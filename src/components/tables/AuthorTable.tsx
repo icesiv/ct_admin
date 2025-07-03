@@ -10,6 +10,9 @@ import {
 import Badge from "../ui/badge/Badge";
 import Image from "next/image";
 
+
+import Pagination from "@/components/tables/Pagination";
+
 interface Order {
   id: number;
   user: {
@@ -220,6 +223,8 @@ export default function BasicTableOne() {
             </TableBody>
           </Table>
         </div>
+           {/* <Pagination {...{ currentPage: 1, totalPages: 1, onPageChange: () => { } }} /> */}
+
       </div>
     </div>
   );

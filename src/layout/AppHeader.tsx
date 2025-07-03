@@ -1,14 +1,17 @@
 "use client";
+
 import { ThemeToggleButton } from "@/components/common/ThemeToggleButton";
 import NotificationDropdown from "@/components/header/NotificationDropdown";
 import UserDropdown from "@/components/header/UserDropdown";
 import { useSidebar } from "@/context/SidebarContext";
+import { useAuth } from '@/context/AuthContext';
 import Image from "next/image";
 import Link from "next/link";
-import React, { useState ,useEffect,useRef} from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 const AppHeader: React.FC = () => {
   const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
+  const { user, handleLogout } = useAuth(); // Get user and logout function from auth context
 
   const { isMobileOpen, toggleSidebar, toggleMobileSidebar } = useSidebar();
 
@@ -23,6 +26,7 @@ const AppHeader: React.FC = () => {
   const toggleApplicationMenu = () => {
     setApplicationMenuOpen(!isApplicationMenuOpen);
   };
+
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -39,6 +43,11 @@ const AppHeader: React.FC = () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
+
+  // Handle sign out
+  const handleSignOut = () => {
+    handleLogout();
+  };
 
   return (
     <header className="sticky top-0 flex w-full bg-white border-gray-200 z-99999 dark:border-gray-800 dark:bg-gray-900 lg:border-b">
@@ -80,22 +89,21 @@ const AppHeader: React.FC = () => {
                 />
               </svg>
             )}
-            {/* Cross Icon */}
           </button>
 
           <Link href="/" className="lg:hidden">
             <Image
-              width={154}
-              height={32}
+              width={220}
+              height={80}
               className="dark:hidden"
-              src="./images/logo/logo.svg"
+              src="/images/logo/logo-wide.svg"
               alt="Logo"
             />
             <Image
-              width={154}
-              height={32}
+              width={220}
+              height={80}
               className="hidden dark:block"
-              src="./images/logo/logo-dark.svg"
+              src="/images/logo/logo-wide.svg"
               alt="Logo"
             />
           </Link>
@@ -165,28 +173,18 @@ const AppHeader: React.FC = () => {
             <ThemeToggleButton />
             {/* <!-- Dark Mode Toggler --> */}
 
-           <NotificationDropdown /> 
+            {/* <NotificationDropdown />  */}
             {/* <!-- Notification Menu Area --> */}
           </div>
           {/* <!-- User Area --> */}
           <UserDropdown
             user={{
-              name: "John Doe",
-              email: "john@example.com",
-              avatar: "/images/user/owner.jpg"
+              name: user?.name || "Unknown User",
+              email: user?.email || "No email",
+              avatar: user?.avatar || "/images/user/owner.jpg"
             }}
-            onSignOut={() => signOut()}
+            onSignOut={handleSignOut}
           />
-
-          {/* 
-          <UserDropdown
-            user={userData}
-            menuItems={customMenuItems}
-            onSignOut={() => signOut()}
-            className="custom-wrapper"
-            dropdownClassName="custom-dropdown"
-          /> */}
-    
         </div>
       </div>
     </header>

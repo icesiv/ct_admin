@@ -61,9 +61,11 @@ interface AuthContextType {
     clearError: () => void;
     setShowLogin: (show: boolean) => void;
     router: AppRouterInstance;
-    fetcCategories: () => Promise<void>;
+    fetchCategories: () => Promise<void>; // Fixed typo
     news_categories: Category[];
     savePost: (data: any) => Promise<any>;
+    saveMenu: (data: any) => Promise<any>; // Added missing function
+    fetchMenu: () => Promise<any>; // Added missing function
 }
 
 interface AuthProviderProps {
@@ -94,8 +96,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Check authentication on mount
     useEffect(() => {
         checkAuth();
-        fetcCategories();
-        fetchUser();
+        fetchCategories();
     }, []);
 
     // Fetch user if authenticated but no user data
@@ -116,7 +117,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         try {
             await fetchUser();
         } catch (error) {
-            handleLogout();
+            await handleLogout();
         }
     };
 
@@ -145,7 +146,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             }
         } catch (error) {
             console.error('Fetch user error:', error);
-            handleLogout();
+            await handleLogout();
+        } finally {
+            dispatch({ type: 'SET_LOADING', payload: false });
         }
     };
 
@@ -181,6 +184,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             const errorMsg = { general: 'Network error. Please try again.' };
             dispatch({ type: 'SET_ERROR', payload: errorMsg });
             return { success: false, errors: errorMsg };
+        } finally {
+            dispatch({ type: 'SET_LOADING', payload: false });
         }
     };
 
@@ -204,7 +209,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             localStorage.removeItem('auth_token');
             localStorage.removeItem('user');
             dispatch({ type: 'LOGOUT' });
-            router.push('/login');
+            router.push('/signin');
         }
     };
 
@@ -216,7 +221,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         dispatch({ type: 'SHOW_LOGIN', payload: show });
     };
 
-    const fetcCategories = async (): Promise<void> => {
+    const fetchCategories = async (): Promise<void> => { // Fixed function name
         const token = localStorage.getItem('auth_token');
 
         if (!token) {
@@ -236,35 +241,98 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             if (response.ok) {
                 const data = await response.json();
                 dispatch({ type: 'SET_CATEGORY_data', payload: data });
-                dispatch({ type: 'SET_CATEGORY_LOADING', payload: false });
             } else {
                 throw new Error('Failed to fetch categories');
             }
         } catch (error) {
-            dispatch({ type: 'SET_CATEGORY_LOADING', payload: false });
             console.error('Fetch category error:', error);
-            // handleLogout();
+            // handleLogout(); // Consider if you want to logout on category fetch failure
+        } finally {
+            dispatch({ type: 'SET_CATEGORY_LOADING', payload: false });
         }
     };
 
     const savePost = async (data: any): Promise<any> => {
         const token = localStorage.getItem('auth_token');
 
+        if (!token) {
+            throw new Error('No authentication token found');
+        }
+
         try {
-            if (token) {
-                const resp = await fetch(`${BASE_URL}admin/posts/store`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(data)
-                });
-                return resp.json();
+            const response = await fetch(`${BASE_URL}admin/posts/store`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to save post');
             }
+
+            return await response.json();
         } catch (error) {
             console.error('Save post error:', error);
+            throw error; // Re-throw to allow caller to handle
+        }
+    };
+
+    const saveMenu = async (data: any): Promise<any> => {
+        const token = localStorage.getItem('auth_token');
+
+        if (!token) {
+            throw new Error('No authentication token found');
+        }
+
+        try {
+            const response = await fetch(`${BASE_URL}admin/menus/store`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to save menu');
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Save menu error:', error);
+            throw error; // Re-throw to allow caller to handle
+        }
+    };
+
+    const fetchMenu = async (): Promise<any> => {
+        const token = localStorage.getItem('auth_token');
+
+        if (!token) {
+            throw new Error('No authentication token found');
+        }
+
+        try {
+            const response = await fetch(`${BASE_URL}home/menu-items`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json',
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch menu');
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Fetch menu error:', error);
+            throw error; // Re-throw to allow caller to handle
         }
     };
 
@@ -280,9 +348,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         clearError,
         setShowLogin,
         router,
-        fetcCategories,
+        fetchCategories, // Fixed function name
         news_categories: Array.isArray(data) ? data : (data?.data ? data.data : []),
         savePost,
+        saveMenu,
+        fetchMenu,
     };
 
     return (
