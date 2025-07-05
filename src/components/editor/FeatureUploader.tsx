@@ -28,8 +28,7 @@ interface UploadHeaders {
   [key: string]: string;
 }
 
-export const FeatureImageUploader = ({ 
-  UpdateFeatureImage, 
+export const FeatureImageUploader = ({  
   featuredImage, 
   title = 'Featured Image' 
 }: FeatureImageUploaderProps): JSX.Element => {
@@ -49,7 +48,7 @@ export const FeatureImageUploader = ({
   // }, [imagePreview, UpdateFeatureImage]);
 
   useEffect(() => {
-    if (featuredImage !== null && featuredImage !== '') {
+    if (featuredImage !== null && featuredImage !== '' && featuredImage !== undefined) {
       if (featuredImage !== imagePreview) {
         setImagePreview(featuredImage);
       }
@@ -199,7 +198,7 @@ export const FeatureImageUploader = ({
         return fileName;
     }
   };
-
+  console.log('imagePreview', imagePreview);
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-2">
