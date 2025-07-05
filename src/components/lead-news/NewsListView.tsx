@@ -1,11 +1,9 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Edit, Filter, Star } from 'lucide-react';
+import { Edit, Filter, Star, X } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { BASE_URL } from '@/config/config';
 import MultiselectDropdown from '@/components/ui/dropdown/MultiselectDropdown';
-
-import { useModal } from "../../hooks/useModal";
 import Pagination from '../tables/Pagination';
 
 // Type definitions
@@ -56,6 +54,7 @@ const NewsListView: React.FC = () => {
     const [articles, setArticles] = useState<NewsArticle[]>([]);
     const [tmp_lead_news, setTmpLeadnews] = useState<NewsArticle | null>(null);
     const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
+    const [selectedPosition, setSelectedPosition] = useState<number>(1);
 
     const { news_categories, user, loading, isAuthenticated, handleLogout, router } = useAuth() as AuthContextType;
 
@@ -165,7 +164,54 @@ const NewsListView: React.FC = () => {
     // Handle edit button click
     const handleEdit = (newsId: number): void => {
         // ToDo: Navigate to edit page
-        router.push(`/news/edit/${newsId}`);
+        router.push(`/posts/edit/${newsId}`);
+    };
+
+    // Handle make lead news button click
+    const handleMakeLeadNews = (news: NewsArticle): void => {
+        setTmpLeadnews(news);
+        setShowConfirmModal(true);
+        setSelectedPosition(1); // Reset to position 1
+    };
+
+    // Handle modal close
+    const handleModalClose = (): void => {
+        setShowConfirmModal(false);
+        setTmpLeadnews(null);
+        setSelectedPosition(1);
+    };
+
+    // Handle confirm make lead news
+    const handleConfirmMakeLeadNews = async (): Promise<void> => {
+        if (!tmp_lead_news) return;
+
+        const token = localStorage.getItem('auth_token');
+        try {
+
+            // Add your API call here to make the news lead with the selected position
+            await fetch(`${BASE_URL}admin/posts/leadnews`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    position: selectedPosition,
+                    news_id: tmp_lead_news.id
+                })
+            });
+
+            // For now, just close the modal and refresh the data
+            handleModalClose();
+            await fetchNews(currentPage);
+
+            // You can add success notification here
+            console.log(`Making news ID ${tmp_lead_news.id} lead at position ${selectedPosition}`);
+        } catch (err) {
+            console.error('Error making lead news:', err);
+            // You can add error notification here
+        }
     };
 
     // Authentication check
@@ -293,10 +339,7 @@ const NewsListView: React.FC = () => {
                                     {/* Make Lead News Button - only show if NOT in lead */}
                                     {!articles.some(article => article.id === news.id) && (
                                         <button
-                                            onClick={async () => {
-                                                setTmpLeadnews(news);
-                                                setShowConfirmModal(true);
-                                            }}
+                                            onClick={() => handleMakeLeadNews(news)}
                                             className="bg-yellow-500 bg-opacity-90 hover:bg-opacity-100 text-white p-2 rounded-full shadow-md transition-all duration-200 hover:shadow-lg"
                                             title="Make Lead News"
                                         >
@@ -319,29 +362,87 @@ const NewsListView: React.FC = () => {
                         </div>
                     ))}
                 </div>
-            )
-            }
+            )}
 
             {/* Pagination */}
-            {
-                !isLoadingNews && newsData.length > 0 && totalPages > 1 && (
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                        <div className="text-sm text-gray-600">
-                            Page {currentPage} Of {totalPages}
+            {!isLoadingNews && newsData.length > 0 && totalPages > 1 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="text-sm text-gray-600">
+                        Page {currentPage} Of {totalPages}
+                    </div>
+
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={handlePageChange}
+                    />
+                </div>
+            )}
+
+            {/* Confirmation Modal */}
+            {showConfirmModal && tmp_lead_news && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+                        {/* Modal Header */}
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                Make Lead News
+                            </h3>
+                            <button
+                                onClick={handleModalClose}
+                                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                            >
+                                <X className="h-6 w-6" />
+                            </button>
                         </div>
 
-                        <Pagination
-                            currentPage={currentPage}
-                            totalPages={totalPages}
-                            onPageChange={handlePageChange}
-                        />
+                        {/* News Info */}
+                        <div className="mb-4">
+                            <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
+                                Selected News:
+                            </p>
+                            <p className="font-medium text-gray-900 dark:text-white line-clamp-2">
+                                {tmp_lead_news.title}
+                            </p>
+                        </div>
+
+                        {/* Position Dropdown */}
+                        <div className="mb-6">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Select Position:
+                            </label>
+                            <select
+                                value={selectedPosition}
+                                onChange={(e) => setSelectedPosition(parseInt(e.target.value))}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                            >
+                                {Array.from({ length: 20 }, (_, i) => i + 1).map((position) => (
+                                    <option key={position} value={position}>
+                                        Position {position}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Modal Actions */}
+                        <div className="flex justify-end space-x-3">
+                            <button
+                                onClick={handleModalClose}
+                                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 rounded-md transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleConfirmMakeLeadNews}
+                                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
+                            >
+                                Confirm
+                            </button>
+                        </div>
                     </div>
-                )
-            }
-
-            {/* ToDo: Confirmation Modal */}
-
-        </div >
+                </div>
+            )}
+        </div>
     );
 };
 

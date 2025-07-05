@@ -3,33 +3,36 @@ import React, { useEffect, useState } from 'react';
 import { GripVertical, Calendar, Tag, X, Trash2, Save, Check } from 'lucide-react';
 import { BASE_URL } from '@/config/config';
 
+
 // Type definitions
 interface Category {
+  id: string;
   name: string;
 }
 
 interface Article {
-  id: number;
+  id: string;
   title: string;
-  image: string;
   summary?: string;
+  image: string;
   category: Category;
   created_at_ago: string;
 }
 
-interface OrderData {
-  id: number;
+interface SortOrder {
   position: number;
+  id: string;
+  title: string;
 }
 
-interface SortedOrderItem {
+interface OrderData {
+  id: string;
   position: number;
-  id: number;
-  title: string;
 }
 
 interface ApiResponse {
   success: boolean;
+  message?: string;
 }
 
 interface SortableNewsListProps {
@@ -37,26 +40,25 @@ interface SortableNewsListProps {
   fetchLeadNews: () => Promise<void>;
 }
 
-const SortableNewsList: React.FC<SortableNewsListProps> = () => {
-  const [leadPosts, fetchLeadNews] = useState([]);
-
+const SortableNewsList: React.FC<SortableNewsListProps> = ({ leadPosts, fetchLeadNews }) => {
   const [articles, setArticles] = useState<Article[]>([]);
   const [draggedItem, setDraggedItem] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
-  const [sortedOrder, setSortedOrder] = useState<SortedOrderItem[]>([]);
-  const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
-  const [hasChanges, setHasChanges] = useState<boolean>(true);
+  const [sortedOrder, setSortedOrder] = useState<SortOrder[]>([]);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [hasChanges, setHasChanges] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
 
   useEffect(() => {
     setArticles(leadPosts);
+    setHasChanges(false); // Reset changes when new data is loaded
   }, [leadPosts]);
 
-  const deleteLeadNews = async (news_id: number): Promise<void> => {
+  const deleteLeadNews = async (news_id: string): Promise<void> => {
     const url = `${BASE_URL}admin/posts/leadnews/remove`;
     const authtoken = localStorage.getItem('auth_token');
-
+    
     try {
       const response = await fetch(url, {
         method: 'POST',
@@ -65,11 +67,20 @@ const SortableNewsList: React.FC<SortableNewsListProps> = () => {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ news_id: news_id })
+        body: JSON.stringify({ news_id })
       });
-      console.log('response', response);
-    } catch (e) {
-      console.error('Error deleting lead news:', e);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data: ApiResponse = await response.json();
+      if (!data.success) {
+        throw new Error(data.message || 'Failed to delete news');
+      }
+    } catch (error) {
+      console.error('Error deleting news:', error);
+      throw error;
     }
   };
 
@@ -97,7 +108,7 @@ const SortableNewsList: React.FC<SortableNewsListProps> = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to save order');
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data: ApiResponse = await response.json();
@@ -105,9 +116,9 @@ const SortableNewsList: React.FC<SortableNewsListProps> = () => {
       if (data.success) {
         setHasChanges(false);
         setSaveSuccess(true);
-        setTimeout(() => setSaveSuccess(false), 3000); // Reset success state after 3 seconds
+        setTimeout(() => setSaveSuccess(false), 3000);
       } else {
-        throw new Error('API returned unsuccessful response');
+        throw new Error(data.message || 'API returned unsuccessful response');
       }
     } catch (err) {
       console.error('Error saving order:', err);
@@ -154,7 +165,7 @@ const SortableNewsList: React.FC<SortableNewsListProps> = () => {
     setHasChanges(true); // Mark that changes have been made
 
     // Update sorted order
-    const newOrder: SortedOrderItem[] = newArticles.map((article, index) => ({
+    const newOrder: SortOrder[] = newArticles.map((article, index) => ({
       position: index + 1,
       id: article.id,
       title: article.title
@@ -170,25 +181,31 @@ const SortableNewsList: React.FC<SortableNewsListProps> = () => {
     setDragOverIndex(null);
   };
 
-  const handleDeleteClick = async (articleId: number): Promise<void> => {
+  const handleDeleteClick = async (articleId: string): Promise<void> => {
     setDeleteConfirm(articleId);
   };
 
-  const handleDeleteConfirm = async (articleId: number): Promise<void> => {
-    await deleteLeadNews(articleId);
-    await fetchLeadNews();
-    const newArticles = articles.filter(article => article.id !== articleId);
-    setArticles(newArticles);
+  const handleDeleteConfirm = async (articleId: string): Promise<void> => {
+    try {
+      await deleteLeadNews(articleId);
+      await fetchLeadNews();
+      
+      const newArticles = articles.filter(article => article.id !== articleId);
+      setArticles(newArticles);
 
-    // Update sorted order after deletion
-    const newOrder: SortedOrderItem[] = newArticles.map((article, index) => ({
-      position: index + 1,
-      id: article.id,
-      title: article.title
-    }));
-    setSortedOrder(newOrder);
+      // Update sorted order after deletion
+      const newOrder: SortOrder[] = newArticles.map((article, index) => ({
+        position: index + 1,
+        id: article.id,
+        title: article.title
+      }));
+      setSortedOrder(newOrder);
 
-    setDeleteConfirm(null);
+      setDeleteConfirm(null);
+    } catch (error) {
+      console.error('Error deleting article:', error);
+      // You might want to show an error message to the user here
+    }
   };
 
   const handleDeleteCancel = (): void => {
@@ -201,27 +218,23 @@ const SortableNewsList: React.FC<SortableNewsListProps> = () => {
   };
 
   return (
-    <div className='max-w-6xl mx-auto'>
+    <div className="max-w-4xl mx-auto p-6 bg-gray-50 min-h-screen">
       {saveSuccess && (
         <div className="fixed bottom-6 right-6 z-50">
           <div className="bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2">
             <Check className="w-4 h-4" />
-            <span>Sequence saved successfully.</span>
+            <span>ক্রম সফলভাবে সংরক্ষণ হয়েছে</span>
           </div>
         </div>
       )}
-
+      
+      <div className="bg-white rounded-lg shadow-lg p-6">
         <div className="flex justify-between items-center mb-6">
-          <h3 className="mb-4 font-semibold text-gray-800 text-theme-xl dark:text-white/90 sm:text-2xl">
-            Drag News To Sort
-          </h3>
-
+          <h1 className="text-2xl font-bold text-gray-800">সংবাদ তালিকা - ড্র্যাগ করে সাজান</h1>
 
           {/* Save Button */}
           <button
-            onClick={async () => {
-              await saveOrder();
-            }}
+            onClick={saveOrder}
             disabled={!hasChanges || isSaving}
             className={`
               flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200
@@ -235,17 +248,17 @@ const SortableNewsList: React.FC<SortableNewsListProps> = () => {
             {isSaving ? (
               <>
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                Saving...
+                সেভ হচ্ছে...
               </>
             ) : saveSuccess ? (
               <>
                 <Check className="w-4 h-4" />
-                Save Done
+                সেভ হয়েছে
               </>
             ) : (
               <>
                 <Save className="w-4 h-4" />
-                Save
+                ক্রম সেভ করুন
               </>
             )}
           </button>
@@ -282,44 +295,6 @@ const SortableNewsList: React.FC<SortableNewsListProps> = () => {
                   <GripVertical className="w-5 h-5 text-gray-400" />
                 </div>
 
-                {/* Delete Confirmation Modal */}
-                {deleteConfirm && (
-                  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg shadow-xl p-6 max-w-md mx-4">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                          <Trash2 className="w-6 h-6 text-red-600" />
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-semibold text-gray-900">নিশ্চিত করুন</h3>
-                          <p className="text-sm text-gray-600">এই সংবাদটি মুছে ফেলতে চান?</p>
-                        </div>
-                      </div>
-
-                      <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-                        <p className="text-sm text-gray-700 font-medium">
-                          {articles.find(a => a.id === deleteConfirm)?.title}
-                        </p>
-                      </div>
-
-                      <div className="flex gap-3 justify-end">
-                        <button
-                          onClick={handleDeleteCancel}
-                          className="px-4 py-2 text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors"
-                        >
-                          বাতিল
-                        </button>
-                        <button
-                          onClick={async () => await handleDeleteConfirm(deleteConfirm)}
-                          className="px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
-                        >
-                          মুছে ফেলুন
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
                 <div className="flex-shrink-0">
                   <img
                     src={article.image}
@@ -339,9 +314,9 @@ const SortableNewsList: React.FC<SortableNewsListProps> = () => {
                         #{index + 1}
                       </span>
                       <button
-                        onClick={async (e) => {
+                        onClick={(e) => {
                           e.stopPropagation();
-                          await handleDeleteClick(article.id);
+                          handleDeleteClick(article.id);
                         }}
                         className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
                         title="মুছে ফেলুন"
@@ -375,12 +350,51 @@ const SortableNewsList: React.FC<SortableNewsListProps> = () => {
           ))}
         </div>
 
+        {/* Delete Confirmation Modal */}
+        {deleteConfirm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-xl p-6 max-w-md mx-4">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                  <Trash2 className="w-6 h-6 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">নিশ্চিত করুন</h3>
+                  <p className="text-sm text-gray-600">এই সংবাদটি মুছে ফেলতে চান?</p>
+                </div>
+              </div>
+
+              <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-700 font-medium">
+                  {articles.find(a => a.id === deleteConfirm)?.title}
+                </p>
+              </div>
+
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={handleDeleteCancel}
+                  className="px-4 py-2 text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors"
+                >
+                  বাতিল
+                </button>
+                <button
+                  onClick={() => handleDeleteConfirm(deleteConfirm)}
+                  className="px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+                >
+                  মুছে ফেলুন
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="mt-6 p-4 bg-blue-50 rounded-lg">
           <p className="text-sm text-blue-800">
             <strong>নির্দেশনা:</strong> যেকোনো সংবাদ আইটেমের বাম পাশের গ্রিপ আইকন ধরে টেনে নিয়ে অন্য জায়গায় ছেড়ে দিন।
             সাজানোর পর উপরের "ক্রম সেভ করুন" বাটনে ক্লিক করে নতুন ক্রম সংরক্ষণ করুন। ডান পাশের ট্র্যাশ আইকনে ক্লিক করে যেকোনো সংবাদ মুছে ফেলতে পারেন।
           </p>
         </div>
+      </div>
     </div>
   );
 };
