@@ -1,6 +1,6 @@
 'use client';
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import { Metadata } from "next";
+
 import React, { useEffect, useState } from "react";
 
 import Input from "@/components/form/input/InputField";
@@ -41,7 +41,7 @@ export default function LeadNews(): JSX.Element {
   const fetchLeadNews = async (): Promise<void> => {
     const token = localStorage.getItem('auth_token');
     setIsLoading(true);
-    
+
     try {
       const url = `${BASE_URL}admin/posts/leadnews`;
       const response = await fetch(url, {
@@ -71,9 +71,9 @@ export default function LeadNews(): JSX.Element {
     }
   };
 
-  useEffect(()=>{
+  useEffect(() => {
     fetchLeadNews();
-  },[]);
+  }, []);
   const handleGetNews = async (): Promise<void> => {
     if (!newsId.trim()) {
       alert('Please enter a News ID');
@@ -84,7 +84,7 @@ export default function LeadNews(): JSX.Element {
     setIsLoading(true);
 
     try {
-      const url = `${BASE_URL}admin/posts/${newsId}`;
+      const url = `${BASE_URL}posts/${newsId}`;
       const response = await fetch(url, {
         method: 'GET',
         headers: {
@@ -99,8 +99,8 @@ export default function LeadNews(): JSX.Element {
       }
 
       const data = await response.json();
-      if (data.success && data.post) {
-        setNewsTitle(data.post.title);
+      if (data.detail) {
+        setNewsTitle(data.detail.title);
       } else {
         throw new Error('News not found');
       }
@@ -121,21 +121,45 @@ export default function LeadNews(): JSX.Element {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
-    
     if (!newsId.trim() || !newsTitle.trim()) {
       alert('Please get a valid news first');
       return;
     }
 
+
+    const token = localStorage.getItem('auth_token');
+    try {
+
+      // Add your API call here to make the news lead with the selected position
+      await fetch(`${BASE_URL}admin/posts/leadnews`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          position: selectedOrder,
+          news_id: newsId
+        })
+      });
+      await fetchLeadNews();
+      handleClearForm();
+      // For now, just close the modal and refresh the data
+
+    } catch (err) {
+      console.error('Error making lead news:', err);
+      // You can add error notification here
+    }
     // Add your submit logic here
     console.log('Submitting:', { newsId, newsTitle, selectedOrder });
   };
 
-  const SmallButton: React.FC<SmallButtonProps> = ({ 
-    text, 
-    onClick, 
-    disabled = false, 
-    className = "" 
+  const SmallButton: React.FC<SmallButtonProps> = ({
+    text,
+    onClick,
+    disabled = false,
+    className = ""
   }) => {
     return (
       <button
@@ -148,7 +172,6 @@ export default function LeadNews(): JSX.Element {
       </button>
     );
   };
-
   return (
     <div>
       <PageBreadcrumb pageTitle="LeadNews Page" />
@@ -173,18 +196,18 @@ export default function LeadNews(): JSX.Element {
                     id="n_id"
                     name="n_id"
                     placeholder="Enter News ID"
-                    value={newsId}
+                    defaultValue={newsId}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewsId(e.target.value)}
                   />
                 </div>
 
-                <SmallButton 
-                  text="X" 
+                <SmallButton
+                  text="X"
                   onClick={handleClearForm}
                   disabled={isLoading}
                 />
-                <SmallButton 
-                  text="Get" 
+                <SmallButton
+                  text="Get"
                   onClick={handleGetNews}
                   disabled={isLoading || !newsId.trim()}
                 />
@@ -197,9 +220,8 @@ export default function LeadNews(): JSX.Element {
                   id="title"
                   name="title"
                   placeholder="News Title will be here"
-                  value={newsTitle}
-                  disabled={true}
-                  readOnly
+                  defaultValue={newsTitle}
+
                 />
               </div>
 
@@ -224,7 +246,7 @@ export default function LeadNews(): JSX.Element {
                 </div>
 
                 {/* Submit Button */}
-                <button 
+                <button
                   type="submit"
                   disabled={isLoading || !newsTitle.trim()}
                   className="h-11 px-4 py-3 md:w-38 text-sm font-medium text-white transition rounded-lg bg-brand-500 shadow-theme-xs hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -241,8 +263,8 @@ export default function LeadNews(): JSX.Element {
 
       {/* Sort Lead News */}
       <div className="mt-6 rounded-2xl border border-gray-200 bg-white px-5 py-7 dark:border-gray-800 dark:bg-white/[0.03] xl:px-10 xl:py-12">
-        <SortableNewsList 
-          fetchLeadNews={fetchLeadNews} 
+        <SortableNewsList
+          fetchLeadNews={fetchLeadNews}
           leadPosts={articles}
         />
       </div>
