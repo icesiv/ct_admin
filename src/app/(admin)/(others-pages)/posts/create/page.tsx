@@ -11,24 +11,9 @@ export const metadata: Metadata = {
 };
 
 export default function AllPosts() {
-  interface SmallButtonProps {
-    text: string;
-    onClick?: () => void;
-    disabled?: boolean;
-    className?: string;
-  }
+  
 
-  const SmallButton = ({ text, onClick, disabled = false, className = "" }: SmallButtonProps) => {
-    return (
-      <button
-        onClick={onClick}
-        disabled={disabled}
-        className={`h-11 flex items-center justify-center border border-gray-300 dark:border-gray-700 px-4 py-2.5 text-sm transition rounded-lg shadow-theme-xs hover:bg-brand-600 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
-      >
-        {text}
-      </button>
-    )
-  };
+  
 
   return (
     <div>

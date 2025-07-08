@@ -59,7 +59,7 @@ interface ApiResponse<T> {
   success?: boolean;
 }
 
-export const NewsScreenEdit: React.FC<NewsScreenEditProps> = ({ post_id, router }) => {
+export const NewsScreenEdit: React.FC<NewsScreenEditProps> = ({ post_id }) => {
   const [notification, setNotification] = useState<NotificationState | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
