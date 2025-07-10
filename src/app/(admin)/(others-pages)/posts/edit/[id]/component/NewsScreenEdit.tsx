@@ -2,8 +2,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Save, Eye, Trash2, Plus, X } from 'lucide-react';
 
-
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import WysiwygEditor from '@/components/editor/WysiwygEditor';
 import { useAuth } from '@/context/AuthContext';
 import { available_colors, BASE_URL } from '@/config/config';
@@ -50,7 +49,6 @@ interface NotificationState {
 
 interface NewsScreenEditProps {
   post_id: number;
-  router: any; // You might want to type this more specifically based on your router
 }
 
 interface ApiResponse<T> {
@@ -60,6 +58,7 @@ interface ApiResponse<T> {
 }
 
 export const NewsScreenEdit: React.FC<NewsScreenEditProps> = ({ post_id }) => {
+  const router = useRouter();
   const [notification, setNotification] = useState<NotificationState | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
@@ -74,7 +73,7 @@ export const NewsScreenEdit: React.FC<NewsScreenEditProps> = ({ post_id }) => {
   });
 
   const [tagInput, setTagInput] = useState<string>('');
-  const [availableTags, setAvailableTags] = useState<string[]>([
+  const [availableTags] = useState<string[]>([
     'Breaking News', 'Politics', 'Technology', 'Sports', 'Entertainment',
     'Business', 'Health', 'Science', 'Travel', 'Education'
   ]);
@@ -82,42 +81,49 @@ export const NewsScreenEdit: React.FC<NewsScreenEditProps> = ({ post_id }) => {
   const [imagePreview, setImagePreview] = useState<string>('');
   const [isPreview, setIsPreview] = useState<boolean>(false);
 
-  const fetchNewsDetail = async (id: number): Promise<ApiResponse<NewsPost> | null> => {
-    const token = localStorage.getItem('auth_token');
-    const res = await fetch(`${BASE_URL}admin/posts/view/${id}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
-      next: {
-        tags: [`detail_${id}`],
-        revalidate: 60
-      }
-    });
+  const fetchNewsDetail = useCallback(async (id: number): Promise<ApiResponse<NewsPost> | null> => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const res = await fetch(`${BASE_URL}admin/posts/view/${id}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      });
 
-    if (res.status === 404) {
+      if (res.status === 404) {
+        return null;
+      }
+
+      if (!res.ok) {
+        throw new Error('Failed to fetch data');
+      }
+
+      const response: ApiResponse<NewsPost> = await res.json();
+      setFormData(prev => ({
+        ...prev,
+        id: response.data.id,
+        title: response.data.title,
+        excerpt: response.data.excerpt,
+        postContent: response.data.post_content,
+        featuredImage: response.data.featured_image,
+        categories: response.data.categories.map((cat: Category) => Number(cat.id)), // Fixed line
+        tags: response.data.tags.map((tag: Tag) => tag.name)
+      }));
+
+      // Set image preview if featured image exists
+      if (response.data.featured_image) {
+        setImagePreview(response.data.featured_image);
+      }
+
+      return response;
+    } catch (error) {
+      console.error('Error fetching news detail:', error);
       return null;
     }
-
-    if (!res.ok) {
-      throw new Error('Failed to fetch data');
-    }
-
-    const response: ApiResponse<NewsPost> = await res.json();
-    setFormData({
-      ...formData,
-      id: response.data.id,
-      title: response.data.title,
-      excerpt: response.data.excerpt,
-      postContent: response.data.post_content,
-      featuredImage: response.data.featured_image,
-      categories: response.data.categories.map((cat: Category) => cat.id),
-      tags: response.data.tags.map((tag: Tag) => tag.name)
-    });
-    return response;
-  };
+  }, []);
 
   const deletePost = async (id: number): Promise<ApiResponse<any>> => {
     const token = localStorage.getItem('auth_token');
@@ -140,13 +146,15 @@ export const NewsScreenEdit: React.FC<NewsScreenEditProps> = ({ post_id }) => {
 
   useEffect(() => {
     fetchNewsDetail(post_id);
-  }, [post_id]);
+  }, [post_id, fetchNewsDetail]);
 
   const { news_categories, savePost } = useAuth();
-  const all_cat: Category[] = news_categories.map((category: Category, index: number) => ({
-    ...category,
-    color: available_colors[index % 10]
-  }));
+
+  const all_cat: Category[] = news_categories.map((category: any, index: number) => ({
+  ...category,
+  id: Number(category.id), // Ensure consistent number type
+  color: available_colors[index % 10]
+}));
 
   const UpdatePostContent = useCallback((value: string) => {
     console.log('v', value);
@@ -157,13 +165,14 @@ export const NewsScreenEdit: React.FC<NewsScreenEditProps> = ({ post_id }) => {
     console.log('value', value);
     if (value !== null && value !== undefined) {
       setFormData(prev => ({ ...prev, featuredImage: value }));
+      setImagePreview(value);
     }
   }, []);
 
   const handleCategoryToggle = (categoryIds: Category[]) => {
     setFormData(prev => ({
       ...prev,
-      categories: categoryIds.map(cat => cat.id)
+      categories: categoryIds.map(cat => Number(cat.id)) // Ensure it's a number
     }));
   };
 
@@ -265,20 +274,36 @@ export const NewsScreenEdit: React.FC<NewsScreenEditProps> = ({ post_id }) => {
     }
   };
 
-  const renderPreview = (): JSX.Element => {
+  const handleDelete = async () => {
+    if (!formData.id) return;
+
+    setIsDeleting(true);
+    try {
+      await deletePost(formData.id);
+      router.push('/posts');
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      showNotification('Failed to delete post. Please try again.', 'error');
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteModal(false);
+    }
+  };
+
+  const renderPreview = () => {
     const processContent = (content: string): string => {
       return content
         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
         .replace(/\*(.*?)\*/g, '<em>$1</em>')
         .replace(/^- (.+)$/gm, '<li>$1</li>')
-        .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
+        .replace(/(<li>.*<\/li>)/, '<ul>$1</ul>')
         .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-blue-600 hover:underline">$1</a>')
         .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="max-w-full h-auto rounded-lg my-4" />')
         .replace(/\n/g, '<br />');
     };
 
     return (
-      <div className="max-w-4xl mx-auto p-6 bg-white">
+      <div className="max-w-4xl mx-auto p-6 ">
         {imagePreview && (
           <img
             src={imagePreview}
@@ -319,44 +344,7 @@ export const NewsScreenEdit: React.FC<NewsScreenEditProps> = ({ post_id }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <Link href={`/dashboard`}>
-              <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-            </Link>
-            <div className="flex space-x-3">
-              <button
-                type="button"
-                onClick={() => setIsPreview(!isPreview)}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                <Eye className="w-4 h-4 mr-2" />
-                {isPreview ? 'Edit' : 'Preview'}
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowDeleteModal(true)}
-                disabled={isDeleting || !formData.id}
-                className="inline-flex items-center px-4 py-2 border border-red-300 rounded-md shadow-sm text-sm font-medium text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Trash2 className="w-4 h-4 mr-2" />
-                {isDeleting ? 'Deleting...' : 'Delete'}
-              </button>
-              <button
-                type="button"
-                onClick={handleSubmit}
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                Save Article
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
+    <div>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {notification && (
           <Notification
@@ -369,9 +357,36 @@ export const NewsScreenEdit: React.FC<NewsScreenEditProps> = ({ post_id }) => {
           renderPreview()
         ) : (
           <div className="space-y-8">
-            <div className="bg-white shadow rounded-lg">
-              <div className="px-6 py-4 border-b border-gray-200">
+            <div className=" shadow rounded-lg">
+              <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200">
                 <h2 className="text-lg font-medium text-gray-900">Article Details</h2>
+                <div className="flex space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsPreview(!isPreview)}
+                    className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700  hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    <Eye className="w-4 h-4 mr-2" />
+                    {isPreview ? 'Edit' : 'Preview'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowDeleteModal(true)}
+                    disabled={isDeleting || !formData.id}
+                    className="inline-flex items-center px-4 py-2 border border-red-300 rounded-md shadow-sm text-sm font-medium text-red-700  hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    {isDeleting ? 'Deleting...' : 'Delete'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSubmit}
+                    className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    Save Article
+                  </button>
+                </div>
               </div>
               <div className="px-6 py-6 space-y-6">
                 {/* Title */}
@@ -418,7 +433,7 @@ export const NewsScreenEdit: React.FC<NewsScreenEditProps> = ({ post_id }) => {
                     resetDropSelected={handleCategoryToggle}
                     news_categories={all_cat}
                     handleCategoryChange={handleCategoryToggle}
-                    totalNews={0}
+                    // totalNews={0}
                   />
                 </div>
 
@@ -492,29 +507,32 @@ export const NewsScreenEdit: React.FC<NewsScreenEditProps> = ({ post_id }) => {
                   </p>
                 </div>
                 {/* Featured Image */}
-                <FeatureImageUploader featuredImage={formData.featuredImage} UpdateFeatureImage={UpdateFeatureImage} />
+                <FeatureImageUploader
+                  featuredImage={formData.featuredImage}
+                  UpdateFeatureImage={UpdateFeatureImage}
+                />
               </div>
             </div>
 
             {/* WYSIWYG Editor */}
-            <div className="bg-white shadow rounded-lg">
-              <WysiwygEditor post_content={formData.postContent} UpdatePostContent={UpdatePostContent} />    
+            <div className=" shadow rounded-lg">
+              <WysiwygEditor
+                postContent={formData.postContent}
+                updatePostContent={UpdatePostContent}
+              />
             </div>
           </div>
         )}
       </div>
 
       {showDeleteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl p-6 max-w-md mx-4">
+        <div className="fixed inset-0 bg-[#000000aa] bg-opacity-50 flex items-center justify-center z-999999">
+          <div className=" rounded-lg shadow-xl p-6 max-w-md mx-4">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
                 <Trash2 className="w-6 h-6 text-red-600" />
               </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">নিশ্চিত করুন</h3>
-                <p className="text-sm text-gray-600">এই সংবাদটি মুছে ফেলতে চান?</p>
-              </div>
+              <h2 className="text-lg text-gray-600">Are you sure you want to delete?</h2>
             </div>
 
             <div className="mb-4 p-3 bg-gray-50 rounded-lg">
@@ -526,18 +544,17 @@ export const NewsScreenEdit: React.FC<NewsScreenEditProps> = ({ post_id }) => {
             <div className="flex gap-3 justify-end">
               <button
                 onClick={() => setShowDeleteModal(false)}
-                className="px-4 py-2 text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors"
+                disabled={isDeleting}
+                className="px-4 py-2 text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors disabled:opacity-50"
               >
-                বাতিল
+                Cancel
               </button>
               <button
-                onClick={async () => {
-                  await deletePost(formData.id!);
-                  location.href = "/news/list";
-                }}
-                className="px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors disabled:opacity-50"
               >
-                মুছে ফেলুন
+                {isDeleting ? 'Deleting...' : 'Delete'}
               </button>
             </div>
           </div>

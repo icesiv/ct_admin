@@ -9,7 +9,7 @@ export interface NotificationProps {
   onClose: () => void;
 }
 
-export const Notification = ({ message, type, onClose }: NotificationProps): JSX.Element => {
+export const Notification = ({ message, type, onClose }: NotificationProps) => {
   const getColorClasses = (notificationType: NotificationType) => {
     switch (notificationType) {
       case 'success':

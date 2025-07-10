@@ -41,26 +41,10 @@ interface TogglePayload {
     active: boolean;
 }
 
-// Auth context type (you may need to adjust this based on your actual AuthContext)
-interface User {
-    name: string;
-    id?: number;
-    email?: string;
-}
-
-interface AuthContextType {
-    news_categories: Category[];
-    user: User | null;
-    fetcCategories: () => Promise<void>;
-    router: {
-        push: (path: string) => void;
-        back: () => void;
-        replace: (path: string) => void;
-    };
-}
-
 const CategoryCRUD: React.FC = () => {
-    const { news_categories, user, fetcCategories, router } = useAuth() as AuthContextType;
+    // Remove the type assertion and let TypeScript infer the type
+    const authContext = useAuth();
+    const { news_categories, fetchCategories, router } = authContext;
 
     const [categories, setCategories] = useState<Category[]>([]);
     const [showForm, setShowForm] = useState<boolean>(false);
@@ -74,8 +58,19 @@ const CategoryCRUD: React.FC = () => {
     });
 
     useEffect(() => {
-        if (news_categories.length > 0) {
-            setCategories(news_categories);
+        if (news_categories && news_categories.length > 0) {
+            // Transform the categories to match our local Category type
+            const transformedCategories: Category[] = news_categories.map(cat => ({
+                id: typeof cat.id === 'string' ? parseInt(cat.id, 10) : cat.id,
+                name: cat.name,
+                slug: (cat as any).slug || '',
+                parent_id: typeof (cat as any).parent_id === 'string' ? parseInt((cat as any).parent_id, 10) : ((cat as any).parent_id || 0),
+                position: typeof (cat as any).position === 'string' ? parseInt((cat as any).position, 10) : ((cat as any).position || 1),
+                active: (cat as any).active !== false,
+                updated_at: (cat as any).updated_at,
+                created_at: (cat as any).created_at
+            }));
+            setCategories(transformedCategories);
         }
     }, [news_categories]);
 
@@ -141,14 +136,14 @@ const CategoryCRUD: React.FC = () => {
 
         // Basic validation
         if (!formData.name.trim()) {
-            alert('Name and slug are required');
+            alert('Name is required');
             return;
         }
 
         const cat: CategoryPayload = {
             ...(editingCategory && { id: editingCategory.id }),
             name: formData.name,
-            slug: formData.slug,
+            slug: formData.slug || generateSlug(formData.name),
             position: formData.position,
             parent_id: formData.parent_id
         };
@@ -162,7 +157,7 @@ const CategoryCRUD: React.FC = () => {
                 },
                 body: JSON.stringify(cat)
             });
-            await fetcCategories();
+            await fetchCategories();
             resetForm();
         } catch (error) {
             console.error('Error saving category:', error);
@@ -178,7 +173,7 @@ const CategoryCRUD: React.FC = () => {
             slug: category.slug,
             parent_id: category.parent_id,
             position: category.position,
-            active: category.active ?? true
+            active: category.active
         });
         setShowForm(true);
     };
@@ -368,11 +363,11 @@ const CategoryCRUD: React.FC = () => {
                                             <h3 className="font-semibold text-gray-800 dark:text-gray-100">{rootCategory.name}</h3>
                                             <p className="text-sm text-gray-600 dark:text-gray-400">/{rootCategory.slug}</p>
                                         </div>
-                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${rootCategory.active !== false
+                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${rootCategory.active
                                             ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300'
                                             : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300'
                                             }`}>
-                                            {rootCategory.active !== false ? 'Active' : 'Inactive'}
+                                            {rootCategory.active ? 'Active' : 'Inactive'}
                                         </span>
                                         <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-gray-600 px-2 py-1 rounded">
                                             Position: {rootCategory.position}
@@ -383,13 +378,12 @@ const CategoryCRUD: React.FC = () => {
                                             onClick={async () => {
                                                 await toggleActive(rootCategory);
                                             }}
-                                            className={`px-3 py-1 rounded text-sm font-medium transition-colors ${rootCategory.active !== false
+                                            className={`px-3 py-1 rounded text-sm font-medium transition-colors ${rootCategory.active
                                                 ? 'bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300 hover:bg-orange-200 dark:hover:bg-orange-800'
                                                 : 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800'
                                                 }`}
-                                                
                                         >
-                                            {rootCategory.active !== 0 ?  <Trash2 size={16} /> :  <Trash2 size={16} />}
+                                            {rootCategory.active ? 'Deactivate' : 'Activate'}
                                         </button>
                                         <button
                                             onClick={() => handleEdit(rootCategory)}
@@ -417,11 +411,11 @@ const CategoryCRUD: React.FC = () => {
                                                         <h4 className="font-medium text-gray-700 dark:text-gray-300">{childCategory.name}</h4>
                                                         <p className="text-sm text-gray-500 dark:text-gray-400">/{childCategory.slug}</p>
                                                     </div>
-                                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${childCategory.active !== false
+                                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${childCategory.active
                                                         ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300'
                                                         : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300'
                                                         }`}>
-                                                        {childCategory.active !== false ? 'Active' : 'Inactive'}
+                                                        {childCategory.active ? 'Active' : 'Inactive'}
                                                     </span>
                                                     <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-gray-600 px-2 py-1 rounded">
                                                         Position: {childCategory.position}
@@ -432,12 +426,12 @@ const CategoryCRUD: React.FC = () => {
                                                         onClick={async () => {
                                                             await toggleActive(childCategory);
                                                         }}
-                                                        className={`px-3 py-1 rounded text-sm font-medium transition-colors ${childCategory.active !== false
+                                                        className={`px-3 py-1 rounded text-sm font-medium transition-colors ${childCategory.active
                                                             ? 'bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300 hover:bg-orange-200 dark:hover:bg-orange-800'
                                                             : 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800'
                                                             }`}
                                                     >
-                                                        {childCategory.active !== false ? 'Deactivate' : 'Activate'}
+                                                        {childCategory.active ? 'Deactivate' : 'Activate'}
                                                     </button>
                                                     <button
                                                         onClick={() => handleEdit(childCategory)}

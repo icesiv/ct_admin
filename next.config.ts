@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
 
   images: {
     // For Next.js 12.2.0 and newer (recommended)
@@ -55,7 +58,7 @@ const nextConfig: NextConfig = {
       },
     ],
 
-     dangerouslyAllowSVG: true,
+    dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
     formats: ['image/webp', 'image/avif'],

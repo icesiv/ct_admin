@@ -13,7 +13,14 @@ interface Article {
   id: string;
   title: string;
   order: number;
-  // Add other properties as needed based on your API response
+  image: string;
+  category: Category;
+  created_at_ago: string;
+}
+
+interface Category {
+  id: string;
+  name: string;
 }
 
 interface SmallButtonProps {
@@ -31,7 +38,7 @@ interface ApiResponse {
 
 
 
-export default function LeadNews(): JSX.Element {
+export default function LeadNews(){
   const [articles, setArticles] = useState<Article[]>([]);
   const [newsId, setNewsId] = useState<string>("");
   const [newsTitle, setNewsTitle] = useState<string>("");

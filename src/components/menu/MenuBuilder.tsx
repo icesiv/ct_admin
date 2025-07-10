@@ -151,7 +151,7 @@ const MenuBuilder: React.FC = () => {
         return menuItems.map(cleanMenuItem);
     };
 
-    const renderMenuItem = (item: MenuItem, level: number = 0): JSX.Element => {
+    const renderMenuItem = (item: MenuItem, level: number = 0)  => {
         const hasChildren = item.children && item.children.length > 0;
         const isEditing = editingItem && editingItem.id === item.id;
 

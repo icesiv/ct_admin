@@ -28,7 +28,7 @@ interface LoginResult {
     errors?: FormErrors;
 }
 
-export default function SignInForm(): JSX.Element {
+export default function SignInForm() {
     const [formData, setFormData] = useState<FormData>({
         email: '',
         password: ''
@@ -119,7 +119,7 @@ export default function SignInForm(): JSX.Element {
                                     </Label>
                                     <Input
                                         name="email"
-                                        value={formData.email}
+                                        defaultValue={formData.email}
                                         onChange={handleInputChange}
                                         placeholder="info@gmail.com"
                                         type="email"
@@ -135,7 +135,7 @@ export default function SignInForm(): JSX.Element {
                                     <div className="relative">
                                         <Input
                                             name="password"
-                                            value={formData.password}
+                                            defaultValue={formData.password}
                                             onChange={handleInputChange}
                                             type={showPassword ? "text" : "password"}
                                             placeholder="Enter your password"
@@ -176,7 +176,7 @@ export default function SignInForm(): JSX.Element {
                                 )}
                                 <div>
                                     <Button
-                                        type="submit"
+                                        // type="submit"
                                         className="w-full"
                                         size="sm"
                                         disabled={isSubmitting}

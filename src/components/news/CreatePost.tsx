@@ -11,7 +11,7 @@ import MultiselectDropdown from '@/components/ui/dropdown/MultiselectDropdown';
 
 // Type definitions
 interface Category {
-  id: string | number;
+  id: number;
   name: string;
   color?: string;
 }
@@ -21,7 +21,7 @@ interface FormData {
   excerpt: string;
   postContent: string;
   featuredImage: File | string | null;
-  categories: (string | number)[];
+  categories: number[];
   tags: string[];
 }
 
@@ -35,11 +35,11 @@ interface SavePostData {
   excerpt: string;
   post_content: string;
   featured_image: File | string | null;
-  categories: (string | number)[];
+  categories: number[];
   tags: string[];
 }
 
-export default function CreatePost(): JSX.Element {
+export default function CreatePost() {
   const [notification, setNotification] = useState<NotificationState | null>(null);
   const [formData, setFormData] = useState<FormData>({
     title: '',
@@ -58,9 +58,10 @@ export default function CreatePost(): JSX.Element {
   ]);
 
   const { news_categories, savePost } = useAuth();
-  const all_cat: Category[] = news_categories.map((category: Category, index: number) => {
+  const all_cat: Category[] = news_categories.map((category: any, index: number) => {
     return {
-      ...category, 
+      id: Number(category.id), // Ensure id is a number
+      name: category.name,
       color: available_colors[index % 10]
     };
   });
@@ -76,11 +77,17 @@ export default function CreatePost(): JSX.Element {
   const [imagePreview, setImagePreview] = useState<string>('');
   const [isPreview, setIsPreview] = useState<boolean>(false);
 
-  const handleCategoryToggle = (categoryIds: (string | number)[]): void => {
+  const handleCategoryToggle = (categoryIds: number[]): void => {
     setFormData(prev => ({
       ...prev,
       categories: categoryIds
     }));
+  };
+
+  // New function to handle Category objects from MultiselectDropdown
+  const handleCategoryChange = (categories: Category[]): void => {
+    const categoryIds = categories.map(cat => cat.id);
+    handleCategoryToggle(categoryIds);
   };
 
   // Tag handling functions
@@ -192,13 +199,13 @@ export default function CreatePost(): JSX.Element {
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
       .replace(/^- (.+)$/gm, '<li>$1</li>')
-      .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
+      .replace(/(<li>.*<\/li>)/, '<ul>$1</ul>')
       .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-blue-600 hover:underline">$1</a>')
       .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="max-w-full h-auto rounded-lg my-4" />')
       .replace(/\n/g, '<br />');
   };
 
-  const renderPreview = (): JSX.Element => {
+  const renderPreview = () => {
     return (
       <div className="max-w-4xl mx-auto p-6 bg-white">
         {imagePreview && (
@@ -262,7 +269,7 @@ export default function CreatePost(): JSX.Element {
 
   return (
     <div>
-      <header className="hadow-sm border-b border-gray-200">
+      <header className="shadow-sm border-b border-gray-200">
           <div className="flex justify-between items-center py-4">
             <div className="flex space-x-3">
               <button
@@ -340,9 +347,9 @@ export default function CreatePost(): JSX.Element {
                   </label>
                   <div className="block">
                     <MultiselectDropdown
-                      resetDropSelected={handleCategoryToggle}
+                      resetDropSelected={handleCategoryChange}
                       news_categories={all_cat}
-                      handleCategoryChange={handleCategoryToggle}
+                      handleCategoryChange={handleCategoryChange}
                     />
                   </div>
                   
@@ -444,7 +451,7 @@ export default function CreatePost(): JSX.Element {
 
             {/* WYSIWYG Editor */}
             <div className="bg-white shadow rounded-lg">
-              <WysiwygEditor UpdatePostContent={UpdatePostContent} post_content={formData.postContent} />
+              <WysiwygEditor updatePostContent={UpdatePostContent} postContent={formData.postContent} />
             </div>
           </div>
         )}
