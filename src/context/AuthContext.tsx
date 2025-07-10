@@ -2,8 +2,8 @@
 import { createContext, useContext, useEffect, useReducer, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
-import { BASE_URL } from '../config/config';
-import { rootReducer } from '../reducers';
+import { BASE_URL } from '@/config/config';
+import { rootReducer } from '@/reducers';
 
 // Types
 interface User {

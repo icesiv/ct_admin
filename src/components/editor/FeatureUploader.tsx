@@ -31,7 +31,7 @@ interface UploadHeaders {
 export const FeatureImageUploader = ({  
   featuredImage, 
   title = 'Featured Image' 
-}: FeatureImageUploaderProps): JSX.Element => {
+}: FeatureImageUploaderProps) => {
 
   const [imagePreview, setImagePreview] = useState<string | null>(featuredImage || null);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
@@ -173,7 +173,7 @@ export const FeatureImageUploader = ({
     }
   };
 
-  const getStatusIcon = (): JSX.Element | null => {
+  const getStatusIcon = () => {
     switch (uploadStatus) {
       case 'uploading':
         return <Loader2 className="w-4 h-4 animate-spin text-blue-500" />;

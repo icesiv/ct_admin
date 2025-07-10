@@ -1,4 +1,11 @@
-export const categoryReducer = (state, action) => {
+// src/reducers/categoryReducer.ts
+const initialCategoryState = {
+    data: [],
+    loading: false,
+    error: null
+};
+
+export const categoriesReducer = (state = initialCategoryState, action: any) => {
     switch (action.type) {
         case 'SET_CATEGORY_LOADING':
             return { ...state, loading: action.payload };

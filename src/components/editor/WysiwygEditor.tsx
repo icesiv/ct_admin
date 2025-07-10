@@ -1,160 +1,531 @@
-import React, { useState, useRef, useCallback, useEffect, ChangeEvent, DragEvent, ClipboardEvent } from 'react';
-import { Bold, Italic, Underline, List, ListOrdered, Link, Image, Type, AlignLeft, AlignCenter, AlignRight, Upload, Video } from 'lucide-react';
-import { BASE_URL } from '@/config/config';
+'use client';
 
-interface WysiwygEditorProps {
-  UpdatePostContent: (content: string) => void;
-  post_content?: string | null;
+import React, {
+  useState,
+  useRef,
+  useCallback,
+  useEffect,
+  useMemo,
+  memo,
+  type ChangeEvent,
+  type DragEvent,
+  type FormEvent,
+  type KeyboardEvent
+} from 'react';
+
+import {
+  Bold,
+  Italic,
+  Underline,
+  List,
+  ListOrdered,
+  Link,
+  Image,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  Upload,
+  Video,
+  type LucideIcon
+} from 'lucide-react';
+
+// Types
+interface ImageData {
+  file_url: string;
+  width?: number;
+  height?: number;
+  thumb?: string;
 }
 
-const WysiwygEditor: React.FC<WysiwygEditorProps> = ({ UpdatePostContent, post_content = null }) => {
-  const [content, setContent] = useState<string>(post_content || '');
+interface ToolbarButton {
+  icon: LucideIcon;
+  command?: string;
+  action?: () => void;
+  title: string;
+  divider?: never;
+}
+
+interface ToolbarDivider {
+  divider: true;
+  icon?: never;
+  command?: never;
+  action?: never;
+  title?: never;
+}
+
+type ToolbarItem = ToolbarButton | ToolbarDivider;
+
+interface SelectOption {
+  label: string;
+  value: string;
+  command?: string;
+}
+
+interface WysiwygEditorProps {
+  updatePostContent: (content: string) => void;
+  postContent?: string | null; // Explicitly allow null
+  baseUrl?: string;
+  maxImageSize?: number;
+  placeholder?: string;
+  className?: string;
+}
+
+// Custom hooks
+const useSelection = () => {
   const [selectedText, setSelectedText] = useState<string>('');
+  const [savedRange, setSavedRange] = useState<Range | null>(null);
+
+  const handleTextSelection = useCallback(() => {
+    const selection = window.getSelection();
+    if (selection) {
+      setSelectedText(selection.toString());
+      if (selection.rangeCount > 0) {
+        setSavedRange(selection.getRangeAt(0).cloneRange());
+      }
+    }
+  }, []);
+
+  return { selectedText, savedRange, setSavedRange, handleTextSelection };
+};
+
+const useImageUpload = (baseUrl: string) => {
+  const [uploading, setUploading] = useState<boolean>(false);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
+
+  const uploadImage = useCallback(async (file: File): Promise<ImageData> => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+    const uploadUrl = `${baseUrl}/admin/images/upload-image`;
+
+    setUploading(true);
+    setUploadProgress(0);
+
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      formData.append('generate_thumbnails', 'true');
+      formData.append('thumbnail_sizes[]', '500');
+
+      const response = await new Promise<any>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+
+        xhr.upload.addEventListener('progress', (e) => {
+          if (e.lengthComputable) {
+            const progress = Math.round((e.loaded / e.total) * 100);
+            setUploadProgress(progress);
+          }
+        });
+
+        xhr.addEventListener('load', () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const response = JSON.parse(xhr.responseText);
+              resolve(response);
+            } catch (error) {
+              reject(new Error('Invalid JSON response'));
+            }
+          } else {
+            reject(new Error(`Upload failed: ${xhr.status}`));
+          }
+        });
+
+        xhr.addEventListener('error', () => reject(new Error('Network error')));
+        xhr.addEventListener('timeout', () => reject(new Error('Upload timeout')));
+
+        xhr.open('POST', uploadUrl);
+        if (token) {
+          xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+        }
+        xhr.setRequestHeader('Accept', 'application/json');
+        xhr.timeout = 30000;
+        xhr.send(formData);
+      });
+
+      return response.data;
+    } finally {
+      setUploading(false);
+      setUploadProgress(0);
+    }
+  }, [baseUrl]);
+
+  return { uploading, uploadProgress, uploadImage };
+};
+
+// Utility functions
+const extractYouTubeVideoId = (url: string): string | null => {
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+    /youtube\.com\/watch\?.*v=([^&\n?#]+)/
+  ];
+
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) return match[1];
+  }
+  return null;
+};
+
+const createYouTubeEmbed = (videoId: string, width = 560, height = 315): HTMLDivElement => {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'youtube-embed-wrapper';
+  wrapper.style.cssText = `
+    position: relative;
+    width: 100%;
+    max-width: ${width}px;
+    margin: 20px auto;
+    padding: 0;
+    background: #f0f0f0;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  `;
+
+  wrapper.innerHTML = `
+    <div style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%;">
+      <iframe 
+        src="https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1" 
+        frameBorder="0" 
+        allowFullScreen
+        style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
+        title="YouTube video player"
+      ></iframe>
+    </div>
+  `;
+
+  return wrapper;
+};
+
+const fixImageUrls = (htmlContent: string | null | undefined, domain = 'https://campustimes.press'): string => {
+  if (!htmlContent) return '';
+  const imgRegex = /<img([^>]*)\ssrc="(\/[^"]*)"([^>]*)>/gi;
+  return htmlContent.replace(imgRegex, (match, beforeSrc, src, afterSrc) => {
+    return `<img${beforeSrc} src="${domain}${src}"${afterSrc}>`;
+  });
+};
+
+// Toolbar component
+const Toolbar = memo(({
+  buttons,
+  headingOptions,
+  fontFamilyOptions,
+  fontSizeOptions,
+  onHeadingChange,
+  onFontFamilyChange,
+  onFontSizeChange
+}: {
+  buttons: ToolbarItem[];
+  headingOptions: SelectOption[];
+  fontFamilyOptions: SelectOption[];
+  fontSizeOptions: SelectOption[];
+  onHeadingChange: (value: string) => void;
+  onFontFamilyChange: (value: string) => void;
+  onFontSizeChange: (value: string) => void;
+}) => (
+  <div className="bg-gray-50 border-b border-gray-300 p-3">
+    <div className="flex items-center gap-2 flex-wrap">
+      <select
+        className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        onChange={(e) => onHeadingChange(e.target.value)}
+      >
+        {headingOptions.map((option, index) => (
+          <option key={index} value={option.value}>{option.label}</option>
+        ))}
+      </select>
+
+      <select
+        className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[120px]"
+        onChange={(e) => {
+          if (e.target.value) {
+            onFontFamilyChange(e.target.value);
+            e.target.value = '';
+          }
+        }}
+        defaultValue=""
+      >
+        <option value="" disabled>Font</option>
+        {fontFamilyOptions.map((option, index) => (
+          <option key={index} value={option.value} style={{ fontFamily: option.value }}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+
+      <select
+        className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[70px]"
+        onChange={(e) => {
+          if (e.target.value) {
+            onFontSizeChange(e.target.value);
+            e.target.value = '';
+          }
+        }}
+        defaultValue=""
+      >
+        <option value="" disabled>Size</option>
+        {fontSizeOptions.map((option, index) => (
+          <option key={index} value={option.value}>{option.label}</option>
+        ))}
+      </select>
+
+      <div className="w-px h-6 bg-gray-300 mx-1"></div>
+
+      {buttons.map((button, index) => (
+        button.divider ? (
+          <div key={index} className="w-px h-6 bg-gray-300 mx-1"></div>
+        ) : (
+          <button
+            key={index}
+            onClick={() => button.action?.() || (button.command && document.execCommand(button.command, false, ''))}
+            className="p-2 hover:bg-gray-200 rounded transition-colors duration-200"
+            title={button.title}
+            type="button"
+          >
+            <button.icon size={16} className="text-gray-700" />
+          </button>
+        )
+      ))}
+    </div>
+  </div>
+));
+
+Toolbar.displayName = 'Toolbar';
+
+// Modal components
+const LinkModal = memo(({
+  isOpen,
+  onClose,
+  onInsert,
+  value,
+  onChange
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onInsert: () => void;
+  value: string;
+  onChange: (value: string) => void;
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
+        <h3 className="text-lg font-semibold mb-4">Insert Link</h3>
+        <input
+          type="url"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="Enter URL..."
+          className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+          autoFocus
+        />
+        <div className="flex justify-end gap-2">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+            type="button"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onInsert}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+            type="button"
+          >
+            Insert
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+LinkModal.displayName = 'LinkModal';
+
+const VideoModal = memo(({
+  isOpen,
+  onClose,
+  onInsert,
+  value,
+  onChange
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onInsert: () => void;
+  value: string;
+  onChange: (value: string) => void;
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
+        <h3 className="text-lg font-semibold mb-4">Insert YouTube Video</h3>
+        <input
+          type="url"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="Paste YouTube URL here..."
+          className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+          autoFocus
+        />
+        <div className="text-sm text-gray-500 mb-4">
+          Supported formats:
+          <ul className="list-disc list-inside mt-2 space-y-1">
+            <li>https://www.youtube.com/watch?v=VIDEO_ID...</li>
+            <li>https://youtu.be/VIDEO_ID...</li>
+            <li>https://www.youtube.com/embed/VIDEO_ID...</li>
+          </ul>
+        </div>
+        <div className="flex justify-end gap-2">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+            type="button"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onInsert}
+            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+            type="button"
+          >
+            Insert Video
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+VideoModal.displayName = 'VideoModal';
+
+const ImageModal = memo(({
+  isOpen,
+  onClose,
+  onFileSelect,
+  uploading,
+  uploadProgress,
+  fileInputRef
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onFileSelect: (e: ChangeEvent<HTMLInputElement>) => void;
+  uploading: boolean;
+  uploadProgress: number;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
+        <h3 className="text-lg font-semibold mb-4">Insert Image</h3>
+
+        {uploading ? (
+          <div className="space-y-4">
+            <div className="text-center">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-2"></div>
+              <p className="text-gray-600">Uploading image...</p>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div
+                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${uploadProgress}%` }}
+              ></div>
+            </div>
+            <div className="text-center text-sm text-gray-500">
+              {uploadProgress}% complete
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div
+              className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors cursor-pointer"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Upload className="mx-auto mb-2 text-gray-400" size={32} />
+              <p className="text-gray-600">Click to upload or drag and drop</p>
+              <p className="text-sm text-gray-400">PNG, JPG, GIF up to 10MB</p>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={onFileSelect}
+              className="hidden"
+            />
+          </div>
+        )}
+
+        <div className="flex justify-end gap-2 mt-6">
+          <button
+            onClick={onClose}
+            disabled={uploading}
+            className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors disabled:opacity-50"
+            type="button"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+ImageModal.displayName = 'ImageModal';
+
+// Main component
+const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
+  updatePostContent,
+  postContent = null,
+  baseUrl = 'https://campustimes.press',
+  maxImageSize = 10 * 1024 * 1024, // 10MB
+  placeholder = 'Start writing your content here...',
+  className = ''
+}) => {
+  const [content, setContent] = useState<string>(postContent || '');
   const [showLinkModal, setShowLinkModal] = useState<boolean>(false);
   const [linkUrl, setLinkUrl] = useState<string>('');
   const [showImageModal, setShowImageModal] = useState<boolean>(false);
   const [showVideoModal, setShowVideoModal] = useState<boolean>(false);
   const [videoUrl, setVideoUrl] = useState<string>('');
   const [dragOver, setDragOver] = useState<boolean>(false);
-  const [savedRange, setSavedRange] = useState<Range | null>(null);
-  const [uploading, setUploading] = useState<boolean>(false);
-  const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
+
   const editorRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const { selectedText, savedRange, setSavedRange, handleTextSelection } = useSelection();
+  const { uploading, uploadProgress, uploadImage } = useImageUpload(baseUrl);
+
+
+  // Initialize content
   useEffect(() => {
-    if (editorRef.current && post_content && !isInitialized) {
-      const fixedContent = fixImageUrls(post_content);
+    if (editorRef.current && !isInitialized) {
+      const initialContent = postContent ?? ''; // Handle null case with nullish coalescing
+      const fixedContent = fixImageUrls(initialContent);
       editorRef.current.innerHTML = fixedContent;
       setContent(fixedContent);
       setIsInitialized(true);
     }
-  }, [post_content, isInitialized]);
+  }, [postContent, isInitialized]);
 
+  // Update parent component
   useEffect(() => {
-    if (isInitialized && content !== post_content) {
-      UpdatePostContent(content);
+    if (isInitialized && content !== postContent) {
+      updatePostContent(content);
     }
-  }, [content, UpdatePostContent, isInitialized, post_content]);
+  }, [content, updatePostContent, isInitialized, postContent]);
 
-  const extractYouTubeVideoId = (url: string): string | null => {
-    const patterns = [
-      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
-      /youtube\.com\/watch\?.*v=([^&\n?#]+)/
-    ];
-    
-    for (const pattern of patterns) {
-      const match = url.match(pattern);
-      if (match) return match[1];
-    }
-    return null;
-  };
-
-  const createYouTubeEmbed = (videoId: string, width = 560, height = 315): HTMLDivElement => {
-    const iframe = document.createElement('div');
-    iframe.className = 'youtube-embed-wrapper';
-    iframe.style.cssText = `
-      position: relative;
-      width: 100%;
-      max-width: ${width}px;
-      margin: 20px auto;
-      padding: 0;
-      background: #f0f0f0;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    `;
-    
-    iframe.innerHTML = `
-      <div style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%;">
-        <iframe 
-          src="https://www.youtube.com/embed/$${videoId}?rel=0&modestbranding=1" 
-          frameBorder="0" 
-          allowFullScreen
-          style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
-          title="YouTube video player"
-        ></iframe>
-      </div>
-    `;
-    
-    return iframe;
-  };
-
-  const insertYouTubeVideo = () => {
-    if (videoUrl.trim()) {
-      const videoId = extractYouTubeVideoId(videoUrl);
-      
-      if (!videoId) {
-        alert('Please enter a valid YouTube URL');
-        return;
-      }
-
-      editorRef.current?.focus();
-      
-      let range: Range | undefined;
-      const selection = window.getSelection();
-
-      if (savedRange && editorRef.current?.contains(savedRange.commonAncestorContainer)) {
-        range = savedRange.cloneRange();
-        selection?.removeAllRanges();
-        selection?.addRange(range);
-      } else if (selection?.rangeCount) {
-        range = selection.getRangeAt(0);
-      } else {
-        range = document.createRange();
-        if (editorRef.current) {
-            range.selectNodeContents(editorRef.current);
-            range.collapse(false);
-            selection?.removeAllRanges();
-            selection?.addRange(range);
-        }
-      }
-
-      const embedWrapper = createYouTubeEmbed(videoId);
-
-      try {
-        if (!range?.collapsed) {
-          range?.deleteContents();
-        }
-
-        range?.insertNode(embedWrapper);
-
-        const br = document.createElement('br');
-        range?.setStartAfter(embedWrapper);
-        range?.insertNode(br);
-
-        range?.setStartAfter(br);
-        range?.collapse(true);
-
-        selection?.removeAllRanges();
-        if(range) selection?.addRange(range);
-
-      } catch (error) {
-        if (editorRef.current) {
-            editorRef.current.appendChild(embedWrapper);
-            const br = document.createElement('br');
-            editorRef.current.appendChild(br);
-        }
-      }
-
-      if (editorRef.current) setContent(editorRef.current.innerHTML);
-
-      setShowVideoModal(false);
-      setVideoUrl('');
-      setSavedRange(null);
-    }
-  };
-
-  const execCommand = (command: string, value: string | null = null) => {
-    document.execCommand(command, false, value);
+  // Command execution
+  const execCommand = useCallback((command: string, value?: string) => {
+    document.execCommand(command, false, value ?? "");
     editorRef.current?.focus();
-  };
+  }, []);
 
-  const handleFontFamily = (fontFamily: string) => {
+  // Font handling
+  const handleFontFamily = useCallback((fontFamily: string) => {
     editorRef.current?.focus();
-
     const selection = window.getSelection();
+
     if (selection?.rangeCount) {
       const range = selection.getRangeAt(0);
 
@@ -166,9 +537,8 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({ UpdatePostContent, post_c
           const contents = range.extractContents();
           span.appendChild(contents);
           range.insertNode(span);
-
           selection.removeAllRanges();
-          if(editorRef.current) setContent(editorRef.current.innerHTML);
+          if (editorRef.current) setContent(editorRef.current.innerHTML);
         } catch (error) {
           execCommand('fontName', fontFamily);
         }
@@ -176,12 +546,12 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({ UpdatePostContent, post_c
         execCommand('fontName', fontFamily);
       }
     }
-  };
+  }, [execCommand]);
 
-  const handleFontSize = (size: string) => {
+  const handleFontSize = useCallback((size: string) => {
     editorRef.current?.focus();
-
     const selection = window.getSelection();
+
     if (selection?.rangeCount) {
       const range = selection.getRangeAt(0);
 
@@ -193,136 +563,19 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({ UpdatePostContent, post_c
           const contents = range.extractContents();
           span.appendChild(contents);
           range.insertNode(span);
-
           selection.removeAllRanges();
           if (editorRef.current) setContent(editorRef.current.innerHTML);
         } catch (error) {
           execCommand('fontSize', '3');
-          const selectedElement = selection.anchorNode?.parentElement;
-          if (selectedElement) {
-            selectedElement.style.fontSize = size;
-          }
         }
       } else {
         execCommand('fontSize', '3');
-        editorRef.current?.setAttribute('data-next-font-size', size);
       }
     }
-  };
+  }, [execCommand]);
 
-  const handleTextSelection = () => {
-    const selection = window.getSelection();
-    if(selection) setSelectedText(selection.toString());
-
-    if (selection?.rangeCount) {
-      setSavedRange(selection.getRangeAt(0).cloneRange());
-    }
-  };
-
-  const uploadImageToBackend = async (file: File) => {
-    try {
-      const token = localStorage?.getItem('auth_token');
-      const UPLOAD_URL = `${BASE_URL}admin/images/upload-image`; 
-      const UPLOAD_HEADERS = {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/json',
-      };
-      setUploading(true);
-      setUploadProgress(0);
-
-      const formData = new FormData();
-      formData.append('image', file);
-      formData.append('generate_thumbnails', 'true');
-      formData.append('thumbnail_sizes[]', '500');
-
-      const xhr = new XMLHttpRequest();
-
-      return new Promise((resolve, reject) => {
-        xhr.upload.addEventListener('progress', (e) => {
-          if (e.lengthComputable) {
-            const progress = Math.round((e.loaded / e.total) * 100);
-            setUploadProgress(progress);
-          }
-        });
-
-        xhr.addEventListener('load', () => {
-          setUploading(false);
-          setUploadProgress(0);
-
-          if (xhr.status >= 200 && xhr.status < 300) {
-            try {
-              const response = JSON.parse(xhr.responseText);
-              resolve(response);
-            } catch (parseError) {
-              reject(new Error('Invalid JSON response from server'));
-            }
-          } else {
-            reject(new Error(`Upload failed with status: ${xhr.status}`));
-          }
-        });
-
-        xhr.addEventListener('error', () => {
-          setUploading(false);
-          setUploadProgress(0);
-          reject(new Error('Network error during upload'));
-        });
-
-        xhr.addEventListener('timeout', () => {
-          setUploading(false);
-          setUploadProgress(0);
-          reject(new Error('Upload timeout'));
-        });
-
-        xhr.open('POST', UPLOAD_URL);
-
-        Object.entries(UPLOAD_HEADERS).forEach(([key, value]) => {
-          if (value) xhr.setRequestHeader(key, value);
-        });
-
-        xhr.timeout = 30000;
-        xhr.send(formData);
-      });
-    } catch (error) {
-      setUploading(false);
-      setUploadProgress(0);
-      throw error;
-    }
-  };
-
-  const insertLink = () => {
-    if (linkUrl) {
-      editorRef.current?.focus();
-      if (savedRange) {
-        const selection = window.getSelection();
-        selection?.removeAllRanges();
-        selection?.addRange(savedRange);
-      }
-
-      execCommand('createLink', linkUrl);
-      setShowLinkModal(false);
-      setLinkUrl('');
-      setSavedRange(null);
-    }
-  };
-
-  const handleImageUpload = async (file: File) => {
-    if (file && file.type.startsWith('image/')) {
-      try {
-        const response: any = await uploadImageToBackend(file);
-
-        if (response && response.data && response.data.file_url) {
-          insertImageIntoEditor(response.data);
-        } else {
-          throw new Error('Invalid response format from server');
-        }
-      } catch (error: any) {
-        console.error('Upload failed:', error);
-        alert(`Image upload failed: ${error.message}`);
-      }
-    }
-  };
-
-    const insertImageIntoEditor = (imageData: { file_url: string; width?: number; height?: number; thumb?: string; }) => {
+  // Image handling
+  const insertImageIntoEditor = useCallback((imageData: ImageData) => {
     const img = document.createElement('img');
     img.src = imageData.file_url;
     img.alt = 'Uploaded image';
@@ -336,12 +589,14 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({ UpdatePostContent, post_c
       img.setAttribute('data-thumb', imageData.thumb);
     }
 
-    img.style.width = '100%';
-    img.style.maxWidth = '600px';
-    img.style.height = 'auto';
-    img.style.margin = '10px 0';
-    img.style.display = 'block';
-    img.style.borderRadius = '4px';
+    Object.assign(img.style, {
+      width: '100%',
+      maxWidth: '600px',
+      height: 'auto',
+      margin: '10px 0',
+      display: 'block',
+      borderRadius: '4px'
+    });
 
     editorRef.current?.focus();
 
@@ -365,37 +620,130 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({ UpdatePostContent, post_c
     }
 
     try {
-      if(range && !range.collapsed) {
+      if (range && !range.collapsed) {
         range.deleteContents();
       }
-
       range?.insertNode(img);
 
       const br = document.createElement('br');
       range?.setStartAfter(img);
       range?.insertNode(br);
-
       range?.setStartAfter(br);
       range?.collapse(true);
 
       selection?.removeAllRanges();
-      if(range) selection?.addRange(range);
-
+      if (range) selection?.addRange(range);
     } catch (error) {
-        if(editorRef.current) {
-            editorRef.current.appendChild(img);
-            const br = document.createElement('br');
-            editorRef.current.appendChild(br);
-        }
+      if (editorRef.current) {
+        editorRef.current.appendChild(img);
+        const br = document.createElement('br');
+        editorRef.current.appendChild(br);
+      }
     }
 
     if (editorRef.current) setContent(editorRef.current.innerHTML);
-
     setShowImageModal(false);
-
     setSavedRange(null);
-  };
+  }, [savedRange, setSavedRange]);
 
+  const handleImageUpload = useCallback(async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+
+    if (file.size > maxImageSize) {
+      alert(`Image size must be less than ${maxImageSize / (1024 * 1024)}MB`);
+      return;
+    }
+
+    try {
+      const imageData = await uploadImage(file);
+      insertImageIntoEditor(imageData);
+    } catch (error) {
+      console.error('Upload failed:', error);
+      alert(`Image upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }, [maxImageSize, uploadImage, insertImageIntoEditor]);
+
+  // Video handling
+  const insertYouTubeVideo = useCallback(() => {
+    if (!videoUrl.trim()) return;
+
+    const videoId = extractYouTubeVideoId(videoUrl);
+    if (!videoId) {
+      alert('Please enter a valid YouTube URL');
+      return;
+    }
+
+    editorRef.current?.focus();
+
+    let range: Range | undefined;
+    const selection = window.getSelection();
+
+    if (savedRange && editorRef.current?.contains(savedRange.commonAncestorContainer)) {
+      range = savedRange.cloneRange();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+    } else if (selection?.rangeCount) {
+      range = selection.getRangeAt(0);
+    } else {
+      range = document.createRange();
+      if (editorRef.current) {
+        range.selectNodeContents(editorRef.current);
+        range.collapse(false);
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+      }
+    }
+
+    const embedWrapper = createYouTubeEmbed(videoId);
+
+    try {
+      if (range && !range.collapsed) {
+        range.deleteContents();
+      }
+      range?.insertNode(embedWrapper);
+
+      const br = document.createElement('br');
+      range?.setStartAfter(embedWrapper);
+      range?.insertNode(br);
+      range?.setStartAfter(br);
+      range?.collapse(true);
+
+      selection?.removeAllRanges();
+      if (range) selection?.addRange(range);
+    } catch (error) {
+      if (editorRef.current) {
+        editorRef.current.appendChild(embedWrapper);
+        const br = document.createElement('br');
+        editorRef.current.appendChild(br);
+      }
+    }
+
+    if (editorRef.current) setContent(editorRef.current.innerHTML);
+    setShowVideoModal(false);
+    setVideoUrl('');
+    setSavedRange(null);
+  }, [videoUrl, savedRange, setSavedRange]);
+
+  const insertLink = useCallback(() => {
+    if (!linkUrl) return;
+
+    editorRef.current?.focus();
+    if (savedRange) {
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(savedRange);
+    }
+
+    execCommand('createLink', linkUrl);
+    setShowLinkModal(false);
+    setLinkUrl('');
+    setSavedRange(null);
+  }, [linkUrl, savedRange, setSavedRange, execCommand]);
+
+  // Drag and drop
   const handleDrop = useCallback((e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setDragOver(false);
@@ -406,7 +754,7 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({ UpdatePostContent, post_c
     if (imageFile) {
       handleImageUpload(imageFile);
     }
-  }, []);
+  }, [handleImageUpload]);
 
   const handleDragOver = useCallback((e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -418,32 +766,54 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({ UpdatePostContent, post_c
     setDragOver(false);
   }, []);
 
-  const handleFileSelect = (e: ChangeEvent<HTMLInputElement>) => {
+  // File input
+  const handleFileSelect = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       handleImageUpload(file);
     }
     e.target.value = '';
-  };
+  }, [handleImageUpload]);
 
-  const fixImageUrls = (htmlContent: string, domain = 'https://campustimes.press'): string => {
-    if (!htmlContent) return '';
-    const imgRegex = /<img([^>]*)\ssrc="(\/[^"]*)"([^>]*)>/gi;
-
-    return htmlContent.replace(imgRegex, (match, beforeSrc, src, afterSrc) => {
-      return `<img${beforeSrc} src="${domain}${src}"${afterSrc}>`;
-    });
-  };
-
-  const handleContentChange = (e: React.FormEvent<HTMLDivElement>) => {
+  // Content change
+  const handleContentChange = useCallback((e: FormEvent<HTMLDivElement>) => {
     const newContent = e.currentTarget.innerHTML;
     setContent(newContent);
-  };
+  }, []);
 
-  const toolbarButtons = [
-    { icon: Bold, command: 'bold', title: 'Bold' },
-    { icon: Italic, command: 'italic', title: 'Italic' },
-    { icon: Underline, command: 'underline', title: 'Underline' },
+  // Keyboard shortcuts
+  const handleKeyDown = useCallback((e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.ctrlKey || e.metaKey) {
+      switch (e.key) {
+        case 'b':
+          e.preventDefault();
+          execCommand('bold');
+          break;
+        case 'i':
+          e.preventDefault();
+          execCommand('italic');
+          break;
+        case 'u':
+          e.preventDefault();
+          execCommand('underline');
+          break;
+        case 'k':
+          e.preventDefault();
+          const selection = window.getSelection();
+          if (selection?.rangeCount) {
+            setSavedRange(selection.getRangeAt(0).cloneRange());
+          }
+          setShowLinkModal(true);
+          break;
+      }
+    }
+  }, [execCommand, setSavedRange]);
+
+  // Memoized options
+  const toolbarButtons = useMemo<ToolbarItem[]>(() => [
+    { icon: Bold, command: 'bold', title: 'Bold (Ctrl+B)' },
+    { icon: Italic, command: 'italic', title: 'Italic (Ctrl+I)' },
+    { icon: Underline, command: 'underline', title: 'Underline (Ctrl+U)' },
     { divider: true },
     { icon: AlignLeft, command: 'justifyLeft', title: 'Align Left' },
     { icon: AlignCenter, command: 'justifyCenter', title: 'Align Center' },
@@ -453,42 +823,51 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({ UpdatePostContent, post_c
     { icon: ListOrdered, command: 'insertOrderedList', title: 'Numbered List' },
     { divider: true },
     {
-      icon: Link, action: () => {
+      icon: Link,
+      action: () => {
         const selection = window.getSelection();
         if (selection?.rangeCount) {
           setSavedRange(selection.getRangeAt(0).cloneRange());
         }
         setShowLinkModal(true);
-      }, title: 'Insert Link'
+      },
+      title: 'Insert Link (Ctrl+K)'
     },
     {
-      icon: Image, action: () => {
+      icon: Image,
+      action: () => {
         const selection = window.getSelection();
         if (selection?.rangeCount) {
           setSavedRange(selection.getRangeAt(0).cloneRange());
         }
         setShowImageModal(true);
-      }, title: 'Insert Image'
+      },
+      title: 'Insert Image'
     },
     {
-      icon: Video, action: () => {
+      icon: Video,
+      action: () => {
         const selection = window.getSelection();
         if (selection?.rangeCount) {
           setSavedRange(selection.getRangeAt(0).cloneRange());
         }
         setShowVideoModal(true);
-      }, title: 'Insert YouTube Video'
+      },
+      title: 'Insert YouTube Video'
     },
-  ];
+  ], [setSavedRange]);
 
-  const headingOptions = [
+  const headingOptions = useMemo<SelectOption[]>(() => [
     { label: 'Normal', command: 'formatBlock', value: 'div' },
     { label: 'Heading 1', command: 'formatBlock', value: 'h1' },
     { label: 'Heading 2', command: 'formatBlock', value: 'h2' },
     { label: 'Heading 3', command: 'formatBlock', value: 'h3' },
-  ];
+    { label: 'Heading 4', command: 'formatBlock', value: 'h4' },
+    { label: 'Heading 5', command: 'formatBlock', value: 'h5' },
+    { label: 'Heading 6', command: 'formatBlock', value: 'h6' },
+  ], []);
 
-  const fontSizeOptions = [
+  const fontSizeOptions = useMemo<SelectOption[]>(() => [
     { label: '8px', value: '8px' },
     { label: '10px', value: '10px' },
     { label: '12px', value: '12px' },
@@ -503,9 +882,9 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({ UpdatePostContent, post_c
     { label: '48px', value: '48px' },
     { label: '60px', value: '60px' },
     { label: '72px', value: '72px' },
-  ];
+  ], []);
 
-  const fontFamilyOptions = [
+  const fontFamilyOptions = useMemo<SelectOption[]>(() => [
     { label: 'Default', value: 'inherit' },
     { label: 'Arial', value: 'Arial, sans-serif' },
     { label: 'Helvetica', value: 'Helvetica, Arial, sans-serif' },
@@ -521,10 +900,10 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({ UpdatePostContent, post_c
     { label: 'Tahoma', value: 'Tahoma, Geneva, sans-serif' },
     { label: 'Century Gothic', value: '"Century Gothic", CenturyGothic, sans-serif' },
     { label: 'Garamond', value: 'Garamond, serif' },
-  ];
+  ], []);
 
   return (
-    <div className="max-w-7xl mx-auto p-6 bg-white">
+    <div className={`max-w-7xl mx-auto p-6 bg-white ${className}`}>
       <div className="border border-gray-300 rounded-lg shadow-lg overflow-hidden">
         <div className="bg-gray-50 border-b border-gray-300 p-3">
           <div className="flex items-center gap-2 flex-wrap">
@@ -532,7 +911,7 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({ UpdatePostContent, post_c
               className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               onChange={(e: ChangeEvent<HTMLSelectElement>) => {
                 const option = headingOptions.find(opt => opt.value === e.target.value);
-                if (option) execCommand(option.command, option.value);
+                if (option) execCommand(option.command || "", option.value || "");
               }}
             >
               {headingOptions.map((option, index) => (
@@ -585,6 +964,7 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({ UpdatePostContent, post_c
                   onClick={() => button.action ? button.action() : (button.command && execCommand(button.command))}
                   className="p-2 hover:bg-gray-200 rounded transition-colors duration-200"
                   title={button.title}
+                  type="button"
                 >
                   <button.icon size={16} className="text-gray-700" />
                 </button>
@@ -610,11 +990,13 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({ UpdatePostContent, post_c
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
+            onKeyDown={handleKeyDown}
+          // placeholder={placeholder}
           />
 
           {!content && (
             <div className="absolute top-4 left-4 text-gray-400 pointer-events-none">
-              Start writing your content here...
+              {placeholder}
             </div>
           )}
 
@@ -633,141 +1015,40 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({ UpdatePostContent, post_c
         </div>
       </div>
 
-      {showLinkModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold mb-4">Insert Link</h3>
-            <input
-              type="url"
-              value={linkUrl}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => setLinkUrl(e.target.value)}
-              placeholder="Enter URL..."
-              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
-              autoFocus
-            />
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => {
-                  setShowLinkModal(false);
-                  setLinkUrl('');
-                }}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={insertLink}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-              >
-                Insert
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <LinkModal
+        isOpen={showLinkModal}
+        onClose={() => {
+          setShowLinkModal(false);
+          setLinkUrl('');
+        }}
+        onInsert={insertLink}
+        value={linkUrl}
+        onChange={setLinkUrl}
+      />
 
-      {showVideoModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold mb-4">Insert YouTube Video</h3>
-            <input
-              type="url"
-              value={videoUrl}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => setVideoUrl(e.target.value)}
-              placeholder="Paste YouTube URL here..."
-              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
-              autoFocus
-            />
-            <div className="text-sm text-gray-500 mb-4">
-              Supported formats:
-              <ul className="list-disc list-inside mt-2 space-y-1">
-                <li>https://www.youtube.com/watch?v=VIDEO_ID...</li>
-                <li>https://youtu.be/VIDEO_ID...</li>
-                <li>https://www.youtube.com/embed/VIDEO_ID...</li>
-              </ul>
-            </div>
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => {
-                  setShowVideoModal(false);
-                  setVideoUrl('');
-                }}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={insertYouTubeVideo}
-                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
-              >
-                Insert Video
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <VideoModal
+        isOpen={showVideoModal}
+        onClose={() => {
+          setShowVideoModal(false);
+          setVideoUrl('');
+        }}
+        onInsert={insertYouTubeVideo}
+        value={videoUrl}
+        onChange={setVideoUrl}
+      />
 
-      {showImageModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold mb-4">Insert Image</h3>
+      <ImageModal
+        isOpen={showImageModal}
+        onClose={() => {
+          setShowImageModal(false);
+        }}
+        onFileSelect={handleFileSelect}
+        uploading={uploading}
+        uploadProgress={uploadProgress}
+        fileInputRef={fileInputRef}
+      />
 
-            {uploading ? (
-              <div className="space-y-4">
-                <div className="text-center">
-                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-2"></div>
-                  <p className="text-gray-600">Uploading image...</p>
-                </div>
-
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${uploadProgress}%` }}
-                  ></div>
-                </div>
-
-                <div className="text-center text-sm text-gray-500">
-                  {uploadProgress}% complete
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div
-                  className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors cursor-pointer"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <Upload className="mx-auto mb-2 text-gray-400" size={32} />
-                  <p className="text-gray-600">Click to upload or drag and drop</p>
-                  <p className="text-sm text-gray-400">PNG, JPG, GIF up to 10MB</p>
-                </div>
-
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                />
-              </div>
-            )}
-
-            <div className="flex justify-end gap-2 mt-6">
-              <button
-                onClick={() => {
-                  setShowImageModal(false);
-                  setUploadProgress(0);
-                }}
-                disabled={uploading}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors disabled:opacity-50"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <style jsx>{`        
+      <style jsx global>{`
         [contenteditable] h1 {
           font-size: 2rem;
           font-weight: bold;

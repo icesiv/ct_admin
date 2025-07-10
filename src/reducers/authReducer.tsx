@@ -1,4 +1,13 @@
-export const authReducer = (state, action) => {
+// src/reducers/authReducer.ts
+const initialAuthState = {
+    user: null,
+    loading: true,
+    isAuthenticated: false,
+    error: null,
+    showLogin: false
+};
+
+export const authReducer = (state = initialAuthState, action: any) => {
     switch (action.type) {
         case 'SET_LOADING':
             return { ...state, loading: action.payload };
