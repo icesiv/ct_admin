@@ -4,16 +4,30 @@ import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import { BASE_URL } from "@/config/config";
 import { EyeCloseIcon, EyeIcon } from "@/icons";
-import React, { useState } from "react";
+import React, { useState, ChangeEvent, FormEvent } from "react";
+
+interface FormData {
+    name: string;
+    user_role: string;
+    email: string;
+    phone: string;
+    password: string;
+    confirm_password: string;
+}
+
+interface Message {
+    type: 'success' | 'error' | '';
+    text: string;
+}
 
 export default function CreateUserForm() {
-    const [showPassword, setShowPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const [profileImage, setProfileImage] = useState(null);
-    const [imagePreview, setImagePreview] = useState(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [message, setMessage] = useState({ type: '', text: '' });
-    const [formData, setFormData] = useState({
+    const [showPassword, setShowPassword] = useState<boolean>(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
+    const [profileImage, setProfileImage] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+    const [message, setMessage] = useState<Message>({ type: '', text: '' });
+    const [formData, setFormData] = useState<FormData>({
         name: '',
         user_role: 'author',
         email: '',
@@ -22,15 +36,16 @@ export default function CreateUserForm() {
         confirm_password: ''
     });
 
-    const handleInputChange = (e) => {
+    const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({
             ...prev,
             [name]: value
         }));
     }
-    const handleImageUpload = (event) => {
-        const file = event.target.files[0];
+
+    const handleImageUpload = (event: ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
         if (file) {
             // Validate file type
             if (!file.type.startsWith('image/')) {
@@ -47,7 +62,7 @@ export default function CreateUserForm() {
             setProfileImage(file);
             const reader = new FileReader();
             reader.onload = (e) => {
-                setImagePreview(e.target.result);
+                setImagePreview(e.target?.result as string);
             };
             reader.readAsDataURL(file);
         }
@@ -57,10 +72,13 @@ export default function CreateUserForm() {
         setProfileImage(null);
         setImagePreview(null);
         // Reset the file input
-        document.getElementById('profile_image').value = '';
+        const fileInput = document.getElementById('profile_image') as HTMLInputElement;
+        if (fileInput) {
+            fileInput.value = '';
+        }
     };
 
-    const validateForm = () => {
+    const validateForm = (): boolean => {
         const { name, email, phone, password, confirm_password } = formData;
 
         // Check required fields
@@ -113,7 +131,7 @@ export default function CreateUserForm() {
         return true;
     };
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setIsSubmitting(true);
         setMessage({ type: '', text: '' });
@@ -178,12 +196,15 @@ export default function CreateUserForm() {
             // Clear image
             setProfileImage(null);
             setImagePreview(null);
-            document.getElementById('profile_image').value = '';
+            const fileInput = document.getElementById('profile_image') as HTMLInputElement;
+            if (fileInput) {
+                fileInput.value = '';
+            }
 
         } catch (error) {
             setMessage({
                 type: 'error',
-                text: error.message || 'Failed to create user. Please try again.'
+                text: error instanceof Error ? error.message : 'Failed to create user. Please try again.'
             });
         } finally {
             setIsSubmitting(false);
@@ -244,7 +265,7 @@ export default function CreateUserForm() {
                             />
                             <button
                                 type="button"
-                                onClick={() => document.getElementById('profile_image').click()}
+                                onClick={() => document.getElementById('profile_image')?.click()}
                                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-500/10 dark:bg-gray-800 dark:text-white/90 dark:border-gray-600 dark:hover:bg-gray-700"
                             >
                                 Choose Image
