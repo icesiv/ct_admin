@@ -412,7 +412,7 @@ export default function UserTable() {
                         <img
                           width={40}
                           height={40}
-                          src={user.profile_image}
+                          src={user.profile_image ?? '/images/user/avatar-placeholder.png'}
                           alt={user.name}
                           
                         />

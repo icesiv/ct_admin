@@ -22,7 +22,7 @@ export default function Profile() {
           Profile
         </h3>
         <div className="space-y-6">
-          <UserMetaCard user={user}/>
+          {user && <UserMetaCard user={user} />}
           <UserInfoCard />
           <UserAddressCard />
         </div>

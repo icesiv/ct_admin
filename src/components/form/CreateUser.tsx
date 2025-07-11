@@ -282,7 +282,7 @@ export default function CreateUserForm() {
                             type="text"
                             id="name"
                             name="name"
-                            value={formData.name}
+                            defaultValue={formData.name}
                             onChange={handleInputChange}
                             placeholder="Enter your name"
                         />
@@ -296,7 +296,7 @@ export default function CreateUserForm() {
                         <select
                             id="user_role"
                             name="user_role"
-                            value={formData.user_role}
+                            defaultValue={formData.user_role}
                             onChange={handleInputChange}
                             className="h-11 w-full text-center rounded-lg border py-2.5 shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 0 dark:placeholder:text-white/30 bg-transparent text-gray-800 border-gray-300 focus:border-brand-300 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-brand-800"
                         >
@@ -316,7 +316,7 @@ export default function CreateUserForm() {
                             type="email"
                             id="email"
                             name="email"
-                            value={formData.email}
+                            defaultValue={formData.email}
                             onChange={handleInputChange}
                             placeholder="Enter your email address"
                         />
@@ -331,7 +331,7 @@ export default function CreateUserForm() {
                             type="tel"
                             id="phone"
                             name="phone"
-                            value={formData.phone}
+                            defaultValue={formData.phone}
                             onChange={handleInputChange}
                             placeholder="Enter your phone number"
                         />
@@ -348,7 +348,7 @@ export default function CreateUserForm() {
                                 type={showPassword ? "text" : "password"}
                                 id="password"
                                 name="password"
-                                value={formData.password}
+                                defaultValue={formData.password}
                                 onChange={handleInputChange}
                             />
                             <span
@@ -375,7 +375,7 @@ export default function CreateUserForm() {
                                 type={showConfirmPassword ? "text" : "password"}
                                 id="confirm_password"
                                 name="confirm_password"
-                                value={formData.confirm_password}
+                                defaultValue={formData.confirm_password}
                                 onChange={handleInputChange}
                             />
                             <span

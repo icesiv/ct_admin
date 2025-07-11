@@ -7,8 +7,16 @@ import Input from "../form/input/InputField";
 import Label from "../form/Label";
 import Image from "next/image";
 
+interface User {
+  id: string | number;
+  name: string;
+  email: string;
+  profile_pic?: string | null;
+  role?: string;
+  // Add other user properties as needed
+}
 
-export default function UserMetaCard({user}) {
+export default function UserMetaCard({user}: { user: User }) {
   const { isOpen, openModal, closeModal } = useModal();
   const handleSave = () => {
     // Handle save logic here
