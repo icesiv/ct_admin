@@ -185,7 +185,7 @@ export default function CreatePost() {
         categories: formData.categories,
         tags: formData.tags,
       };
-      
+
       await savePost(saveData);
       showNotification('News article saved successfully!', 'success');
     } catch (e) {
@@ -269,30 +269,28 @@ export default function CreatePost() {
 
   return (
     <div>
-      <header className="shadow-sm border-b border-gray-200">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex space-x-3">
-              <button
-                type="button"
-                onClick={() => setIsPreview(!isPreview)}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                <Eye className="w-4 h-4 mr-2" />
-                {isPreview ? 'Edit' : 'Preview'}
-              </button>
-              <button
-                type="button"
-                onClick={handleSubmit}
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                Save Article
-              </button>
-            </div>
-          </div>
-      </header>
+      <div className="flex justify-end items-center">
+        <div className="flex space-x-3">
+          <button
+            type="button"
+            onClick={() => setIsPreview(!isPreview)}
+            className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
+          >
+            <Eye className="w-4 h-4 mr-2" />
+            {isPreview ? 'Edit' : 'Preview'}
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
+          >
+            <Save className="w-4 h-4 mr-2" />
+            Save Article
+          </button>
+        </div>
+      </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div className="max-w-7xl mx-auto lg:px-8 py-4">
         {notification && (
           <Notification
             message={notification.message}
@@ -303,12 +301,12 @@ export default function CreatePost() {
         {isPreview ? (
           renderPreview()
         ) : (
-          <div className="space-y-8">
-            <div>
-              <div className="px-6 py-6 space-y-6">
+          <div className="space-y-4">
+           
+              <div className="space-y-6">
                 {/* Title */}
                 <div>
-                  <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Title *
                   </label>
                   <input
@@ -317,7 +315,7 @@ export default function CreatePost() {
                     name="title"
                     value={formData.title}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 text-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                     placeholder="Enter article title..."
                     required
                   />
@@ -325,7 +323,7 @@ export default function CreatePost() {
 
                 {/* Excerpt */}
                 <div>
-                  <label htmlFor="excerpt" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="excerpt" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Excerpt *
                   </label>
                   <textarea
@@ -334,7 +332,7 @@ export default function CreatePost() {
                     value={formData.excerpt}
                     onChange={handleInputChange}
                     rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                     placeholder="Brief description of the article..."
                     required
                   />
@@ -342,7 +340,7 @@ export default function CreatePost() {
 
                 {/* Categories */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                     Categories *
                   </label>
                   <div className="block">
@@ -352,10 +350,10 @@ export default function CreatePost() {
                       handleCategoryChange={handleCategoryChange}
                     />
                   </div>
-                  
+
                   {formData.categories.length > 0 && (
                     <div className="mt-3">
-                      <p className="text-sm text-gray-600 mb-2">Selected categories:</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Selected categories:</p>
                       <div className="flex flex-wrap gap-2">
                         {formData.categories.map(categoryId => {
                           const category = all_cat.find(cat => cat.id === categoryId);
@@ -375,7 +373,7 @@ export default function CreatePost() {
 
                 {/* Tags Section */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                     Tags
                   </label>
 
@@ -386,7 +384,7 @@ export default function CreatePost() {
                       value={tagInput}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTagInput(e.target.value)}
                       onKeyPress={handleTagInputKeyPress}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                       placeholder="Type a tag and press Enter or comma..."
                     />
                     <button
@@ -400,14 +398,14 @@ export default function CreatePost() {
 
                   {/* Popular Tags */}
                   <div className="mb-4">
-                    <p className="text-sm text-gray-600 mb-2">Popular tags:</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Popular tags:</p>
                     <div className="flex flex-wrap gap-2">
                       {availableTags.filter(tag => !formData.tags.includes(tag)).map((tag: string) => (
                         <button
                           key={tag}
                           type="button"
                           onClick={() => handleTagAdd(tag)}
-                          className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-gray-200 transition-colors border border-gray-300"
+                          className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors border border-gray-300 dark:border-gray-600"
                         >
                           + {tag}
                         </button>
@@ -418,18 +416,18 @@ export default function CreatePost() {
                   {/* Selected Tags */}
                   {formData.tags.length > 0 && (
                     <div>
-                      <p className="text-sm text-gray-600 mb-2">Selected tags ({formData.tags.length}/10):</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Selected tags ({formData.tags.length}/10):</p>
                       <div className="flex flex-wrap gap-2">
                         {formData.tags.map((tag: string, index: number) => (
                           <span
                             key={index}
-                            className="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium border border-blue-200"
+                            className="inline-flex items-center px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium border border-blue-200 dark:border-blue-700"
                           >
                             #{tag}
                             <button
                               type="button"
                               onClick={() => handleTagRemove(tag)}
-                              className="ml-2 text-blue-600 hover:text-blue-800 focus:outline-none"
+                              className="ml-2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 focus:outline-none"
                             >
                               <X className="w-3 h-3" />
                             </button>
@@ -439,7 +437,7 @@ export default function CreatePost() {
                     </div>
                   )}
 
-                  <p className="mt-2 text-xs text-gray-500">
+                  <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                     Tags help categorize and make your content more discoverable. Press Enter or comma to add multiple tags.
                   </p>
                 </div>
@@ -447,10 +445,10 @@ export default function CreatePost() {
                 {/* Featured Image */}
                 <FeatureImageUploader UpdateFeatureImage={UpdateFeatureImage} />
               </div>
-            </div>
+           
 
             {/* WYSIWYG Editor */}
-            <div className="bg-white shadow rounded-lg">
+            <div className="shadow rounded-lg">
               <WysiwygEditor updatePostContent={UpdatePostContent} postContent={formData.postContent} />
             </div>
           </div>

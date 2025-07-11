@@ -91,7 +91,7 @@ const MultiselectDropdown: React.FC<MultiselectDropdownProps> = ({
     };
 
     return (
-        <div className="mb-8 bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+        <div className="mb-8 bg-gray-50 dark:bg-gray-700 p-2  rounded-lg">
             <div className="flex flex-col lg:flex-row items-center justify-between">
                 {/* Search Bar */}
                 <div className="relative flex justify-start grow" ref={dropdownRef}>

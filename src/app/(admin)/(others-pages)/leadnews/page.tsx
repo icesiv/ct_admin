@@ -269,7 +269,7 @@ export default function LeadNews(){
       </div>
 
       {/* Sort Lead News */}
-      <div className="mt-6 rounded-2xl border border-gray-200 bg-white px-5 py-7 dark:border-gray-800 dark:bg-white/[0.03] xl:px-10 xl:py-12">
+      <div className="mt-6 rounded-2xl md:border border-gray-200 md:bg-white md:px-5 py-7 dark:border-gray-800 md:dark:bg-white/[0.03] xl:px-10 xl:py-12">
         <SortableNewsList
           fetchLeadNews={fetchLeadNews}
           leadPosts={articles}

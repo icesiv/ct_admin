@@ -903,12 +903,12 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
   ], []);
 
   return (
-    <div className={`max-w-7xl mx-auto p-6 bg-white ${className}`}>
-      <div className="border border-gray-300 rounded-lg shadow-lg overflow-hidden">
-        <div className="bg-gray-50 border-b border-gray-300 p-3">
+    <div className={`max-w-7xl mx-auto rounded-lg  ${className}`}>
+<div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden shadow-lg">
+        <div className="bg-gray-50 dark:bg-gray-700 border-b border-gray-300 dark:border-gray-600 p-3">
           <div className="flex items-center gap-2 flex-wrap">
             <select
-              className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               onChange={(e: ChangeEvent<HTMLSelectElement>) => {
                 const option = headingOptions.find(opt => opt.value === e.target.value);
                 if (option) execCommand(option.command || "", option.value || "");
@@ -920,7 +920,7 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
             </select>
 
             <select
-              className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[120px]"
+              className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[120px] bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               onChange={(e: ChangeEvent<HTMLSelectElement>) => {
                 if (e.target.value) {
                   handleFontFamily(e.target.value);
@@ -938,7 +938,7 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
             </select>
 
             <select
-              className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[70px]"
+              className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[70px] bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               onChange={(e: ChangeEvent<HTMLSelectElement>) => {
                 if (e.target.value) {
                   handleFontSize(e.target.value);
@@ -953,20 +953,20 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
               ))}
             </select>
 
-            <div className="w-px h-6 bg-gray-300 mx-1"></div>
+            <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1"></div>
 
             {toolbarButtons.map((button, index) => (
               button.divider ? (
-                <div key={index} className="w-px h-6 bg-gray-300 mx-1"></div>
+                <div key={index} className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1"></div>
               ) : (
                 <button
                   key={index}
                   onClick={() => button.action ? button.action() : (button.command && execCommand(button.command))}
-                  className="p-2 hover:bg-gray-200 rounded transition-colors duration-200"
+                  className="p-2 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors duration-200"
                   title={button.title}
                   type="button"
                 >
-                  <button.icon size={16} className="text-gray-700" />
+                  <button.icon size={16} className="text-gray-700 dark:text-gray-300" />
                 </button>
               )
             ))}
@@ -978,7 +978,7 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
             ref={editorRef}
             contentEditable
             suppressContentEditableWarning={true}
-            className={`min-h-96 p-4 focus:outline-none text-gray-800 leading-relaxed ${dragOver ? 'bg-blue-50 border-2 border-dashed border-blue-300' : ''
+            className={`min-h-96 p-4 focus:outline-none text-gray-800 dark:text-gray-200 leading-relaxed ${dragOver ? 'bg-blue-50 dark:bg-blue-900/20 border-2 border-dashed border-blue-300 dark:border-blue-500' : ''
               }`}
             style={{
               fontSize: '16px',
@@ -995,21 +995,21 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
           />
 
           {!content && (
-            <div className="absolute top-4 left-4 text-gray-400 pointer-events-none">
+            <div className="absolute top-4 left-4 text-gray-400 dark:text-gray-500 pointer-events-none">
               {placeholder}
             </div>
           )}
 
           {dragOver && (
-            <div className="absolute inset-0 flex items-center justify-center bg-blue-50 bg-opacity-90 pointer-events-none">
-              <div className="text-blue-600 text-lg font-medium">
+            <div className="absolute inset-0 flex items-center justify-center bg-blue-50 dark:bg-blue-900/20 bg-opacity-90 pointer-events-none">
+              <div className="text-blue-600 dark:text-blue-400 text-lg font-medium">
                 Drop your image here
               </div>
             </div>
           )}
         </div>
 
-        <div className="bg-gray-50 border-t border-gray-300 px-4 py-2 text-sm text-gray-600">
+        <div className="bg-gray-50 dark:bg-gray-700 border-t border-gray-300 dark:border-gray-600 px-4 py-2 text-sm text-gray-600 dark:text-gray-400">
           Words: {content.replace(/<[^>]*>/g, '').split(/\s+/).filter(word => word.length > 0).length} |
           Characters: {content.replace(/<[^>]*>/g, '').length}
         </div>

@@ -16,11 +16,11 @@ export const QuickAccess = () => {
         <div className="flex flex-col gap-2 mb-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="w-full">
             <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90 mb-4">
-              Top Tags
+              Quick Access
             </h3>
             {/* Button Grid - 2 columns on mobile, 4 columns on desktop */}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <button onClick={() => console.log("Create Post")} className="group relative flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 ease-out">
+              <button onClick={() => router.push('/posts/create')} className="group relative flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 ease-out">
                 <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform duration-200" />
                 <span className="text-sm">Create Post</span>
                 <div className="absolute inset-0 rounded-xl bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-200"></div>
@@ -38,9 +38,9 @@ export const QuickAccess = () => {
                 <div className="absolute inset-0 rounded-xl bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-200"></div>
               </button>
               
-              <button className="group relative flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 ease-out">
+              <button onClick={() => router.push('/topics')} className="group relative flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 ease-out">
                 <Tag className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
-                <span className="text-sm">Create Tags</span>
+                <span className="text-sm">Topics</span>
                 <div className="absolute inset-0 rounded-xl bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-200"></div>
               </button>
             </div>
