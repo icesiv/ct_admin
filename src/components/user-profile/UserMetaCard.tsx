@@ -13,6 +13,7 @@ interface User {
   email: string;
   profile_image?: string | null;
   role?: string;
+  phone?: string;
   // Add other user properties as needed
 }
 

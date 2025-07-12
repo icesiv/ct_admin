@@ -1,16 +1,8 @@
 'use client';
+
+import { User } from '@/types/user';
 import React, { useState, useEffect } from "react";
 import { BASE_URL } from "@/config/config";
-
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  phone: string;
-  user_role: string;
-  profile_image: string | null;
-  created_at: string;
-}
 
 interface EditFormData {
   name: string;
@@ -36,16 +28,22 @@ interface ValidationErrors {
   password_confirmation?: string;
 }
 
+
 export default function UserEditModal({ user, isOpen, onClose, onSave }: UserEditModalProps) {
-  const [formData, setFormData] = useState<EditFormData>({
-    name: '',
-    email: '',
-    phone: '',
-    user_role: '',
+  if (!user || !isOpen) {
+    return null;
+  }
+
+const [formData, setFormData] = useState<EditFormData>({
+    name: user.name,
+    email: user.email,
+    phone: user.phone || '',
+    user_role: user.user_role, // Rely on user.user_role being a string
     password: '',
     password_confirmation: '',
-    profile_image: null
+    profile_image: user.profile_image,
   });
+  
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -59,8 +57,8 @@ export default function UserEditModal({ user, isOpen, onClose, onSave }: UserEdi
       setFormData({
         name: user.name,
         email: user.email,
-        phone: user.phone,
-        user_role: user.user_role,
+        phone: user.phone || '',
+        user_role: user.user_role || 'user',
         password: '',
         password_confirmation: '',
         profile_image: user.profile_image
@@ -151,7 +149,7 @@ export default function UserEditModal({ user, isOpen, onClose, onSave }: UserEdi
 
     // Real-time validation
     const newErrors = { ...validationErrors };
-    
+
     switch (name) {
       case 'email':
         const emailError = validateEmail(value);
@@ -205,7 +203,7 @@ export default function UserEditModal({ user, isOpen, onClose, onSave }: UserEdi
         alert('Please select a valid image file');
         return;
       }
-      
+
       // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         alert('Image size must be less than 5MB');
@@ -213,7 +211,7 @@ export default function UserEditModal({ user, isOpen, onClose, onSave }: UserEdi
       }
 
       setImageFile(file);
-      
+
       // Create preview
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -272,16 +270,16 @@ export default function UserEditModal({ user, isOpen, onClose, onSave }: UserEdi
 
     try {
       setSaving(true);
-      
+
       const token = localStorage.getItem('auth_token') || process.env.NEXT_PUBLIC_API_TOKEN;
-      
+
       if (!token) {
         throw new Error('No authentication token found');
       }
 
       // If there's an image file, upload it first
       let profileImagePath = formData.profile_image;
-      
+
       if (imageFile) {
         const imageFormData = new FormData();
         imageFormData.append('profile_image', imageFile);
@@ -329,9 +327,9 @@ export default function UserEditModal({ user, isOpen, onClose, onSave }: UserEdi
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       const result = await response.json();
-      
+
       if (result.success) {
         // Create updated user object
         const updatedUser: User = {
@@ -342,7 +340,7 @@ export default function UserEditModal({ user, isOpen, onClose, onSave }: UserEdi
           user_role: formData.user_role,
           profile_image: profileImagePath
         };
-        
+
         onSave(updatedUser);
         handleClose();
         alert('User updated successfully!');
@@ -456,11 +454,10 @@ export default function UserEditModal({ user, isOpen, onClose, onSave }: UserEdi
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white ${
-                  validationErrors.email 
-                    ? 'border-red-500 dark:border-red-500' 
-                    : 'border-gray-300 dark:border-gray-600'
-                }`}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white ${validationErrors.email
+                  ? 'border-red-500 dark:border-red-500'
+                  : 'border-gray-300 dark:border-gray-600'
+                  }`}
               />
               {validationErrors.email && (
                 <p className="mt-1 text-sm text-red-600 dark:text-red-400">
@@ -480,11 +477,10 @@ export default function UserEditModal({ user, isOpen, onClose, onSave }: UserEdi
                 value={formData.phone}
                 onChange={handleInputChange}
                 placeholder="e.g., +1234567890 or (123) 456-7890"
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white ${
-                  validationErrors.phone 
-                    ? 'border-red-500 dark:border-red-500' 
-                    : 'border-gray-300 dark:border-gray-600'
-                }`}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white ${validationErrors.phone
+                  ? 'border-red-500 dark:border-red-500'
+                  : 'border-gray-300 dark:border-gray-600'
+                  }`}
               />
               {validationErrors.phone && (
                 <p className="mt-1 text-sm text-red-600 dark:text-red-400">
@@ -522,11 +518,10 @@ export default function UserEditModal({ user, isOpen, onClose, onSave }: UserEdi
                   value={formData.password}
                   onChange={handleInputChange}
                   placeholder="Leave blank to keep current password"
-                  className={`w-full px-3 py-2 pr-10 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white ${
-                    validationErrors.password 
-                      ? 'border-red-500 dark:border-red-500' 
-                      : 'border-gray-300 dark:border-gray-600'
-                  }`}
+                  className={`w-full px-3 py-2 pr-10 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white ${validationErrors.password
+                    ? 'border-red-500 dark:border-red-500'
+                    : 'border-gray-300 dark:border-gray-600'
+                    }`}
                 />
                 <button
                   type="button"
@@ -564,11 +559,10 @@ export default function UserEditModal({ user, isOpen, onClose, onSave }: UserEdi
                   value={formData.password_confirmation}
                   onChange={handleInputChange}
                   placeholder="Confirm new password"
-                  className={`w-full px-3 py-2 pr-10 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white ${
-                    validationErrors.password_confirmation 
-                      ? 'border-red-500 dark:border-red-500' 
-                      : 'border-gray-300 dark:border-gray-600'
-                  }`}
+                  className={`w-full px-3 py-2 pr-10 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white ${validationErrors.password_confirmation
+                    ? 'border-red-500 dark:border-red-500'
+                    : 'border-gray-300 dark:border-gray-600'
+                    }`}
                 />
                 <button
                   type="button"
