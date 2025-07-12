@@ -13,10 +13,10 @@ import { BASE_URL } from "@/config/config";
 import UserEditModal from "./UserEditModal";
 
 interface User {
-  id: number;
+  id: string | number;
   name: string;
   email: string;
-  phone: string;
+  phone?: string;
   user_role: string;
   profile_image: string | null;
   created_at: string;

@@ -1,24 +1,13 @@
 "use client";
 import React, { useState } from "react";
 import UserEditModal from "../tables/UserEditModal";
+import { User } from '@/types/user';
 
-interface User {
-  id: string | number;
-  name: string;
-  email: string;
-  phone: string;
-  profile_image?: string | null;
-  user_role?: string;
-  created_at?: string;
-  updated_at?: string;
+interface UserInfoCardProps {
+  user: User;
 }
 
-
-
-
-export default function UserInfoCard({ user }: {
-  user: User;
-}) {
+export default function UserInfoCard({ user }: UserInfoCardProps) {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const handleCloseModal = () => {
@@ -29,8 +18,13 @@ export default function UserInfoCard({ user }: {
 
   };
   const handleEdit = () => {
-   
+
     setIsModalOpen(true);
+  };
+
+  const normalizedUser = {
+    ...user,
+    user_role: user.user_role ?? 'user', // Provide default role
   };
 
   return (
@@ -92,7 +86,7 @@ export default function UserInfoCard({ user }: {
         )}
 
         <button
-          onClick={() =>handleEdit()}
+          onClick={() => handleEdit()}
           className="flex w-full items-center justify-center gap-2 rounded-full border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200 lg:inline-flex lg:w-auto"
         >
           <svg
@@ -115,7 +109,7 @@ export default function UserInfoCard({ user }: {
       </div>
 
       <UserEditModal
-        user={user}
+        user={normalizedUser}
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         onSave={handleUserSave}
