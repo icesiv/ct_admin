@@ -5,19 +5,21 @@ import { Modal } from "../ui/modal";
 import Button from "../ui/button/Button";
 import Input from "../form/input/InputField";
 import Label from "../form/Label";
-import Image from "next/image";
+
 
 interface User {
   id: string | number;
   name: string;
   email: string;
-  profile_pic?: string | null;
+  profile_image?: string | null;
   role?: string;
   // Add other user properties as needed
 }
 
 export default function UserMetaCard({user}: { user: User }) {
   const { isOpen, openModal, closeModal } = useModal();
+  
+  
   const handleSave = () => {
     // Handle save logic here
     console.log("Saving changes...");
@@ -30,10 +32,10 @@ export default function UserMetaCard({user}: { user: User }) {
           <div className="flex flex-col items-center w-full gap-6 xl:flex-row">
             <div className="w-20 h-20 overflow-hidden border border-gray-200 rounded-full dark:border-gray-800">
              {
-              user?.profile_pic && <img
+              user?.profile_image && <img
                 width={80}
                 height={80}
-                src={user?.profile_pic}
+                src={user?.profile_image}
                 alt={user?.name}
               />
              } 

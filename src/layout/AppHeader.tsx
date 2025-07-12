@@ -181,7 +181,7 @@ const AppHeader: React.FC = () => {
             user={{
               name: user?.name || "Unknown User",
               email: user?.email || "No email",
-              avatar: (user as any)?.avatar || "/images/user/owner.jpg"
+              profile_image: (user as any)?.profile_image || "/images/user/owner.jpg"
 
             }}
             onSignOut={handleSignOut}

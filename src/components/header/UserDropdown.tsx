@@ -1,5 +1,4 @@
 "use client";
-import Image from "next/image";
 import Link from "next/link";
 import React, { useState } from "react";
 import { Dropdown } from "../ui/dropdown/Dropdown";
@@ -18,7 +17,7 @@ interface UserDropdownProps {
     name: string;
     displayName?: string;
     email: string;
-    avatar: string;
+    profile_image: string;
   };
   menuItems?: MenuItem[];
   signOutHref?: string;
@@ -128,7 +127,6 @@ export default function UserDropdown({
     }
     closeDropdown();
   }
-
   return (
     <div className={`relative ${className}`}>
       <button
@@ -136,16 +134,16 @@ export default function UserDropdown({
         className="flex items-center text-gray-700 dark:text-gray-400 dropdown-toggle"
       >
         <span className="mr-3 overflow-hidden rounded-full h-11 w-11">
-          <Image
+          <img
             width={44}
             height={44}
-            src={user.avatar || "/images/avatar-placeholder.png"}
+            src={user?.profile_image || "/images/avatar-placeholder.png"}
             alt={`${user.name} avatar`}
           />
         </span>
 
         <span className="block mr-1 font-medium text-theme-sm">
-          {user.displayName || user.name}
+          {user.name || user.name}
         </span>
 
         <svg
@@ -252,5 +250,3 @@ export default function UserDropdown({
     </div>
   );
 }
-
-// E

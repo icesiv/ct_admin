@@ -1,5 +1,5 @@
 'use client';
-import UserAddressCard from "@/components/user-profile/UserAddressCard";
+// import UserAddressCard from "@/components/user-profile/UserAddressCard";
 import UserInfoCard from "@/components/user-profile/UserInfoCard";
 import UserMetaCard from "@/components/user-profile/UserMetaCard";
 import { useAuth } from "@/context/AuthContext";
@@ -13,8 +13,7 @@ import React from "react";
 // };
 
 export default function Profile() {
-  const {user} = useAuth();
-  console.log('user', user);
+  const { user } = useAuth();
   return (
     <div>
       <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6">
@@ -23,8 +22,9 @@ export default function Profile() {
         </h3>
         <div className="space-y-6">
           {user && <UserMetaCard user={user} />}
-          <UserInfoCard />
-          <UserAddressCard />
+          {user && <UserInfoCard user={user} />}
+
+          {/* <UserAddressCard /> */}
         </div>
       </div>
     </div>
