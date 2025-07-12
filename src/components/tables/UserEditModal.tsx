@@ -29,6 +29,13 @@ interface UserEditModalProps {
   onSave: (updatedUser: User) => void;
 }
 
+interface ValidationErrors {
+  email?: string;
+  phone?: string;
+  password?: string;
+  password_confirmation?: string;
+}
+
 export default function UserEditModal({ user, isOpen, onClose, onSave }: UserEditModalProps) {
   const [formData, setFormData] = useState<EditFormData>({
     name: '',
@@ -42,6 +49,9 @@ export default function UserEditModal({ user, isOpen, onClose, onSave }: UserEdi
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
 
   // Initialize form data when user changes
   useEffect(() => {
@@ -56,6 +66,7 @@ export default function UserEditModal({ user, isOpen, onClose, onSave }: UserEdi
         profile_image: user.profile_image
       });
       setImageFile(null);
+      setValidationErrors({});
       // Set current profile image as preview
       setImagePreview(user.profile_image ? getProfileImage(user.profile_image) : null);
     }
@@ -73,6 +84,46 @@ export default function UserEditModal({ user, isOpen, onClose, onSave }: UserEdi
     return '/images/user/default-avatar.jpg';
   };
 
+  // Email validation
+  const validateEmail = (email: string): string | null => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email.trim()) {
+      return 'Email is required';
+    }
+    if (!emailRegex.test(email)) {
+      return 'Please enter a valid email address';
+    }
+    return null;
+  };
+
+  // Phone validation
+  const validatePhone = (phone: string): string | null => {
+    const phoneRegex = /^\+?[\d\s\-\(\)]{10,}$/;
+    if (!phone.trim()) {
+      return 'Phone number is required';
+    }
+    if (!phoneRegex.test(phone)) {
+      return 'Please enter a valid phone number (at least 10 digits)';
+    }
+    return null;
+  };
+
+  // Password validation
+  const validatePassword = (password: string): string | null => {
+    if (password && password.length < 6) {
+      return 'Password must be at least 6 characters long';
+    }
+    return null;
+  };
+
+  // Password confirmation validation
+  const validatePasswordConfirmation = (password: string, confirmation: string): string | null => {
+    if (password && password !== confirmation) {
+      return 'Passwords do not match';
+    }
+    return null;
+  };
+
   const handleClose = () => {
     setFormData({
       name: '',
@@ -85,6 +136,9 @@ export default function UserEditModal({ user, isOpen, onClose, onSave }: UserEdi
     });
     setImageFile(null);
     setImagePreview(null);
+    setValidationErrors({});
+    setShowPassword(false);
+    setShowConfirmPassword(false);
     onClose();
   };
 
@@ -94,6 +148,53 @@ export default function UserEditModal({ user, isOpen, onClose, onSave }: UserEdi
       ...prev,
       [name]: value
     }));
+
+    // Real-time validation
+    const newErrors = { ...validationErrors };
+    
+    switch (name) {
+      case 'email':
+        const emailError = validateEmail(value);
+        if (emailError) {
+          newErrors.email = emailError;
+        } else {
+          delete newErrors.email;
+        }
+        break;
+      case 'phone':
+        const phoneError = validatePhone(value);
+        if (phoneError) {
+          newErrors.phone = phoneError;
+        } else {
+          delete newErrors.phone;
+        }
+        break;
+      case 'password':
+        const passwordError = validatePassword(value);
+        if (passwordError) {
+          newErrors.password = passwordError;
+        } else {
+          delete newErrors.password;
+        }
+        // Also validate password confirmation when password changes
+        const confirmationError = validatePasswordConfirmation(value, formData.password_confirmation);
+        if (confirmationError) {
+          newErrors.password_confirmation = confirmationError;
+        } else {
+          delete newErrors.password_confirmation;
+        }
+        break;
+      case 'password_confirmation':
+        const confirmError = validatePasswordConfirmation(formData.password, value);
+        if (confirmError) {
+          newErrors.password_confirmation = confirmError;
+        } else {
+          delete newErrors.password_confirmation;
+        }
+        break;
+    }
+
+    setValidationErrors(newErrors);
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -136,17 +237,36 @@ export default function UserEditModal({ user, isOpen, onClose, onSave }: UserEdi
     }
   };
 
+  const validateForm = (): boolean => {
+    const errors: ValidationErrors = {};
+
+    // Validate email
+    const emailError = validateEmail(formData.email);
+    if (emailError) errors.email = emailError;
+
+    // Validate phone
+    const phoneError = validatePhone(formData.phone);
+    if (phoneError) errors.phone = phoneError;
+
+    // Validate password (if provided)
+    if (formData.password) {
+      const passwordError = validatePassword(formData.password);
+      if (passwordError) errors.password = passwordError;
+
+      const confirmationError = validatePasswordConfirmation(formData.password, formData.password_confirmation);
+      if (confirmationError) errors.password_confirmation = confirmationError;
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSave = async () => {
     if (!user) return;
 
-    // Validate password fields
-    if (formData.password && formData.password !== formData.password_confirmation) {
-      alert('Passwords do not match!');
-      return;
-    }
-
-    if (formData.password && formData.password.length < 6) {
-      alert('Password must be at least 6 characters long!');
+    // Validate form before proceeding
+    if (!validateForm()) {
+      alert('Please fix all validation errors before saving');
       return;
     }
 
@@ -312,6 +432,7 @@ export default function UserEditModal({ user, isOpen, onClose, onSave }: UserEdi
               </div>
             </div>
 
+            {/* Name Field */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Name
@@ -325,6 +446,7 @@ export default function UserEditModal({ user, isOpen, onClose, onSave }: UserEdi
               />
             </div>
 
+            {/* Email Field */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Email
@@ -334,10 +456,20 @@ export default function UserEditModal({ user, isOpen, onClose, onSave }: UserEdi
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white ${
+                  validationErrors.email 
+                    ? 'border-red-500 dark:border-red-500' 
+                    : 'border-gray-300 dark:border-gray-600'
+                }`}
               />
+              {validationErrors.email && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {validationErrors.email}
+                </p>
+              )}
             </div>
 
+            {/* Phone Field */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Phone
@@ -347,10 +479,21 @@ export default function UserEditModal({ user, isOpen, onClose, onSave }: UserEdi
                 name="phone"
                 value={formData.phone}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                placeholder="e.g., +1234567890 or (123) 456-7890"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white ${
+                  validationErrors.phone 
+                    ? 'border-red-500 dark:border-red-500' 
+                    : 'border-gray-300 dark:border-gray-600'
+                }`}
               />
+              {validationErrors.phone && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {validationErrors.phone}
+                </p>
+              )}
             </div>
 
+            {/* Role Field */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Role
@@ -367,35 +510,86 @@ export default function UserEditModal({ user, isOpen, onClose, onSave }: UserEdi
               </select>
             </div>
 
+            {/* Password Field */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 New Password (optional)
               </label>
-              <input
-                type="password"
-                name="password"
-                value={formData.password}
-                onChange={handleInputChange}
-                placeholder="Leave blank to keep current password"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  placeholder="Leave blank to keep current password"
+                  className={`w-full px-3 py-2 pr-10 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white ${
+                    validationErrors.password 
+                      ? 'border-red-500 dark:border-red-500' 
+                      : 'border-gray-300 dark:border-gray-600'
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  {showPassword ? (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+              {validationErrors.password && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {validationErrors.password}
+                </p>
+              )}
             </div>
 
+            {/* Confirm Password Field */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Confirm Password
               </label>
-              <input
-                type="password"
-                name="password_confirmation"
-                value={formData.password_confirmation}
-                onChange={handleInputChange}
-                placeholder="Confirm new password"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              />
-              {formData.password && formData.password_confirmation && formData.password !== formData.password_confirmation && (
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  name="password_confirmation"
+                  value={formData.password_confirmation}
+                  onChange={handleInputChange}
+                  placeholder="Confirm new password"
+                  className={`w-full px-3 py-2 pr-10 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white ${
+                    validationErrors.password_confirmation 
+                      ? 'border-red-500 dark:border-red-500' 
+                      : 'border-gray-300 dark:border-gray-600'
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  {showConfirmPassword ? (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+              {validationErrors.password_confirmation && (
                 <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                  Passwords do not match
+                  {validationErrors.password_confirmation}
                 </p>
               )}
             </div>
@@ -410,7 +604,7 @@ export default function UserEditModal({ user, isOpen, onClose, onSave }: UserEdi
             </button>
             <button
               onClick={handleSave}
-              disabled={saving}
+              disabled={saving || Object.keys(validationErrors).length > 0}
               className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {saving ? 'Saving...' : 'Save'}
