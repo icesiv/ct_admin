@@ -302,7 +302,6 @@ export default function CreatePost() {
           renderPreview()
         ) : (
           <div className="space-y-4">
-           
               <div className="space-y-6">
                 {/* Title */}
                 <div>

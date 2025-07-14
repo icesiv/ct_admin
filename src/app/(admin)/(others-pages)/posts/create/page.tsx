@@ -1,9 +1,7 @@
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { Metadata } from "next";
 import React from "react";
-
-
-import CreatePost from "@/app/(admin)/(others-pages)/posts/create/component/CreatePost";
+import CreatePost from "./component/CreatePost";
 
 export const metadata: Metadata = {
   title: "New Posts | CT Admin",

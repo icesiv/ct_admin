@@ -151,10 +151,10 @@ export const NewsScreenEdit: React.FC<NewsScreenEditProps> = ({ post_id }) => {
   const { news_categories, savePost } = useAuth();
 
   const all_cat: Category[] = news_categories.map((category: any, index: number) => ({
-  ...category,
-  id: Number(category.id), // Ensure consistent number type
-  color: available_colors[index % 10]
-}));
+    ...category,
+    id: Number(category.id), // Ensure consistent number type
+    color: available_colors[index % 10]
+  }));
 
   const UpdatePostContent = useCallback((value: string) => {
     console.log('v', value);
@@ -344,9 +344,38 @@ export const NewsScreenEdit: React.FC<NewsScreenEditProps> = ({ post_id }) => {
   };
 
   return (
-    <div>
-      
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div className=" text-gray-900 dark:text-gray-100 min-h-screen">
+      <div className="flex justify-end items-center">
+        <div className="flex space-x-3">
+          <button
+            type="button"
+            onClick={() => setIsPreview(!isPreview)}
+            className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900 focus:ring-blue-500 dark:focus:ring-blue-400"
+          >
+            <Eye className="w-4 h-4 mr-2" />
+            {isPreview ? 'Edit' : 'Preview'}
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowDeleteModal(true)}
+            disabled={isDeleting || !formData.id}
+            className="inline-flex items-center px-4 py-2 border border-red-300 dark:border-red-600 rounded-md shadow-sm text-sm font-medium text-red-700 dark:text-red-400 bg-white dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900 focus:ring-red-500 dark:focus:ring-red-400 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            {isDeleting ? 'Deleting...' : 'Delete'}
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900 focus:ring-blue-500 dark:focus:ring-blue-400"
+          >
+            <Save className="w-4 h-4 mr-2" />
+            Save
+          </button>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto lg:px-8 py-4">
         {notification && (
           <Notification
             message={notification.message}
@@ -357,166 +386,136 @@ export const NewsScreenEdit: React.FC<NewsScreenEditProps> = ({ post_id }) => {
         {isPreview ? (
           renderPreview()
         ) : (
-          <div className="space-y-8">
-            <div className=" shadow rounded-lg">
-              <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200">
-                <h2 className="text-lg font-medium text-gray-900">Article Details</h2>
-                <div className="flex space-x-3">
-                  <button
-                    type="button"
-                    onClick={() => setIsPreview(!isPreview)}
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700  hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  >
-                    <Eye className="w-4 h-4 mr-2" />
-                    {isPreview ? 'Edit' : 'Preview'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowDeleteModal(true)}
-                    disabled={isDeleting || !formData.id}
-                    className="inline-flex items-center px-4 py-2 border border-red-300 rounded-md shadow-sm text-sm font-medium text-red-700  hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    {isDeleting ? 'Deleting...' : 'Delete'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleSubmit}
-                    className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  >
-                    <Save className="w-4 h-4 mr-2" />
-                    Save Article
-                  </button>
-                </div>
+          <div className="space-y-4">
+            <div className="space-y-6">
+              {/* Title */}
+              <div>
+                <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Title *
+                </label>
+                <input
+                  type="text"
+                  id="title"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 text-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                  placeholder="Enter article title..."
+                  required
+                />
               </div>
-              <div className="px-6 py-6 space-y-6">
-                {/* Title */}
-                <div>
-                  <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-                    Title *
-                  </label>
+
+              {/* Excerpt */}
+              <div>
+                <label htmlFor="excerpt" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Excerpt *
+                </label>
+                <textarea
+                  id="excerpt"
+                  name="excerpt"
+                  value={formData.excerpt}
+                  onChange={handleInputChange}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                  placeholder="Brief description of the article..."
+                  required
+                />
+              </div>
+
+              {/* Categories */}
+              <div>
+                                <label htmlFor="excerpt" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Select one or more categories *
+
+                </label>
+
+                <MultiselectDropdown
+                  preselected={formData.categories}
+                  resetDropSelected={handleCategoryToggle}
+                  news_categories={all_cat}
+                  handleCategoryChange={handleCategoryToggle}
+                // totalNews={0}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                  Tags
+                </label>
+
+                {/* Tag Input */}
+                <div className="flex gap-2 mb-4">
                   <input
                     type="text"
-                    id="title"
-                    name="title"
-                    value={formData.title}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg"
-                    placeholder="Enter article title..."
-                    required
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyPress={handleTagInputKeyPress}
+                    className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                    placeholder="Type a tag and press Enter or comma..."
                   />
+                  <button
+                    type="button"
+                    onClick={handleTagInputSubmit}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
                 </div>
 
-                {/* Excerpt */}
-                <div>
-                  <label htmlFor="excerpt" className="block text-sm font-medium text-gray-700 mb-2">
-                    Excerpt *
-                  </label>
-                  <textarea
-                    id="excerpt"
-                    name="excerpt"
-                    value={formData.excerpt}
-                    onChange={handleInputChange}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Brief description of the article..."
-                    required
-                  />
-                </div>
-
-                {/* Categories */}
-                <div>
-                  <label className="block">
-                    Select one or more categories for your article
-                  </label>
-                  <MultiselectDropdown
-                    preselected={formData.categories}
-                    resetDropSelected={handleCategoryToggle}
-                    news_categories={all_cat}
-                    handleCategoryChange={handleCategoryToggle}
-                    // totalNews={0}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Tags
-                  </label>
-
-                  {/* Tag Input */}
-                  <div className="flex gap-2 mb-4">
-                    <input
-                      type="text"
-                      value={tagInput}
-                      onChange={(e) => setTagInput(e.target.value)}
-                      onKeyPress={handleTagInputKeyPress}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Type a tag and press Enter or comma..."
-                    />
-                    <button
-                      type="button"
-                      onClick={handleTagInputSubmit}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-                    >
-                      <Plus className="w-4 h-4" />
-                    </button>
+                {/* Popular Tags */}
+                <div className="mb-4">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Popular tags:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {availableTags.filter(tag => !formData.tags.includes(tag)).map((tag) => (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => handleTagAdd(tag)}
+                        className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors border border-gray-300 dark:border-gray-600"
+                      >
+                        + {tag}
+                      </button>
+                    ))}
                   </div>
+                </div>
 
-                  {/* Popular Tags */}
-                  <div className="mb-4">
-                    <p className="text-sm text-gray-600 mb-2">Popular tags:</p>
+                {/* Selected Tags */}
+                {formData.tags.length > 0 && (
+                  <div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Selected tags ({formData.tags.length}/10):</p>
                     <div className="flex flex-wrap gap-2">
-                      {availableTags.filter(tag => !formData.tags.includes(tag)).map((tag) => (
-                        <button
-                          key={tag}
-                          type="button"
-                          onClick={() => handleTagAdd(tag)}
-                          className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-gray-200 transition-colors border border-gray-300"
+                      {formData.tags.map((tag, index) => (
+                        <span
+                          key={index}
+                          className="inline-flex items-center px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium border border-blue-200 dark:border-blue-700"
                         >
-                          + {tag}
-                        </button>
+                          #{tag}
+                          <button
+                            type="button"
+                            onClick={() => handleTagRemove(tag)}
+                            className="ml-2 text-blue-600 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-100 focus:outline-none"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </span>
                       ))}
                     </div>
                   </div>
+                )}
 
-                  {/* Selected Tags */}
-                  {formData.tags.length > 0 && (
-                    <div>
-                      <p className="text-sm text-gray-600 mb-2">Selected tags ({formData.tags.length}/10):</p>
-                      <div className="flex flex-wrap gap-2">
-                        {formData.tags.map((tag, index) => (
-                          <span
-                            key={index}
-                            className="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium border border-blue-200"
-                          >
-                            #{tag}
-                            <button
-                              type="button"
-                              onClick={() => handleTagRemove(tag)}
-                              className="ml-2 text-blue-600 hover:text-blue-800 focus:outline-none"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <p className="mt-2 text-xs text-gray-500">
-                    Tags help categorize and make your content more discoverable. Press Enter or comma to add multiple tags.
-                  </p>
-                </div>
-                {/* Featured Image */}
-                <FeatureImageUploader
-                  featuredImage={formData.featuredImage}
-                  UpdateFeatureImage={UpdateFeatureImage}
-                />
+                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                  Tags help categorize and make your content more discoverable. Press Enter or comma to add multiple tags.
+                </p>
               </div>
+              {/* Featured Image */}
+              <FeatureImageUploader
+                featuredImage={formData.featuredImage}
+                UpdateFeatureImage={UpdateFeatureImage}
+              />
             </div>
 
             {/* WYSIWYG Editor */}
-            <div className=" shadow rounded-lg">
+            <div className="shadow rounded-lg bg-white dark:bg-gray-800">
               <WysiwygEditor
                 postContent={formData.postContent}
                 updatePostContent={UpdatePostContent}
@@ -527,17 +526,17 @@ export const NewsScreenEdit: React.FC<NewsScreenEditProps> = ({ post_id }) => {
       </div>
 
       {showDeleteModal && (
-        <div className="fixed inset-0 bg-[#000000aa] bg-opacity-50 flex items-center justify-center z-999999">
-          <div className=" rounded-lg shadow-xl p-6 max-w-md mx-4">
+        <div className="fixed inset-0 bg-[#000000aa] dark:bg-black bg-opacity-50 dark:bg-opacity-75 flex items-center justify-center z-999999">
+          <div className="rounded-lg bg-white dark:bg-gray-800 shadow-xl p-6 max-w-md mx-4">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                <Trash2 className="w-6 h-6 text-red-600" />
+              <div className="w-12 h-12 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center">
+                <Trash2 className="w-6 h-6 text-red-600 dark:text-red-400" />
               </div>
-              <h2 className="text-lg text-gray-600">Are you sure you want to delete?</h2>
+              <h2 className="text-lg text-gray-600 dark:text-gray-200">Are you sure you want to delete?</h2>
             </div>
 
-            <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-700 font-medium">
+            <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+              <p className="text-sm text-gray-700 dark:text-gray-200 font-medium">
                 {formData.title}
               </p>
             </div>
@@ -546,7 +545,7 @@ export const NewsScreenEdit: React.FC<NewsScreenEditProps> = ({ post_id }) => {
               <button
                 onClick={() => setShowDeleteModal(false)}
                 disabled={isDeleting}
-                className="px-4 py-2 text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors disabled:opacity-50"
+                className="px-4 py-2 text-gray-700 dark:text-gray-200 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-lg transition-colors disabled:opacity-50"
               >
                 Cancel
               </button>
@@ -563,4 +562,4 @@ export const NewsScreenEdit: React.FC<NewsScreenEditProps> = ({ post_id }) => {
       )}
     </div>
   );
-};
+}
