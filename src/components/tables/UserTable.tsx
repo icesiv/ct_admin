@@ -12,6 +12,9 @@ import Badge from "../ui/badge/Badge";
 import { BASE_URL } from "@/config/config";
 import UserEditModal from "./UserEditModal";
 
+import {  Edit2, Trash2 } from 'lucide-react';
+
+
 interface User {
   id: string | number;
   name: string;
@@ -128,7 +131,7 @@ export default function UserTable() {
       }
     }
     // Return a default avatar or placeholder
-    return '/images/user/default-avatar.jpg';
+    return '/images/user/avatar-placeholder.png';
   };
 
   const formatDate = (dateString: string) => {
@@ -217,7 +220,7 @@ export default function UserTable() {
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
               {users.map((user) => (
                 <TableRow key={user.id}>
-                  <TableCell className="px-5 py-4 sm:px-6 text-start">
+                  <TableCell className="px-5 py-4 sm:px-6 text-start min-w-60 ">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 overflow-hidden rounded-full">
                         <img
@@ -251,17 +254,20 @@ export default function UserTable() {
                       {getStatusFromRole(user.user_role)}
                     </Badge>
                   </TableCell>
-                  <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                  <TableCell className="px-4 py-3 text-gray-500 text-start text-xs dark:text-gray-400">
                     {formatDate(user.created_at)}
                   </TableCell>
-                  <TableCell className="px-4 py-3 text-gray-500 justify-start text-theme-sm dark:text-gray-400 space-x-4">
+                  <TableCell className="px-4 py-3 text-gray-500">
+                    <div className="flex items-center gap-4">
+
                     <button 
                       onClick={() => handleEdit(user)}
                       className="ml-2 text-green-500 hover:text-green-600"
                     >
-                      Edit
+                      <Edit2 size={16} />
                     </button>
-                    <button className="text-red-500 hover:text-red-600">Disable</button>
+                    <button className="text-red-500 hover:text-red-600"><Trash2 size={16} /></button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

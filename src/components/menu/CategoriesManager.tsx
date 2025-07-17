@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Save, X } from 'lucide-react';
+import { Plus, Edit2, Trash2, Save, X, RefreshCcw } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { BASE_URL } from '@/config/config';
 
@@ -178,13 +178,6 @@ const CategoryCRUD: React.FC = () => {
         setShowForm(true);
     };
 
-    // Handle delete
-    const handleDelete = (id: number): void => {
-        if (window.confirm('Are you sure you want to delete this category?')) {
-            setCategories(prev => prev.filter(cat => cat.id !== id));
-        }
-    };
-
     // Toggle active status
     const toggleActive = async (root_cat: Category): Promise<void> => {
         const token = localStorage.getItem('auth_token');
@@ -213,30 +206,38 @@ const CategoryCRUD: React.FC = () => {
         }
     };
 
-    const handleBack = (): void => {
-        router.push('/dashboard');
-    };
-
     const categorizedList = getCategorizedList();
+
+    const reload = () => window.location.reload(); // true is implied
+
 
     return (
         <div className="max-w-6xl mx-auto">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md">
                 {/* Header */}
                 <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                    <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Category Management</h1>
-                    <button
-                        onClick={() => setShowForm(true)}
-                        className="bg-blue-600 dark:bg-blue-700 text-white px-4 py-2 rounded-md hover:bg-blue-700 dark:hover:bg-blue-800 flex items-center gap-2 transition-colors"
-                    >
-                        <Plus size={20} />
-                        Add Category
-                    </button>
+                    <h1 className="text-2xl hidden md:block font-bold text-gray-800 dark:text-gray-100">Manage Categories</h1>
+
+                    <div className='flex items-center gap-4'>
+                        <button
+                            onClick={reload}
+                            className="bg-green-600 dark:bg-green-700 text-white px-4 py-2 rounded-md hover:bg-green-700 dark:hover:bg-green-800 flex items-center gap-2 transition-colors"
+                        >
+                            <RefreshCcw size={20} />
+                        </button>
+                        <button
+                            onClick={() => setShowForm(true)}
+                            className="bg-blue-600 dark:bg-blue-700 text-white px-4 py-2 rounded-md hover:bg-blue-700 dark:hover:bg-blue-800 flex items-center gap-2 transition-colors"
+                        >
+                            <Plus size={20} />
+                            Add Category
+                        </button>
+                    </div>
                 </div>
 
                 {/* Form Modal */}
                 {showForm && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 dark:bg-black dark:bg-opacity-70 flex items-center justify-center z-50">
+                    <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-99999">
                         <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4">
                             <div className="flex justify-between items-center mb-4">
                                 <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">
@@ -352,109 +353,98 @@ const CategoryCRUD: React.FC = () => {
                 )}
 
                 {/* Categories List */}
-                <div className="p-6">
-                    <div className="space-y-4">
-                        {categorizedList.map((rootCategory: CategoryWithChildren) => (
-                            <div key={rootCategory.id} className="border border-gray-200 dark:border-gray-700 rounded-lg">
-                                {/* Root Category */}
-                                <div className="p-4 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600 flex items-center justify-between">
-                                    <div className="flex items-center gap-4">
-                                        <div>
-                                            <h3 className="font-semibold text-gray-800 dark:text-gray-100">{rootCategory.name}</h3>
-                                            <p className="text-sm text-gray-600 dark:text-gray-400">/{rootCategory.slug}</p>
-                                        </div>
-                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${rootCategory.active
-                                            ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300'
-                                            : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300'
-                                            }`}>
-                                            {rootCategory.active ? 'Active' : 'Inactive'}
-                                        </span>
-                                        <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-gray-600 px-2 py-1 rounded">
-                                            Position: {rootCategory.position}
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <button
-                                            onClick={async () => {
-                                                await toggleActive(rootCategory);
-                                            }}
-                                            className={`px-3 py-1 rounded text-sm font-medium transition-colors ${rootCategory.active
-                                                ? 'bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300 hover:bg-orange-200 dark:hover:bg-orange-800'
-                                                : 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800'
-                                                }`}
-                                        >
-                                            {rootCategory.active ? 'Deactivate' : 'Activate'}
-                                        </button>
-                                        <button
-                                            onClick={() => handleEdit(rootCategory)}
-                                            className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900 rounded transition-colors"
-                                        >
-                                            <Edit2 size={16} />
-                                        </button>
-                                        <button
-                                            onClick={() => handleDelete(rootCategory.id)}
-                                            className="p-2 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900 rounded transition-colors"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {/* Child Categories */}
-                                {rootCategory.children.length > 0 && (
-                                    <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                                        {rootCategory.children.map((childCategory: Category) => (
-                                            <div key={childCategory.id} className="p-4 pl-8 flex items-center justify-between">
-                                                <div className="flex items-center gap-4">
-                                                    <div className="w-4 h-4 border-l-2 border-b-2 border-gray-300 dark:border-gray-600"></div>
-                                                    <div>
-                                                        <h4 className="font-medium text-gray-700 dark:text-gray-300">{childCategory.name}</h4>
-                                                        <p className="text-sm text-gray-500 dark:text-gray-400">/{childCategory.slug}</p>
-                                                    </div>
-                                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${childCategory.active
-                                                        ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300'
-                                                        : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300'
-                                                        }`}>
-                                                        {childCategory.active ? 'Active' : 'Inactive'}
-                                                    </span>
-                                                    <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-gray-600 px-2 py-1 rounded">
-                                                        Position: {childCategory.position}
-                                                    </span>
+                <div className="p-2 md:p-6 space-y-4 max-w-3xl mx-auto">
+                    {categorizedList.map((rootCategory: CategoryWithChildren) => (
+                        <div key={rootCategory.id}>
+                            {/* Root Category */}
+                            <div className=" flex  justify-between p-4 gap-y-4 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg">
+                                                <div className="space-y-2">
+                                                    <h4 className="font-medium text-gray-700 dark:text-gray-300">{rootCategory.name}</h4>
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                        <span className="bg-gray-200 dark:bg-gray-600 px-2 py-1 mr-2 rounded">
+                                                            {rootCategory.id}
+                                                        </span>
+                                                        {rootCategory.slug}</p>
                                                 </div>
-                                                <div className="flex items-center gap-2">
-                                                    <button
-                                                        onClick={async () => {
-                                                            await toggleActive(childCategory);
-                                                        }}
-                                                        className={`px-3 py-1 rounded text-sm font-medium transition-colors ${childCategory.active
-                                                            ? 'bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300 hover:bg-orange-200 dark:hover:bg-orange-800'
-                                                            : 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800'
-                                                            }`}
-                                                    >
-                                                        {childCategory.active ? 'Deactivate' : 'Activate'}
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleEdit(childCategory)}
-                                                        className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900 rounded transition-colors"
-                                                    >
-                                                        <Edit2 size={16} />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDelete(childCategory.id)}
-                                                        className="p-2 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900 rounded transition-colors"
-                                                    >
-                                                        <Trash2 size={16} />
-                                                    </button>
+
+                                <div className="flex justify-end items-center gap-2">
+                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${rootCategory.active
+                                        ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300'
+                                        : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300'
+                                        }`}>
+                                        {rootCategory.active ? 'Active' : 'Inactive'}
+                                    </span>
+
+                                    <button
+                                        onClick={async () => {
+                                            await toggleActive(rootCategory);
+                                        }}
+                                        className={`px-3 py-1 rounded text-sm font-medium transition-colors ${rootCategory.active
+                                            ? 'bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300 hover:bg-orange-200 dark:hover:bg-orange-800'
+                                            : 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800'
+                                            }`}
+                                    >
+                                        {rootCategory.active ? <Trash2 size={16} /> : <Plus size={16} />}
+                                    </button>
+                                    <button
+                                        onClick={() => handleEdit(rootCategory)}
+                                        className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900 rounded transition-colors"
+                                    >
+                                        <Edit2 size={16} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Child Categories */}
+                            {rootCategory.children.length > 0 && (
+                                <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                                    {rootCategory.children.map((childCategory: Category) => (
+                                        <div key={childCategory.id} className="p-4 pl-4 md:pl-8 flex items-center justify-between">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-4 h-4 border-l-2 border-b-2 border-gray-300 dark:border-gray-600"></div>
+                                                <div className="space-y-2">
+                                                    <h4 className="font-medium text-gray-700 dark:text-gray-300">{childCategory.name}</h4>
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                        <span className="bg-gray-200 dark:bg-gray-600 px-2 py-1 mr-2 rounded">
+                                                            {childCategory.id}
+                                                        </span>
+                                                        {childCategory.slug}</p>
                                                 </div>
                                             </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        ))}
-                    </div>
+                                            <div className="flex justify-end items-center gap-2">
+                                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${childCategory.active
+                                                    ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300'
+                                                    : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300'
+                                                    }`}>
+                                                    {childCategory.active ? 'Active' : 'Inactive'}
+                                                </span>
+                                                <button
+                                                    onClick={async () => {
+                                                        await toggleActive(childCategory);
+                                                    }}
+                                                    className={`px-3 py-1 rounded text-sm font-medium transition-colors ${childCategory.active
+                                                        ? 'bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300 hover:bg-orange-200 dark:hover:bg-orange-800'
+                                                        : 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800'
+                                                        }`}
+                                                >
+                                                    {childCategory.active ? <Trash2 size={16} /> : <Plus size={16} />}
+                                                </button>
+                                                <button
+                                                    onClick={() => handleEdit(childCategory)}
+                                                    className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900 rounded transition-colors"
+                                                >
+                                                    <Edit2 size={16} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    ))}
                 </div>
             </div>
+
         </div>
     );
 };
