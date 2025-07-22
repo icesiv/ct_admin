@@ -71,6 +71,7 @@ export default function CreatePost() {
   }, [formData]);
 
   const UpdateFeatureImage = useCallback((value: File | string | null): void => {
+    console.log('value', value);
     setFormData({ ...formData, featuredImage: value });
   }, [formData]);
 
@@ -148,7 +149,6 @@ export default function CreatePost() {
     if (!formData.excerpt.trim()) {
       errors.push('Excerpt is required');
     }
-    console.log('formData.postContent', formData.postContent);
     if (!formData.postContent.trim()) {
       errors.push('Content is required');
     }

@@ -29,6 +29,7 @@ interface UploadHeaders {
 }
 
 export const FeatureImageUploader = ({  
+  UpdateFeatureImage,
   featuredImage, 
   title = 'Featured Image' 
 }: FeatureImageUploaderProps) => {
@@ -64,6 +65,7 @@ export const FeatureImageUploader = ({
       reader.onload = (event: ProgressEvent<FileReader>) => {
         if (event.target?.result) {
           setImagePreview(event.target.result as string);
+         
         }
       };
       reader.readAsDataURL(file);
@@ -115,6 +117,7 @@ export const FeatureImageUploader = ({
             // Update preview with the server URL
             if (response?.data?.file_url) {
               setImagePreview(response.data.file_url);
+              UpdateFeatureImage(response.data.file_url);
             }
 
             console.log('Upload successful:', response);
