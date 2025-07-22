@@ -28,6 +28,7 @@ import {
   Video,
   type LucideIcon
 } from 'lucide-react';
+import { BASE_URL } from '@/config/config';
 
 // Types
 interface ImageData {
@@ -93,8 +94,10 @@ const useImageUpload = (baseUrl: string) => {
   const [uploadProgress, setUploadProgress] = useState<number>(0);
 
   const uploadImage = useCallback(async (file: File): Promise<ImageData> => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
-    const uploadUrl = `${baseUrl}/admin/images/upload-image`;
+    
+    // const uploadUrl = `${baseUrl}/admin/images/upload-image`;
+    const token = localStorage.getItem('auth_token');
+    const UPLOAD_URL = `${BASE_URL}admin/images/upload-image`;
 
     setUploading(true);
     setUploadProgress(0);
@@ -131,7 +134,7 @@ const useImageUpload = (baseUrl: string) => {
         xhr.addEventListener('error', () => reject(new Error('Network error')));
         xhr.addEventListener('timeout', () => reject(new Error('Upload timeout')));
 
-        xhr.open('POST', uploadUrl);
+        xhr.open('POST', UPLOAD_URL);
         if (token) {
           xhr.setRequestHeader('Authorization', `Bearer ${token}`);
         }
