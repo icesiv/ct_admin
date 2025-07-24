@@ -213,11 +213,9 @@ export default function CreateUserForm() {
 
     return (
         <div className="flex flex-col justify-center flex-1 w-full max-w-xl mx-auto">
-            <h3 className="mb-6 font-semibold text-center text-gray-800 dark:text-white/90 text-xl lg:text-2xl">
-                Create New Admin/User Account
-            </h3>
-
+     
             <form onSubmit={handleSubmit}>
+
                 {/* Message Display */}
                 {message.text && (
                     <div className={`mb-4 p-3 rounded-lg text-sm ${message.type === 'success'
@@ -227,7 +225,7 @@ export default function CreateUserForm() {
                         {message.text}
                     </div>
                 )}
-
+                
                 <div className="space-y-5">
                     {/* Profile Image Upload */}
                     <div className="sm:col-span-1">
@@ -272,6 +270,8 @@ export default function CreateUserForm() {
                             </button>
                         </div>
                     </div>
+
+               
 
                     {/* Full Name */}
                     <div className="sm:col-span-1">
@@ -319,6 +319,7 @@ export default function CreateUserForm() {
                             defaultValue={formData.email}
                             onChange={handleInputChange}
                             placeholder="Enter your email address"
+                          
                         />
                     </div>
 

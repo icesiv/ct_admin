@@ -210,241 +210,252 @@ const CategoryCRUD: React.FC = () => {
 
     const reload = () => window.location.reload(); // true is implied
 
+    const CategoryHeader: React.FC<{
+        onReload: () => void;
+        onAdd: () => void;
+    }> = ({ onReload, onAdd }) => (
+        <div className="flex border-y py-2 border-gray-200 dark:border-gray-700 justify-end items-center flex-wrap gap-2">
+            <div className="flex gap-2">
+                <button
+                    onClick={onReload}
+                    className="bg-green-600 dark:bg-green-700 text-white px-4 py-2 rounded-md hover:bg-green-700 dark:hover:bg-green-800 flex items-center gap-2 transition-colors"
+                >
+                    <RefreshCcw size={20} />
+                </button>
+
+                <button
+                    onClick={onAdd}
+                    className="bg-blue-600 dark:bg-blue-700 text-white px-4 py-2 rounded-md hover:bg-blue-700 dark:hover:bg-blue-800 flex items-center gap-2 transition-colors"
+                >
+                    <Plus size={20} />
+                    Add Category
+                </button>
+            </div>
+        </div>
+    );
 
     return (
-        <div className="max-w-6xl mx-auto">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md">
-                {/* Header */}
-                <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                    <h1 className="text-2xl hidden md:block font-bold text-gray-800 dark:text-gray-100">Manage Categories</h1>
+        <div className="space-y-4 max-w-3xl mx-auto">
 
-                    <div className='flex items-center gap-4'>
-                        <button
-                            onClick={reload}
-                            className="bg-green-600 dark:bg-green-700 text-white px-4 py-2 rounded-md hover:bg-green-700 dark:hover:bg-green-800 flex items-center gap-2 transition-colors"
-                        >
-                            <RefreshCcw size={20} />
-                        </button>
-                        <button
-                            onClick={() => setShowForm(true)}
-                            className="bg-blue-600 dark:bg-blue-700 text-white px-4 py-2 rounded-md hover:bg-blue-700 dark:hover:bg-blue-800 flex items-center gap-2 transition-colors"
-                        >
-                            <Plus size={20} />
-                            Add Category
-                        </button>
-                    </div>
-                </div>
+            {/* Header */}
+            <CategoryHeader
+                onReload={reload}
+                onAdd={() => setShowForm(true)}
+            />
 
-                {/* Form Modal */}
-                {showForm && (
-                    <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-99999">
-                        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4">
-                            <div className="flex justify-between items-center mb-4">
-                                <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">
-                                    {editingCategory ? 'Edit Category' : 'Add New Category'}
-                                </h2>
-                                <button
-                                    onClick={resetForm}
-                                    className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+            {/* Form Modal */}
+            {showForm && (
+                <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-99999">
+                    <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4">
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">
+                                {editingCategory ? 'Edit Category' : 'Add New Category'}
+                            </h2>
+                            <button
+                                onClick={resetForm}
+                                className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                            >
+                                <X size={24} />
+                            </button>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Category Name
+                                </label>
+                                <input
+                                    type="text"
+                                    name="name"
+                                    value={formData.name}
+                                    onChange={handleInputChange}
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                    required
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Slug
+                                </label>
+                                <input
+                                    type="text"
+                                    name="slug"
+                                    value={formData.slug}
+                                    onChange={handleInputChange}
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                    required
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Parent Category
+                                </label>
+                                <select
+                                    name="parent_id"
+                                    value={formData.parent_id}
+                                    onChange={handleInputChange}
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                                 >
-                                    <X size={24} />
+                                    <option value={0}>Root Category</option>
+                                    {getRootCategories().map(cat => (
+                                        <option key={cat.id} value={cat.id}>
+                                            {cat.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Position
+                                </label>
+                                <input
+                                    type="number"
+                                    name="position"
+                                    value={formData.position}
+                                    onChange={handleInputChange}
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                    min="1"
+                                    required
+                                />
+                            </div>
+
+                            <div className="flex items-center">
+                                <input
+                                    type="checkbox"
+                                    name="active"
+                                    checked={formData.active}
+                                    onChange={handleInputChange}
+                                    className="mr-2 w-4 h-4 text-blue-600 focus:ring-blue-500 dark:focus:ring-blue-400 border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
+                                />
+                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    Active
+                                </label>
+                            </div>
+
+                            <div className="flex gap-3 pt-4">
+                                <button
+                                    type="button"
+                                    onClick={async (e: React.MouseEvent<HTMLButtonElement>) => {
+                                        if (e) e.preventDefault();
+                                        await handleSubmit();
+                                    }}
+                                    className="flex-1 bg-blue-600 dark:bg-blue-700 text-white py-2 px-4 rounded-md hover:bg-blue-700 dark:hover:bg-blue-800 flex items-center justify-center gap-2 transition-colors"
+                                >
+                                    <Save size={16} />
+                                    {editingCategory ? 'Update' : 'Save'}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={resetForm}
+                                    className="flex-1 bg-gray-500 dark:bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-600 dark:hover:bg-gray-700 transition-colors"
+                                >
+                                    Cancel
                                 </button>
                             </div>
-
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                        Category Name
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="name"
-                                        value={formData.name}
-                                        onChange={handleInputChange}
-                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                                        required
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                        Slug
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="slug"
-                                        value={formData.slug}
-                                        onChange={handleInputChange}
-                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                                        required
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                        Parent Category
-                                    </label>
-                                    <select
-                                        name="parent_id"
-                                        value={formData.parent_id}
-                                        onChange={handleInputChange}
-                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                                    >
-                                        <option value={0}>Root Category</option>
-                                        {getRootCategories().map(cat => (
-                                            <option key={cat.id} value={cat.id}>
-                                                {cat.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                        Position
-                                    </label>
-                                    <input
-                                        type="number"
-                                        name="position"
-                                        value={formData.position}
-                                        onChange={handleInputChange}
-                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                                        min="1"
-                                        required
-                                    />
-                                </div>
-
-                                <div className="flex items-center">
-                                    <input
-                                        type="checkbox"
-                                        name="active"
-                                        checked={formData.active}
-                                        onChange={handleInputChange}
-                                        className="mr-2 w-4 h-4 text-blue-600 focus:ring-blue-500 dark:focus:ring-blue-400 border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
-                                    />
-                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        Active
-                                    </label>
-                                </div>
-
-                                <div className="flex gap-3 pt-4">
-                                    <button
-                                        type="button"
-                                        onClick={async (e: React.MouseEvent<HTMLButtonElement>) => {
-                                            if (e) e.preventDefault();
-                                            await handleSubmit();
-                                        }}
-                                        className="flex-1 bg-blue-600 dark:bg-blue-700 text-white py-2 px-4 rounded-md hover:bg-blue-700 dark:hover:bg-blue-800 flex items-center justify-center gap-2 transition-colors"
-                                    >
-                                        <Save size={16} />
-                                        {editingCategory ? 'Update' : 'Save'}
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={resetForm}
-                                        className="flex-1 bg-gray-500 dark:bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-600 dark:hover:bg-gray-700 transition-colors"
-                                    >
-                                        Cancel
-                                    </button>
-                                </div>
-                            </div>
                         </div>
                     </div>
-                )}
+                </div>
+            )}
 
-                {/* Categories List */}
-                <div className="p-2 md:p-6 space-y-4 max-w-3xl mx-auto">
-                    {categorizedList.map((rootCategory: CategoryWithChildren) => (
-                        <div key={rootCategory.id}>
-                            {/* Root Category */}
-                            <div className=" flex  justify-between p-4 gap-y-4 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg">
-                                                <div className="space-y-2">
-                                                    <h4 className="font-medium text-gray-700 dark:text-gray-300">{rootCategory.name}</h4>
-                                                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                        <span className="bg-gray-200 dark:bg-gray-600 px-2 py-1 mr-2 rounded">
-                                                            {rootCategory.id}
-                                                        </span>
-                                                        {rootCategory.slug}</p>
-                                                </div>
-
-                                <div className="flex justify-end items-center gap-2">
-                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${rootCategory.active
-                                        ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300'
-                                        : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300'
-                                        }`}>
-                                        {rootCategory.active ? 'Active' : 'Inactive'}
+            {/* Categories List */}
+            <div className="p-2 md:p-6 space-y-4 max-w-3xl mx-auto">
+                {categorizedList.map((rootCategory: CategoryWithChildren) => (
+                    <div key={rootCategory.id}>
+                        {/* Root Category */}
+                        <div className=" flex  justify-between p-4 gap-y-4 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg">
+                            <div className="space-y-2">
+                                <h4 className="font-medium text-gray-700 dark:text-gray-300">{rootCategory.name}</h4>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                    <span className="bg-gray-200 dark:bg-gray-600 px-2 py-1 mr-2 rounded">
+                                        {rootCategory.id}
                                     </span>
-
-                                    <button
-                                        onClick={async () => {
-                                            await toggleActive(rootCategory);
-                                        }}
-                                        className={`px-3 py-1 rounded text-sm font-medium transition-colors ${rootCategory.active
-                                            ? 'bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300 hover:bg-orange-200 dark:hover:bg-orange-800'
-                                            : 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800'
-                                            }`}
-                                    >
-                                        {rootCategory.active ? <Trash2 size={16} /> : <Plus size={16} />}
-                                    </button>
-                                    <button
-                                        onClick={() => handleEdit(rootCategory)}
-                                        className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900 rounded transition-colors"
-                                    >
-                                        <Edit2 size={16} />
-                                    </button>
-                                </div>
+                                    {rootCategory.slug}</p>
                             </div>
 
-                            {/* Child Categories */}
-                            {rootCategory.children.length > 0 && (
-                                <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                                    {rootCategory.children.map((childCategory: Category) => (
-                                        <div key={childCategory.id} className="p-4 pl-4 md:pl-8 flex items-center justify-between">
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-4 h-4 border-l-2 border-b-2 border-gray-300 dark:border-gray-600"></div>
-                                                <div className="space-y-2">
-                                                    <h4 className="font-medium text-gray-700 dark:text-gray-300">{childCategory.name}</h4>
-                                                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                        <span className="bg-gray-200 dark:bg-gray-600 px-2 py-1 mr-2 rounded">
-                                                            {childCategory.id}
-                                                        </span>
-                                                        {childCategory.slug}</p>
-                                                </div>
-                                            </div>
-                                            <div className="flex justify-end items-center gap-2">
-                                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${childCategory.active
-                                                    ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300'
-                                                    : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300'
-                                                    }`}>
-                                                    {childCategory.active ? 'Active' : 'Inactive'}
-                                                </span>
-                                                <button
-                                                    onClick={async () => {
-                                                        await toggleActive(childCategory);
-                                                    }}
-                                                    className={`px-3 py-1 rounded text-sm font-medium transition-colors ${childCategory.active
-                                                        ? 'bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300 hover:bg-orange-200 dark:hover:bg-orange-800'
-                                                        : 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800'
-                                                        }`}
-                                                >
-                                                    {childCategory.active ? <Trash2 size={16} /> : <Plus size={16} />}
-                                                </button>
-                                                <button
-                                                    onClick={() => handleEdit(childCategory)}
-                                                    className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900 rounded transition-colors"
-                                                >
-                                                    <Edit2 size={16} />
-                                                </button>
+                            <div className="flex justify-end items-center gap-2">
+                                <span className={`px-2 py-1 mr-4 rounded-full text-xs font-medium ${rootCategory.active
+                                    ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300'
+                                    : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300'
+                                    }`}>
+                                    {rootCategory.active ? 'Active' : 'Inactive'}
+                                </span>
+
+                                <button
+                                    onClick={async () => {
+                                        await toggleActive(rootCategory);
+                                    }}
+                                    className={`px-3 py-1 rounded text-sm font-medium transition-colors ${rootCategory.active
+                                        ? ' text-orange-700 dark:text-orange-300 hover:bg-orange-200 dark:hover:bg-orange-800'
+                                        : 'text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800'
+                                        }`}
+                                >
+                                    {rootCategory.active ? <Trash2 size={16} /> : <Plus size={16} />}
+                                </button>
+                                <button
+                                    onClick={() => handleEdit(rootCategory)}
+                                    className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900 rounded transition-colors"
+                                >
+                                    <Edit2 size={16} />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Child Categories */}
+                        {rootCategory.children.length > 0 && (
+                            <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                                {rootCategory.children.map((childCategory: Category) => (
+                                    <div key={childCategory.id} className="p-4 pl-4 md:pl-8 flex items-center justify-between">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-4 h-4 border-l-2 border-b-2 border-gray-300 dark:border-gray-600"></div>
+                                            <div className="space-y-2">
+                                                <h4 className="font-medium text-gray-700 dark:text-gray-300">{childCategory.name}</h4>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                    <span className="bg-gray-200 dark:bg-gray-600 px-2 py-1 mr-2 rounded">
+                                                        {childCategory.id}
+                                                    </span>
+                                                    {childCategory.slug}</p>
                                             </div>
                                         </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    ))}
-                </div>
+                                        <div className="flex justify-end items-center gap-2">
+                                            <span className={`px-2 py-1 mr-4 rounded-full text-xs font-medium ${childCategory.active
+                                                ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300'
+                                                : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300'
+                                                }`}>
+                                                {childCategory.active ? 'Active' : 'Inactive'}
+                                            </span>
+                                            <button
+                                                onClick={async () => {
+                                                    await toggleActive(childCategory);
+                                                }}
+                                                className={`px-3 py-1 rounded text-sm font-medium transition-colors ${childCategory.active
+                                                    ? 'text-orange-700 dark:text-orange-300 hover:bg-orange-200 dark:hover:bg-orange-800'
+                                                    : ' text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800'
+                                                    }`}
+                                            >
+                                                {childCategory.active ? <Trash2 size={16} /> : <Plus size={16} />}
+                                            </button>
+                                            <button
+                                                onClick={() => handleEdit(childCategory)}
+                                                className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900 rounded transition-colors"
+                                            >
+                                                <Edit2 size={16} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                ))}
             </div>
 
+            <CategoryHeader
+                onReload={reload}
+                onAdd={() => setShowForm(true)}
+            />
         </div>
     );
 };

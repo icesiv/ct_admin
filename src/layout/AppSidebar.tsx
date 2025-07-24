@@ -59,11 +59,11 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    name: "Video Galleries",
+    name: "Videos",
     icon: <FileVideo2 />,
     subItems: [
-      { name: "Create Gallery", path: "/coming-soon" },
-      { name: "Manage Galleries", path: "/coming-soon" },
+      { name: "Create Video", path: "/coming-soon" },
+      { name: "Homepage Videos", path: "/coming-soon" },
     ],
   },
   {

@@ -15,7 +15,7 @@ export default function CreateUser() {
     <div>
       <PageBreadcrumb pageTitle="Create User" />
 
-      <div className="mt-6 rounded-2xl md:border border-gray-200 md:bg-white md:px-5 py-7 dark:border-gray-800 md:dark:bg-white/[0.03] xl:px-10 xl:py-12">
+      <div className="mt-6 max-w-4xl mx-auto rounded-2xl md:border border-gray-200 md:bg-white md:px-5 py-7 dark:border-gray-800 md:dark:bg-white/[0.03] xl:px-10 xl:py-12">
         <CreateUserForm />
       </div>
 
