@@ -22,6 +22,7 @@ export interface FeatureImageUploaderProps {
   UpdateFeatureImage: (image: string | null) => void;
   featuredImage?: string | null;
   title?: string;
+  OpenModal: (flag: boolean | false) => void;
 }
 
 interface UploadHeaders {
@@ -31,7 +32,8 @@ interface UploadHeaders {
 export const FeatureImageUploader = ({  
   UpdateFeatureImage,
   featuredImage, 
-  title = 'Featured Image' 
+  title = 'Featured Image',
+  OpenModal, 
 }: FeatureImageUploaderProps) => {
 
   const [imagePreview, setImagePreview] = useState<string | null>(featuredImage || null);
@@ -211,7 +213,9 @@ export const FeatureImageUploader = ({
       <div className="flex items-center space-x-4">
         <button
           type="button"
-          onClick={() => fileInputRef.current?.click()}
+          onClick={() => {
+            OpenModal(true);
+          }}
           disabled={uploadStatus === 'uploading'}
           className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
         >

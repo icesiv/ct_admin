@@ -7,6 +7,8 @@ import React, {
   useEffect,
   useMemo,
   memo,
+  forwardRef, 
+  useImperativeHandle,
   type ChangeEvent,
   type DragEvent,
   type FormEvent,
@@ -64,11 +66,17 @@ interface SelectOption {
 
 interface WysiwygEditorProps {
   updatePostContent: (content: string) => void;
-  postContent?: string | null; // Explicitly allow null
+  postContent?: string | null;
   baseUrl?: string;
   maxImageSize?: number;
   placeholder?: string;
   className?: string;
+  OpenModal: (flag: boolean) => void;
+}
+
+// Add interface for the ref methods
+export interface WysiwygEditorRef {
+  insertImageIntoEditor: (imageData: ImageData) => void;
 }
 
 // Custom hooks
@@ -94,8 +102,6 @@ const useImageUpload = (baseUrl: string) => {
   const [uploadProgress, setUploadProgress] = useState<number>(0);
 
   const uploadImage = useCallback(async (file: File): Promise<ImageData> => {
-    
-    // const uploadUrl = `${baseUrl}/admin/images/upload-image`;
     const token = localStorage.getItem('auth_token');
     const UPLOAD_URL = `${BASE_URL}admin/images/upload-image`;
 
@@ -205,93 +211,7 @@ const fixImageUrls = (htmlContent: string | null | undefined, domain = 'https://
   });
 };
 
-// Toolbar component
-const Toolbar = memo(({
-  buttons,
-  headingOptions,
-  fontFamilyOptions,
-  fontSizeOptions,
-  onHeadingChange,
-  onFontFamilyChange,
-  onFontSizeChange
-}: {
-  buttons: ToolbarItem[];
-  headingOptions: SelectOption[];
-  fontFamilyOptions: SelectOption[];
-  fontSizeOptions: SelectOption[];
-  onHeadingChange: (value: string) => void;
-  onFontFamilyChange: (value: string) => void;
-  onFontSizeChange: (value: string) => void;
-}) => (
-  <div className="bg-gray-50 border-b border-gray-300 p-3">
-    <div className="flex items-center gap-2 flex-wrap">
-      <select
-        className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        onChange={(e) => onHeadingChange(e.target.value)}
-      >
-        {headingOptions.map((option, index) => (
-          <option key={index} value={option.value}>{option.label}</option>
-        ))}
-      </select>
-
-      <select
-        className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[120px]"
-        onChange={(e) => {
-          if (e.target.value) {
-            onFontFamilyChange(e.target.value);
-            e.target.value = '';
-          }
-        }}
-        defaultValue=""
-      >
-        <option value="" disabled>Font</option>
-        {fontFamilyOptions.map((option, index) => (
-          <option key={index} value={option.value} style={{ fontFamily: option.value }}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-
-      <select
-        className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[70px]"
-        onChange={(e) => {
-          if (e.target.value) {
-            onFontSizeChange(e.target.value);
-            e.target.value = '';
-          }
-        }}
-        defaultValue=""
-      >
-        <option value="" disabled>Size</option>
-        {fontSizeOptions.map((option, index) => (
-          <option key={index} value={option.value}>{option.label}</option>
-        ))}
-      </select>
-
-      <div className="w-px h-6 bg-gray-300 mx-1"></div>
-
-      {buttons.map((button, index) => (
-        button.divider ? (
-          <div key={index} className="w-px h-6 bg-gray-300 mx-1"></div>
-        ) : (
-          <button
-            key={index}
-            onClick={() => button.action?.() || (button.command && document.execCommand(button.command, false, ''))}
-            className="p-2 hover:bg-gray-200 rounded transition-colors duration-200"
-            title={button.title}
-            type="button"
-          >
-            <button.icon size={16} className="text-gray-700" />
-          </button>
-        )
-      ))}
-    </div>
-  </div>
-));
-
-Toolbar.displayName = 'Toolbar';
-
-// Modal components
+// Modal components remain the same...
 const LinkModal = memo(({
   isOpen,
   onClose,
@@ -475,15 +395,16 @@ const ImageModal = memo(({
 
 ImageModal.displayName = 'ImageModal';
 
-// Main component
-const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
+// Main component with forwardRef
+const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(({
   updatePostContent,
   postContent = null,
   baseUrl = 'https://campustimes.press',
   maxImageSize = 10 * 1024 * 1024, // 10MB
   placeholder = 'Start writing your content here...',
-  className = ''
-}) => {
+  className = '',
+  OpenModal
+}, ref) => {
   const [content, setContent] = useState<string>(postContent || '');
   const [showLinkModal, setShowLinkModal] = useState<boolean>(false);
   const [linkUrl, setLinkUrl] = useState<string>('');
@@ -499,11 +420,10 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
   const { selectedText, savedRange, setSavedRange, handleTextSelection } = useSelection();
   const { uploading, uploadProgress, uploadImage } = useImageUpload(baseUrl);
 
-
   // Initialize content
   useEffect(() => {
     if (editorRef.current && !isInitialized) {
-      const initialContent = postContent ?? ''; // Handle null case with nullish coalescing
+      const initialContent = postContent ?? '';
       const fixedContent = fixImageUrls(initialContent);
       editorRef.current.innerHTML = fixedContent;
       setContent(fixedContent);
@@ -577,7 +497,7 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
     }
   }, [execCommand]);
 
-  // Image handling
+  // Image handling - This is the method that will be exposed
   const insertImageIntoEditor = useCallback((imageData: ImageData) => {
     const img = document.createElement('img');
     img.src = imageData.file_url;
@@ -648,6 +568,11 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
     setShowImageModal(false);
     setSavedRange(null);
   }, [savedRange, setSavedRange]);
+
+  // Expose the method to parent component using useImperativeHandle
+  useImperativeHandle(ref, () => ({
+    insertImageIntoEditor
+  }), [insertImageIntoEditor]);
 
   const handleImageUpload = useCallback(async (file: File) => {
     if (!file.type.startsWith('image/')) {
@@ -843,7 +768,7 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
         if (selection?.rangeCount) {
           setSavedRange(selection.getRangeAt(0).cloneRange());
         }
-        setShowImageModal(true);
+        OpenModal(true);
       },
       title: 'Insert Image'
     },
@@ -858,7 +783,7 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
       },
       title: 'Insert YouTube Video'
     },
-  ], [setSavedRange]);
+  ], [setSavedRange, OpenModal]);
 
   const headingOptions = useMemo<SelectOption[]>(() => [
     { label: 'Normal', command: 'formatBlock', value: 'div' },
@@ -906,8 +831,8 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
   ], []);
 
   return (
-    <div className={`max-w-7xl mx-auto rounded-lg  ${className}`}>
-<div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden shadow-lg">
+    <div className={`max-w-7xl mx-auto rounded-lg ${className}`}>
+      <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden shadow-lg">
         <div className="bg-gray-50 dark:bg-gray-700 border-b border-gray-300 dark:border-gray-600 p-3">
           <div className="flex items-center gap-2 flex-wrap">
             <select
@@ -981,8 +906,9 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
             ref={editorRef}
             contentEditable
             suppressContentEditableWarning={true}
-            className={`min-h-96 p-4 focus:outline-none text-gray-800 dark:text-gray-200 leading-relaxed ${dragOver ? 'bg-blue-50 dark:bg-blue-900/20 border-2 border-dashed border-blue-300 dark:border-blue-500' : ''
-              }`}
+            className={`min-h-96 p-4 focus:outline-none text-gray-800 dark:text-gray-200 leading-relaxed ${
+              dragOver ? 'bg-blue-50 dark:bg-blue-900/20 border-2 border-dashed border-blue-300 dark:border-blue-500' : ''
+            }`}
             style={{
               fontSize: '16px',
               lineHeight: '1.6'
@@ -994,7 +920,6 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onKeyDown={handleKeyDown}
-          // placeholder={placeholder}
           />
 
           {!content && (
@@ -1140,6 +1065,8 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
       `}</style>
     </div>
   );
-};
+});
+
+WysiwygEditor.displayName = 'WysiwygEditor';
 
 export default WysiwygEditor;
