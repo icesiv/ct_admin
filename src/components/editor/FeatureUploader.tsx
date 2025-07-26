@@ -5,7 +5,6 @@ import { Upload, X} from 'lucide-react';
 
 
 export interface FeatureImageUploaderProps {
-  UpdateFeatureImage: (image: string | null) => void;
   featuredImage?: string | null;
   title?: string;
   OpenModal: (flag: boolean | false, isFeature: boolean) => void;

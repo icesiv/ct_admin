@@ -204,7 +204,6 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
       
       if (data.success) {
         const transformedImages = transformApiDataToImageData(data.data);
-        
         if (append) {
           // Append new images to existing ones
           setImages(prev => {
@@ -560,31 +559,31 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
           type: 'success', 
           message: `Successfully uploaded ${pendingFiles.length} image${pendingFiles.length > 1 ? 's' : ''}` 
         });
-        console.log('failedUploads', failedUploads);
+        // console.log('failedUploads', failedUploads);
         // Add successful uploads to local state for preview
-        const newImages: ImageData[] = [];
+        // const newImages: ImageData[] = [];
         
         pendingFiles.forEach((file, index) => {
           const reader = new FileReader();
           reader.onload = (e: ProgressEvent<FileReader>) => {
             if (e.target?.result) {
-              const newImage: ImageData = {
-                id: Date.now() + Math.random() + index,
-                url: e.target.result as string,
-                tags: [...currentTags],
-                name: currentTitle.trim(),
-                fileName: file.name
-              };
-              newImages.push(newImage);
+              // const newImage = {
+              //   id: Date.now() + Math.random() + index,
+              //   url: e.target.result as string,
+              //   tags: [...currentTags],
+              //   name: currentTitle.trim(),
+              //   fileName: file.name
+              // };
+              // newImages.push(newImage);
               
-              // Update state when all files are processed
-              if (newImages.length === pendingFiles.length) {
-                setImages(prev => {
-                  const updated = [...newImages, ...prev];
-                  onImagesChange?.(updated);
-                  return updated;
-                });
-              }
+              // // Update state when all files are processed
+              // if (newImages.length === pendingFiles.length) {
+              //   setImages(prev => {
+              //     const updated = [...newImages, ...prev];
+              //     onImagesChange?.(updated);
+              //     return updated;
+              //   });
+              // }
             }
           };
           reader.readAsDataURL(file);
@@ -677,7 +676,7 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
     setTagInput(e.target.value);
     clearValidationError('tags');
   };
-
+  console.log('images Hoil', images);
   return (
     <>
       {/* Open Modal Button */}
@@ -985,12 +984,10 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
                 onDeleteImage={deleteImage}
                 loading={loading}
                 loadingMore={loadingMore}
-                searchLoading={searchLoading}
                 hasMorePages={hasMorePages}
                 onLoadMore={loadMoreImages}
                 totalImages={totalImages}
                 currentPage={currentPage}
-                isSearchMode={isSearchMode}
                 callback={callback}
                 OpenModal={OpenModal}
               />

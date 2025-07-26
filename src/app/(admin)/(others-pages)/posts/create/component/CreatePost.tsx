@@ -459,7 +459,7 @@ export default function CreatePost({ postId = null }) {
                     resetDropSelected={handleCategoryChange}
                     news_categories={all_cat}
                     handleCategoryChange={handleCategoryChange}
-                    selectedCategories={formData.categories}
+                    preselected={formData.categories}
                   />
                 </div>
 
@@ -557,7 +557,6 @@ export default function CreatePost({ postId = null }) {
               {/* Featured Image */}
               <FeatureImageUploader
                 featuredImage={formData.featuredImage}
-                UpdateFeatureImage={UpdateFeatureImage}
                 OpenModal={OpenModal}
               />
             </div>

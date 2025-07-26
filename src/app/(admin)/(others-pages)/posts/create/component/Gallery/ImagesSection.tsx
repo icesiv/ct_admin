@@ -2,15 +2,10 @@
 import React, { ChangeEvent } from 'react';
 import { SearchPanel } from './SearchPanel';
 import { ImagesGrid } from './ImagesGrid';
+import { ImageData } from './ImageUploaderModal';
 
 
-interface ImageData {
-  id: number;
-  url: string;
-  tags: string[];
-  name: string;
-  fileName?: string;
-}
+
 
 interface ImagesSectionProps {
   images: ImageData[];
@@ -23,7 +18,7 @@ interface ImagesSectionProps {
   onLoadMore?: () => void;
   totalImages?: number;
   currentPage?: number;
-  callback: (url: string) => void;
+  callback?: (imageData: ImageData) => void;
   OpenModal: (flag: boolean, isFeature: boolean) => void;
 }
 

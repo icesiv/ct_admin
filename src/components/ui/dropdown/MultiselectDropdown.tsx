@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Filter, ChevronDown, X, Search } from 'lucide-react';
+import { ChevronDown, X, Search } from 'lucide-react';
 
 // Type definitions
 interface Category {

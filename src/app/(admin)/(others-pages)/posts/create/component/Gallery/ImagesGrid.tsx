@@ -1,13 +1,8 @@
 import React from 'react';
 import { Upload, Trash2, RotateCcw } from 'lucide-react';
+import { ImageData } from './ImageUploaderModal';
 
-interface ImageData {
-  id: number;
-  url: string;
-  tags: string[];
-  name: string;
-  fileName?: string;
-}
+
 
 interface ImagesGridProps {
   images: ImageData[];
@@ -19,8 +14,8 @@ interface ImagesGridProps {
   totalImages?: number;
   currentPage?: number;
   isSearchMode?: boolean;
-  callback: (url: string) => void;
-  OpenModal: (flag: boolean) => void;
+  callback?: (imageData: ImageData) => void;
+  OpenModal: (flag: boolean, isFeature: boolean) => void;
 }
 
 export const ImagesGrid: React.FC<ImagesGridProps> = ({ 
@@ -63,8 +58,8 @@ export const ImagesGrid: React.FC<ImagesGridProps> = ({
             <div className="aspect-square overflow-hidden">
               <a href='#' onClick={(e)=>{
                 e.preventDefault();
-                callback(image);
-                OpenModal(false);
+                callback?.(image);
+                OpenModal(false, false);
               }}>
                 <img src={image.url} alt={image.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 loading="lazy"
