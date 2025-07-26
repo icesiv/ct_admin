@@ -66,6 +66,7 @@ interface AuthContextType {
     savePost: (data: any) => Promise<any>;
     saveMenu: (data: any) => Promise<any>; // Added missing function
     fetchMenu: () => Promise<any>; // Added missing function
+    getPost: (id: string | number) => Promise<any>;
 }
 
 interface AuthProviderProps {
@@ -336,6 +337,33 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
     };
 
+    const getPost = async (id: string | number): Promise<any> => {
+        const token = localStorage.getItem('auth_token');
+
+        if (!token) {
+            throw new Error('No authentication token found');
+        }
+
+        try {
+            const response = await fetch(`${BASE_URL}admin/posts/view/${id}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json',
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch post');
+            }
+
+            return await response.json(); // Optionally: `as PostType` if you define a type
+        } catch (error) {
+            console.error('Fetch post error:', error);
+            throw error;
+        }
+    };
+
+
     const value: AuthContextType = {
         user,
         loading,
@@ -353,6 +381,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         savePost,
         saveMenu,
         fetchMenu,
+        getPost,
     };
 
     return (

@@ -1,15 +1,16 @@
 "use client";
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Save, Eye, Trash2, Plus, X } from 'lucide-react';
 
 import { useRouter } from 'next/navigation';
-import WysiwygEditor from '@/components/editor/WysiwygEditor';
+//import WysiwygEditor from '@/components/editor/WysiwygEditor';
 import { useAuth } from '@/context/AuthContext';
 import { available_colors, BASE_URL } from '@/config/config';
 import { FeatureImageUploader } from '@/components/editor/FeatureUploader';
 import { Notification } from '@/components/ui/notification/Notification';
 import MultiselectDropdown from '@/components/ui/dropdown/MultiselectDropdown';
-
+import WysiwygEditor, { WysiwygEditorRef, ImageData } from '@/components/editor/WysiwygEditor';
+import ImageUploaderModal from '../../../create/component/Gallery/ImageUploaderModal';
 // Type definitions
 interface Category {
   id: number;
@@ -62,6 +63,8 @@ export const NewsScreenEdit: React.FC<NewsScreenEditProps> = ({ post_id }) => {
   const [notification, setNotification] = useState<NotificationState | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
+  const [isFeature, setIsFeature] = useState<boolean>(true);
+  const [isOpen, setIsOpen] = useState<boolean>(false);
   const [formData, setFormData] = useState<FormData>({
     id: null,
     title: '',
@@ -80,6 +83,23 @@ export const NewsScreenEdit: React.FC<NewsScreenEditProps> = ({ post_id }) => {
 
   const [imagePreview, setImagePreview] = useState<string>('');
   const [isPreview, setIsPreview] = useState<boolean>(false);
+
+  const editorRef = useRef<WysiwygEditorRef>(null);
+
+
+  const handleExternalImageInsert = (imageData: ImageData) => {
+   
+    if (editorRef.current) {
+     
+      editorRef.current.insertImageIntoEditor({
+        file_url: imageData.url,
+        width: imageData.dimensions.width,
+        height: imageData.dimensions.height,
+        thumb: imageData.thumbnails[0].file_url
+      });
+    }
+    setIsOpen(false);
+  };
 
   const fetchNewsDetail = useCallback(async (id: number): Promise<ApiResponse<NewsPost> | null> => {
     try {
@@ -124,7 +144,11 @@ export const NewsScreenEdit: React.FC<NewsScreenEditProps> = ({ post_id }) => {
       return null;
     }
   }, []);
-
+   const OpenModal = (flag: boolean, isFeature: boolean): void => {
+    setIsOpen(flag);
+    setIsFeature(isFeature);
+  };
+ 
   const deletePost = async (id: number): Promise<ApiResponse<any>> => {
     const token = localStorage.getItem('auth_token');
     const res = await fetch(`${BASE_URL}admin/posts/remove/news`, {
@@ -161,13 +185,18 @@ export const NewsScreenEdit: React.FC<NewsScreenEditProps> = ({ post_id }) => {
     setFormData(prev => ({ ...prev, postContent: value }));
   }, []);
 
-  const UpdateFeatureImage = useCallback((value: string | null) => {
-    console.log('value', value);
-    if (value !== null && value !== undefined) {
-      setFormData(prev => ({ ...prev, featuredImage: value }));
-      setImagePreview(value);
-    }
-  }, []);
+  // const UpdateFeatureImage = useCallback((value: string | null) => {
+  //   console.log('value', value);
+  //   if (value !== null && value !== undefined) {
+  //     setFormData(prev => ({ ...prev, featuredImage: value }));
+  //     setImagePreview(value);
+  //   }
+  // }, []);
+
+   const UpdateFeatureImage = useCallback((imageData: ImageData): void => {
+      setFormData({ ...formData, featuredImage: imageData.url });
+      setImagePreview(imageData.url);
+    }, [formData]);
 
   const handleCategoryToggle = (categoryIds: Category[]) => {
     setFormData(prev => ({
@@ -508,18 +537,17 @@ export const NewsScreenEdit: React.FC<NewsScreenEditProps> = ({ post_id }) => {
                 </p>
               </div>
               {/* Featured Image */}
-              <FeatureImageUploader
-                featuredImage={formData.featuredImage}
-                UpdateFeatureImage={UpdateFeatureImage}
-              />
+              <FeatureImageUploader 
+                  featuredImage={formData.featuredImage} 
+                  UpdateFeatureImage={UpdateFeatureImage} 
+                  OpenModal={OpenModal}
+                />
             </div>
 
             {/* WYSIWYG Editor */}
             <div className="shadow rounded-lg bg-white dark:bg-gray-800">
-              <WysiwygEditor
-                postContent={formData.postContent}
-                updatePostContent={UpdatePostContent}
-              />
+              <WysiwygEditor ref={editorRef} OpenModal={OpenModal} updatePostContent={UpdatePostContent} postContent={formData.postContent} />
+               <ImageUploaderModal isOpen={isOpen} callback={ isFeature ? UpdateFeatureImage : handleExternalImageInsert} OpenModal={OpenModal}/> 
             </div>
           </div>
         )}

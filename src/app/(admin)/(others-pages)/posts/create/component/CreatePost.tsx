@@ -1,20 +1,26 @@
 "use client";
 
-import { useCallback, useRef, useState } from 'react';
-import { Save, Eye, X, Plus } from 'lucide-react';
+import { useCallback, useRef, useState, useEffect } from 'react';
+import { Save, Eye, X, Plus, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { available_colors } from '@/config/config';
-// import WysiwygEditor from '@/components/editor/WysiwygEditor';
 import { FeatureImageUploader } from '@/components/editor/FeatureUploader';
 import { Notification } from '@/components/ui/notification/Notification';
 import MultiselectDropdown from '@/components/ui/dropdown/MultiselectDropdown';
 import ImageUploaderModal from './Gallery/ImageUploaderModal';
 import WysiwygEditor, { WysiwygEditorRef, ImageData } from '@/components/editor/WysiwygEditor';
+
 // Type definitions
+
 interface Category {
   id: number;
   name: string;
   color?: string;
+}
+
+interface Tag {
+  id: number;
+  name: string;
 }
 
 interface FormData {
@@ -40,11 +46,25 @@ interface SavePostData {
   tags: string[];
 }
 
-export default function CreatePost() {
+interface Post {
+  id: number;
+  title: string;
+  excerpt: string;
+  post_content: string;
+  featured_image: string;
+  categories: Category[];
+  tags: string[];
+}
+
+export default function CreatePost({ postId = null }) {
+  const isEditMode = !!postId;
   const editorRef = useRef<WysiwygEditorRef>(null);
   const [isFeature, setIsFeature] = useState<boolean>(true);
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [notification, setNotification] = useState<NotificationState | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoadingPost, setIsLoadingPost] = useState<boolean>(isEditMode);
+
   const [formData, setFormData] = useState<FormData>({
     title: '',
     excerpt: '',
@@ -61,27 +81,59 @@ export default function CreatePost() {
     'Business', 'Health', 'Science', 'Travel', 'Education'
   ]);
 
-  const { news_categories, savePost } = useAuth();
+  const { news_categories, savePost, getPost } = useAuth();
+
   const all_cat: Category[] = news_categories.map((category: any, index: number) => {
     return {
-      id: Number(category.id), // Ensure id is a number
+      id: Number(category.id),
       name: category.name,
       color: available_colors[index % 10]
     };
   });
 
-  const UpdatePostContent = useCallback((value: string): void => {
-    setFormData({ ...formData, postContent: value });
-  }, [formData]);
-
-  const UpdateFeatureImage = useCallback((imageData: ImageData): void => {
-    console.log('value', imageData.url);
-    setFormData({ ...formData, featuredImage: imageData.url });
-    // setImagePreview(value);
-  }, [formData]);
-
   const [imagePreview, setImagePreview] = useState<string>('');
   const [isPreview, setIsPreview] = useState<boolean>(false);
+
+  // Load post data for edit mode
+  useEffect(() => {
+    const loadPost = async () => {
+      if (!isEditMode || !postId) return;
+
+      setIsLoadingPost(true);
+      try {
+        const response = await getPost(postId);
+        const post = response.data;
+        // console.log('post', post);
+        setFormData({...formData,
+          title: post.title || '',
+          excerpt: post.excerpt || '',
+          postContent: post.post_content || '',
+          featuredImage: post.featured_image || '',
+          categories: response.data.categories.map((cat: Category) => Number(cat.id)), // Fixed line
+          tags: response.data.tags.map((tag: Tag) => tag.name)
+        });
+
+        setImagePreview(post.featured_image || '');
+      } catch (error) {
+        console.error('Error loading post:', error);
+        showNotification('Failed to load post data. Please try again.', 'error');
+
+      } finally {
+        setIsLoadingPost(false);
+      }
+    };
+
+    loadPost();
+  }, [isEditMode, postId, getPost]);
+
+  const UpdatePostContent = useCallback((value: string): void => {
+    setFormData(prev => ({ ...prev, postContent: value }));
+  }, []);
+
+  const UpdateFeatureImage = useCallback((imageData: ImageData): void => {
+    setFormData(prev => ({ ...prev, featuredImage: imageData.url }));
+    setImagePreview(imageData.url);
+  }, []);
 
   const handleCategoryToggle = (categoryIds: number[]): void => {
     setFormData(prev => ({
@@ -90,10 +142,8 @@ export default function CreatePost() {
     }));
   };
 
-   const handleExternalImageInsert = (imageData: ImageData) => {
-   
+  const handleExternalImageInsert = (imageData: ImageData) => {
     if (editorRef.current) {
-     
       editorRef.current.insertImageIntoEditor({
         file_url: imageData.url,
         width: imageData.dimensions.width,
@@ -104,7 +154,6 @@ export default function CreatePost() {
     setIsOpen(false);
   };
 
-  // New function to handle Category objects from MultiselectDropdown
   const handleCategoryChange = (categories: Category[]): void => {
     const categoryIds = categories.map(cat => cat.id);
     handleCategoryToggle(categoryIds);
@@ -131,10 +180,6 @@ export default function CreatePost() {
     setIsOpen(flag);
     setIsFeature(isFeature);
   };
-
-
-  
-
 
   const handleTagInputKeyPress = (e: React.KeyboardEvent<HTMLInputElement>): void => {
     if (e.key === 'Enter' || e.key === ',') {
@@ -186,7 +231,7 @@ export default function CreatePost() {
     if (formData.categories.length > 5) {
       errors.push('Please select maximum 5 categories');
     }
-    if (formData.featuredImage === null || formData.featuredImage === undefined) {
+    if (!formData.featuredImage) {
       errors.push('Please Add Feature Image');
     }
     if (formData.tags.length > 10) {
@@ -204,6 +249,7 @@ export default function CreatePost() {
       return;
     }
 
+    setIsLoading(true);
     try {
       const saveData: SavePostData = {
         title: formData.title,
@@ -214,11 +260,33 @@ export default function CreatePost() {
         tags: formData.tags,
       };
 
-      await savePost(saveData);
-      showNotification('News article saved successfully!', 'success');
+      if (isEditMode) {
+        await savePost({ ...saveData, id: postId });
+        showNotification('News article updated successfully!', 'success');
+      } else {
+        await savePost(saveData);
+        showNotification('News article created successfully!', 'success');
+      }
+
+      // Redirect after successful save/update
+      setTimeout(() => {
+        router.push('/posts');
+      }, 2000);
+
     } catch (e) {
       console.log('error', e);
-      showNotification('Failed to save article. Please try again.', 'error');
+      showNotification(
+        `Failed to ${isEditMode ? 'update' : 'save'} article. Please try again.`,
+        'error'
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCancel = (): void => {
+    if (window.confirm('Are you sure? Any unsaved changes will be lost.')) {
+      router.push('/posts');
     }
   };
 
@@ -236,9 +304,9 @@ export default function CreatePost() {
   const renderPreview = () => {
     return (
       <div className="max-w-4xl mx-auto p-6 bg-white">
-        {imagePreview && (
+        {(imagePreview || formData.featuredImage) && (
           <img
-            src={imagePreview}
+            src={imagePreview || formData.featuredImage || ''}
             alt="Featured"
             className="w-full h-64 object-cover rounded-lg mb-6"
           />
@@ -295,9 +363,32 @@ export default function CreatePost() {
     );
   };
 
+  // Loading state for edit mode
+  if (isLoadingPost) {
+    return (
+      <div className="flex justify-center items-center min-h-64">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
   return (
     <div>
-      <div className="flex justify-end items-center">
+      {/* Header with title and action buttons */}
+      <div className="flex justify-between items-center mb-6">
+        <div className="flex items-center space-x-4">
+          <button
+            onClick={handleCancel}
+            className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back
+          </button>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            {isEditMode ? 'Edit Article' : 'Create New Article'}
+          </h1>
+        </div>
+
         <div className="flex space-x-3">
           <button
             type="button"
@@ -310,10 +401,11 @@ export default function CreatePost() {
           <button
             type="button"
             onClick={handleSubmit}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
+            disabled={isLoading}
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Save className="w-4 h-4 mr-2" />
-            Save Article
+            {isLoading ? 'Saving...' : (isEditMode ? 'Update Article' : 'Save Article')}
           </button>
         </div>
       </div>
@@ -330,158 +422,167 @@ export default function CreatePost() {
           renderPreview()
         ) : (
           <div className="space-y-4">
-              <div className="space-y-6">
-                {/* Title */}
-                <div>
-                  <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Title *
-                  </label>
+            <div className="space-y-6">
+              {/* Title */}
+              <div>
+                <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Title *
+                </label>
+                <input
+                  type="text"
+                  id="title"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 text-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                  placeholder="Enter article title..."
+                  required
+                />
+              </div>
+
+              {/* Excerpt */}
+              <div>
+                <label htmlFor="excerpt" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Excerpt *
+                </label>
+                <textarea
+                  id="excerpt"
+                  name="excerpt"
+                  value={formData.excerpt}
+                  onChange={handleInputChange}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                  placeholder="Brief description of the article..."
+                  required
+                />
+              </div>
+
+              {/* Categories */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                  Categories *
+                </label>
+                <div className="block">
+                  <MultiselectDropdown
+                    resetDropSelected={handleCategoryChange}
+                    news_categories={all_cat}
+                    handleCategoryChange={handleCategoryChange}
+                    selectedCategories={formData.categories}
+                  />
+                </div>
+
+                {formData.categories.length > 0 && (
+                  <div className="mt-3">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Selected categories:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {formData.categories.map(categoryId => {
+                        const category = all_cat.find(cat => cat.id === categoryId);
+                        return category ? (
+                          <span
+                            key={categoryId}
+                            className={`px-2 py-1 rounded-full text-xs font-medium ${category.color}`}
+                          >
+                            {category.name}
+                          </span>
+                        ) : null;
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Tags Section */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                  Tags
+                </label>
+
+                {/* Tag Input */}
+                <div className="flex gap-2 mb-4">
                   <input
                     type="text"
-                    id="title"
-                    name="title"
-                    value={formData.title}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 text-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-                    placeholder="Enter article title..."
-                    required
+                    value={tagInput}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTagInput(e.target.value)}
+                    onKeyPress={handleTagInputKeyPress}
+                    className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                    placeholder="Type a tag and press Enter or comma..."
                   />
+                  <button
+                    type="button"
+                    onClick={handleTagInputSubmit}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
                 </div>
 
-                {/* Excerpt */}
-                <div>
-                  <label htmlFor="excerpt" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Excerpt *
-                  </label>
-                  <textarea
-                    id="excerpt"
-                    name="excerpt"
-                    value={formData.excerpt}
-                    onChange={handleInputChange}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-                    placeholder="Brief description of the article..."
-                    required
-                  />
-                </div>
-
-                {/* Categories */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                    Categories *
-                  </label>
-                  <div className="block">
-                    <MultiselectDropdown
-                      resetDropSelected={handleCategoryChange}
-                      news_categories={all_cat}
-                      handleCategoryChange={handleCategoryChange}
-                    />
+                {/* Popular Tags */}
+                <div className="mb-4">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Popular tags:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {availableTags.filter(tag => !formData.tags.includes(tag)).map((tag: string) => (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => handleTagAdd(tag)}
+                        className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors border border-gray-300 dark:border-gray-600"
+                      >
+                        + {tag}
+                      </button>
+                    ))}
                   </div>
-
-                  {formData.categories.length > 0 && (
-                    <div className="mt-3">
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Selected categories:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {formData.categories.map(categoryId => {
-                          const category = all_cat.find(cat => cat.id === categoryId);
-                          return category ? (
-                            <span
-                              key={categoryId}
-                              className={`px-2 py-1 rounded-full text-xs font-medium ${category.color}`}
-                            >
-                              {category.name}
-                            </span>
-                          ) : null;
-                        })}
-                      </div>
-                    </div>
-                  )}
                 </div>
 
-                {/* Tags Section */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                    Tags
-                  </label>
-
-                  {/* Tag Input */}
-                  <div className="flex gap-2 mb-4">
-                    <input
-                      type="text"
-                      value={tagInput}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTagInput(e.target.value)}
-                      onKeyPress={handleTagInputKeyPress}
-                      className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-                      placeholder="Type a tag and press Enter or comma..."
-                    />
-                    <button
-                      type="button"
-                      onClick={handleTagInputSubmit}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-                    >
-                      <Plus className="w-4 h-4" />
-                    </button>
-                  </div>
-
-                  {/* Popular Tags */}
-                  <div className="mb-4">
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Popular tags:</p>
+                {/* Selected Tags */}
+                {formData.tags.length > 0 && (
+                  <div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Selected tags ({formData.tags.length}/10):</p>
                     <div className="flex flex-wrap gap-2">
-                      {availableTags.filter(tag => !formData.tags.includes(tag)).map((tag: string) => (
-                        <button
-                          key={tag}
-                          type="button"
-                          onClick={() => handleTagAdd(tag)}
-                          className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors border border-gray-300 dark:border-gray-600"
+                      {formData.tags.map((tag: string, index: number) => (
+                        <span
+                          key={index}
+                          className="inline-flex items-center px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium border border-blue-200 dark:border-blue-700"
                         >
-                          + {tag}
-                        </button>
+                          #{tag}
+                          <button
+                            type="button"
+                            onClick={() => handleTagRemove(tag)}
+                            className="ml-2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 focus:outline-none"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </span>
                       ))}
                     </div>
                   </div>
+                )}
 
-                  {/* Selected Tags */}
-                  {formData.tags.length > 0 && (
-                    <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Selected tags ({formData.tags.length}/10):</p>
-                      <div className="flex flex-wrap gap-2">
-                        {formData.tags.map((tag: string, index: number) => (
-                          <span
-                            key={index}
-                            className="inline-flex items-center px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium border border-blue-200 dark:border-blue-700"
-                          >
-                            #{tag}
-                            <button
-                              type="button"
-                              onClick={() => handleTagRemove(tag)}
-                              className="ml-2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 focus:outline-none"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                    Tags help categorize and make your content more discoverable. Press Enter or comma to add multiple tags.
-                  </p>
-                </div>
-
-                {/* Featured Image */}
-                <FeatureImageUploader 
-                  featuredImage={formData.featuredImage} 
-                  UpdateFeatureImage={UpdateFeatureImage} 
-                  OpenModal={OpenModal}
-                />
+                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                  Tags help categorize and make your content more discoverable. Press Enter or comma to add multiple tags.
+                </p>
               </div>
-           
+
+              {/* Featured Image */}
+              <FeatureImageUploader
+                featuredImage={formData.featuredImage}
+                UpdateFeatureImage={UpdateFeatureImage}
+                OpenModal={OpenModal}
+              />
+            </div>
 
             {/* WYSIWYG Editor */}
             <div className="shadow rounded-lg">
-              <ImageUploaderModal isOpen={isOpen} callback={ isFeature ? UpdateFeatureImage : handleExternalImageInsert} OpenModal={OpenModal}/>
-              <WysiwygEditor ref={editorRef} OpenModal={OpenModal} updatePostContent={UpdatePostContent} postContent={formData.postContent} />
+              <ImageUploaderModal
+                isOpen={isOpen}
+                callback={isFeature ? UpdateFeatureImage : handleExternalImageInsert}
+                OpenModal={OpenModal}
+              />
+              <WysiwygEditor
+                ref={editorRef}
+                OpenModal={OpenModal}
+                updatePostContent={UpdatePostContent}
+                postContent={formData.postContent}
+              />
             </div>
           </div>
         )}
