@@ -24,7 +24,7 @@ interface ImagesSectionProps {
   totalImages?: number;
   currentPage?: number;
   callback: (url: string) => void;
-  OpenModal: (flag: boolean) => void;
+  OpenModal: (flag: boolean, isFeature: boolean) => void;
 }
 
 export const ImagesSection: React.FC<ImagesSectionProps> = ({ 

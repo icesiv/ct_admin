@@ -61,8 +61,8 @@ interface ImageUploaderModalProps {
   initialImages?: ImageData[];
   onImagesChange?: (images: ImageData[]) => void;
   isOpen: boolean;
-  callback?: (url: string) => void;
-  OpenModal: (flag: boolean) => void;
+  callback?: (imageData: ImageData) => void;
+  OpenModal: (flag: boolean, isFeature: boolean) => void;
 }
 
 interface UploadResponse {
@@ -131,7 +131,7 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
       minSize: 1024, // 1KB
       allowedTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'],
       maxCount: 20,
-      maxDimensions: { width: 4000, height: 4000 },
+      maxDimensions: { width: 8000, height: 8000 },
       minDimensions: { width: 50, height: 50 }
     }
   };
@@ -146,7 +146,9 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
       url: item.image_object.file_url,
       tags: item.tag ? item.tag.split(',').map(tag => tag.trim()) : [],
       name: item.title,
-      fileName: item.image_object.original_name
+      fileName: item.image_object.original_name,
+      dimensions: item.image_object.dimensions,
+      thumbnails: item.image_object.thumbnails
     }));
   };
 
@@ -542,7 +544,7 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
           type: 'success', 
           message: `Successfully uploaded ${pendingFiles.length} image${pendingFiles.length > 1 ? 's' : ''}` 
         });
-        
+        console.log('failedUploads', failedUploads);
         // Add successful uploads to local state for preview
         const newImages: ImageData[] = [];
         
@@ -680,7 +682,7 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
               <h2 className="text-2xl font-bold text-gray-800">Image Manager</h2>
               <button
                 onClick={() => {
-                  OpenModal(false);
+                  OpenModal(false, false);
                 }}
                 className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                 type="button"

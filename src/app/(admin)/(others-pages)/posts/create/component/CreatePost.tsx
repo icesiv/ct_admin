@@ -21,7 +21,7 @@ interface FormData {
   title: string;
   excerpt: string;
   postContent: string;
-  featuredImage: File | string | null;
+  featuredImage: string | null;
   categories: number[];
   tags: string[];
 }
@@ -74,9 +74,9 @@ export default function CreatePost() {
     setFormData({ ...formData, postContent: value });
   }, [formData]);
 
-  const UpdateFeatureImage = useCallback((value: File | string | null): void => {
-    console.log('value', value);
-    setFormData({ ...formData, featuredImage: value });
+  const UpdateFeatureImage = useCallback((imageData: ImageData): void => {
+    console.log('value', imageData.url);
+    setFormData({ ...formData, featuredImage: imageData.url });
     // setImagePreview(value);
   }, [formData]);
 
@@ -91,9 +91,15 @@ export default function CreatePost() {
   };
 
    const handleExternalImageInsert = (imageData: ImageData) => {
-    // Call the exposed method from the editor
+   
     if (editorRef.current) {
-      editorRef.current.insertImageIntoEditor(imageData);
+     
+      editorRef.current.insertImageIntoEditor({
+        file_url: imageData.url,
+        width: imageData.dimensions.width,
+        height: imageData.dimensions.height,
+        thumb: imageData.thumbnails[0].file_url
+      });
     }
     setIsOpen(false);
   };
@@ -121,8 +127,9 @@ export default function CreatePost() {
     }));
   };
 
-  const OpenModal = (flag: boolean): void => {
+  const OpenModal = (flag: boolean, isFeature: boolean): void => {
     setIsOpen(flag);
+    setIsFeature(isFeature);
   };
 
 
@@ -463,14 +470,18 @@ export default function CreatePost() {
                 </div>
 
                 {/* Featured Image */}
-                <FeatureImageUploader featuredImage={formData.featuredImage} UpdateFeatureImage={UpdateFeatureImage} OpenModal={OpenModal}/>
+                <FeatureImageUploader 
+                  featuredImage={formData.featuredImage} 
+                  UpdateFeatureImage={UpdateFeatureImage} 
+                  OpenModal={OpenModal}
+                />
               </div>
            
 
             {/* WYSIWYG Editor */}
             <div className="shadow rounded-lg">
-              <ImageUploaderModal isOpen={isOpen} callback={handleExternalImageInsert} OpenModal={OpenModal}/>
-              <WysiwygEditor OpenModal={OpenModal} updatePostContent={UpdatePostContent} postContent={formData.postContent} />
+              <ImageUploaderModal isOpen={isOpen} callback={ isFeature ? UpdateFeatureImage : handleExternalImageInsert} OpenModal={OpenModal}/>
+              <WysiwygEditor ref={editorRef} OpenModal={OpenModal} updatePostContent={UpdatePostContent} postContent={formData.postContent} />
             </div>
           </div>
         )}

@@ -63,8 +63,8 @@ export const ImagesGrid: React.FC<ImagesGridProps> = ({
             <div className="aspect-square overflow-hidden">
               <a href='#' onClick={(e)=>{
                 e.preventDefault();
-                console.log(' image',image);
-                callback(image.url);
+                // console.log(' image',image);
+                callback(image);
                 OpenModal(false);
               }}>
                 <img src={image.url} alt={image.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"

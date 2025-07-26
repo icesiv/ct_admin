@@ -71,7 +71,7 @@ interface WysiwygEditorProps {
   maxImageSize?: number;
   placeholder?: string;
   className?: string;
-  OpenModal: (flag: boolean) => void;
+  OpenModal: (flag: boolean,isFeature: boolean) => void;
 }
 
 // Add interface for the ref methods
@@ -499,6 +499,7 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(({
 
   // Image handling - This is the method that will be exposed
   const insertImageIntoEditor = useCallback((imageData: ImageData) => {
+    console.log('Hola', imageData);
     const img = document.createElement('img');
     img.src = imageData.file_url;
     img.alt = 'Uploaded image';
@@ -768,7 +769,7 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(({
         if (selection?.rangeCount) {
           setSavedRange(selection.getRangeAt(0).cloneRange());
         }
-        OpenModal(true);
+        OpenModal(true,false);
       },
       title: 'Insert Image'
     },
