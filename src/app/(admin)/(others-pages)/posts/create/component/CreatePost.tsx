@@ -1,14 +1,15 @@
 "use client";
 
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Save, Eye, X, Plus } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { available_colors } from '@/config/config';
-import WysiwygEditor from '@/components/editor/WysiwygEditor';
+// import WysiwygEditor from '@/components/editor/WysiwygEditor';
 import { FeatureImageUploader } from '@/components/editor/FeatureUploader';
 import { Notification } from '@/components/ui/notification/Notification';
 import MultiselectDropdown from '@/components/ui/dropdown/MultiselectDropdown';
-
+import ImageUploaderModal from './Gallery/ImageUploaderModal';
+import WysiwygEditor, { WysiwygEditorRef, ImageData } from '@/components/editor/WysiwygEditor';
 // Type definitions
 interface Category {
   id: number;
@@ -20,7 +21,7 @@ interface FormData {
   title: string;
   excerpt: string;
   postContent: string;
-  featuredImage: File | string | null;
+  featuredImage: string | null;
   categories: number[];
   tags: string[];
 }
@@ -40,12 +41,15 @@ interface SavePostData {
 }
 
 export default function CreatePost() {
+  const editorRef = useRef<WysiwygEditorRef>(null);
+  const [isFeature, setIsFeature] = useState<boolean>(true);
+  const [isOpen, setIsOpen] = useState<boolean>(false);
   const [notification, setNotification] = useState<NotificationState | null>(null);
   const [formData, setFormData] = useState<FormData>({
     title: '',
     excerpt: '',
     postContent: '    ',
-    featuredImage: null,
+    featuredImage: '',
     categories: [],
     tags: []
   });
@@ -70,9 +74,10 @@ export default function CreatePost() {
     setFormData({ ...formData, postContent: value });
   }, [formData]);
 
-  const UpdateFeatureImage = useCallback((value: File | string | null): void => {
-    console.log('value', value);
-    setFormData({ ...formData, featuredImage: value });
+  const UpdateFeatureImage = useCallback((imageData: ImageData): void => {
+    console.log('value', imageData.url);
+    setFormData({ ...formData, featuredImage: imageData.url });
+    // setImagePreview(value);
   }, [formData]);
 
   const [imagePreview, setImagePreview] = useState<string>('');
@@ -83,6 +88,20 @@ export default function CreatePost() {
       ...prev,
       categories: categoryIds
     }));
+  };
+
+   const handleExternalImageInsert = (imageData: ImageData) => {
+   
+    if (editorRef.current) {
+     
+      editorRef.current.insertImageIntoEditor({
+        file_url: imageData.url,
+        width: imageData.dimensions.width,
+        height: imageData.dimensions.height,
+        thumb: imageData.thumbnails[0].file_url
+      });
+    }
+    setIsOpen(false);
   };
 
   // New function to handle Category objects from MultiselectDropdown
@@ -107,6 +126,15 @@ export default function CreatePost() {
       tags: prev.tags.filter(tag => tag !== tagToRemove)
     }));
   };
+
+  const OpenModal = (flag: boolean, isFeature: boolean): void => {
+    setIsOpen(flag);
+    setIsFeature(isFeature);
+  };
+
+
+  
+
 
   const handleTagInputKeyPress = (e: React.KeyboardEvent<HTMLInputElement>): void => {
     if (e.key === 'Enter' || e.key === ',') {
@@ -442,13 +470,18 @@ export default function CreatePost() {
                 </div>
 
                 {/* Featured Image */}
-                <FeatureImageUploader UpdateFeatureImage={UpdateFeatureImage} />
+                <FeatureImageUploader 
+                  featuredImage={formData.featuredImage} 
+                  UpdateFeatureImage={UpdateFeatureImage} 
+                  OpenModal={OpenModal}
+                />
               </div>
            
 
             {/* WYSIWYG Editor */}
             <div className="shadow rounded-lg">
-              <WysiwygEditor updatePostContent={UpdatePostContent} postContent={formData.postContent} />
+              <ImageUploaderModal isOpen={isOpen} callback={ isFeature ? UpdateFeatureImage : handleExternalImageInsert} OpenModal={OpenModal}/>
+              <WysiwygEditor ref={editorRef} OpenModal={OpenModal} updatePostContent={UpdatePostContent} postContent={formData.postContent} />
             </div>
           </div>
         )}
