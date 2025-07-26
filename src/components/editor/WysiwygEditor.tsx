@@ -33,7 +33,7 @@ import {
 import { BASE_URL } from '@/config/config';
 
 // Types
-interface ImageData {
+export interface ImageData {
   file_url: string;
   width?: number;
   height?: number;

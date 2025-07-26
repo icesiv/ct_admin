@@ -46,15 +46,7 @@ interface SavePostData {
   tags: string[];
 }
 
-interface Post {
-  id: number;
-  title: string;
-  excerpt: string;
-  post_content: string;
-  featured_image: string;
-  categories: Category[];
-  tags: string[];
-}
+
 
 export default function CreatePost({ postId = null }) {
   const isEditMode = !!postId;
