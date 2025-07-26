@@ -273,6 +273,7 @@ export default function LeadNews(){
         <SortableNewsList
           fetchLeadNews={fetchLeadNews}
           leadPosts={articles}
+          mode="leadnews"
         />
       </div>
     </div>

@@ -38,9 +38,10 @@ interface ApiResponse {
 interface SortableNewsListProps {
   leadPosts: Article[];
   fetchLeadNews: () => Promise<void>;
+  mode: string;
 }
 
-const SortableNewsList: React.FC<SortableNewsListProps> = ({ leadPosts, fetchLeadNews }) => {
+const SortableNewsList: React.FC<SortableNewsListProps> = ({ leadPosts, fetchLeadNews, mode  }) => {
   const [articles, setArticles] = useState<Article[]>([]);
   const [draggedItem, setDraggedItem] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
@@ -56,7 +57,7 @@ const SortableNewsList: React.FC<SortableNewsListProps> = ({ leadPosts, fetchLea
   }, [leadPosts]);
 
   const deleteLeadNews = async (news_id: string): Promise<void> => {
-    const url = `${BASE_URL}admin/posts/leadnews/remove`;
+    const url = `${BASE_URL}admin/posts/${mode}/remove`;
     const authtoken = localStorage.getItem('auth_token');
     
     try {
@@ -86,7 +87,7 @@ const SortableNewsList: React.FC<SortableNewsListProps> = ({ leadPosts, fetchLea
 
   const saveOrder = async (): Promise<void> => {
     const authtoken = localStorage.getItem('auth_token');
-    const url = `${BASE_URL}admin/posts/leadnews/reorder`;
+    const url = `${BASE_URL}admin/posts/${mode}/reorder`;
 
     setIsSaving(true);
     setSaveSuccess(false);

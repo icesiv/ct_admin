@@ -13,6 +13,7 @@ import {
   Hash,
   Star,
   FileVideo2,
+  ShieldAlert,
   Images,
   LayoutDashboard,
   Newspaper,
@@ -46,9 +47,14 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    name: "Lead-News",
+    name: "Lead News",
     icon: <Star />,
-    path: "/leadnews",
+    path: "/lead-news",
+  },
+  {
+    name: "Breaking News",
+    icon: <ShieldAlert />,
+    path: "/breaking-news",
   },
   {
     name: "Photo Galleries",
@@ -58,14 +64,14 @@ const navItems: NavItem[] = [
       { name: "Manage Galleries", path: "/photo-gallery" },
     ],
   },
-  {
-    name: "Videos",
-    icon: <FileVideo2 />,
-    subItems: [
-      { name: "Create Video", path: "/coming-soon" },
-      { name: "Homepage Videos", path: "/coming-soon" },
-    ],
-  },
+  // {
+  //   name: "Videos",
+  //   icon: <FileVideo2 />,
+  //   subItems: [
+  //     { name: "Create Video", path: "/coming-soon" },
+  //     { name: "Homepage Videos", path: "/coming-soon" },
+  //   ],
+  // },
   {
     name: "Topics",
     icon: <Hash />,
