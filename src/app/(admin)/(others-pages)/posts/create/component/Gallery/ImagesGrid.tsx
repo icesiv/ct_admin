@@ -63,7 +63,6 @@ export const ImagesGrid: React.FC<ImagesGridProps> = ({
             <div className="aspect-square overflow-hidden">
               <a href='#' onClick={(e)=>{
                 e.preventDefault();
-                // console.log(' image',image);
                 callback(image);
                 OpenModal(false);
               }}>

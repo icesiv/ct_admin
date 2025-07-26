@@ -32,8 +32,8 @@ import {
 } from 'lucide-react';
 import { BASE_URL } from '@/config/config';
 
-// Types
-export interface ImageData {
+
+interface ImageData {
   file_url: string;
   width?: number;
   height?: number;

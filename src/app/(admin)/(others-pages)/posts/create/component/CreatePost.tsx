@@ -8,8 +8,8 @@ import { FeatureImageUploader } from '@/components/editor/FeatureUploader';
 import { Notification } from '@/components/ui/notification/Notification';
 import MultiselectDropdown from '@/components/ui/dropdown/MultiselectDropdown';
 import ImageUploaderModal from './Gallery/ImageUploaderModal';
-import WysiwygEditor, { WysiwygEditorRef, ImageData } from '@/components/editor/WysiwygEditor';
-
+import WysiwygEditor, { WysiwygEditorRef } from '@/components/editor/WysiwygEditor';
+import {ImageData} from '@/app/(admin)/(others-pages)/posts/create/component/Gallery/ImageUploaderModal';
 // Type definitions
 
 interface Category {
@@ -73,7 +73,7 @@ export default function CreatePost({ postId = null }) {
     'Business', 'Health', 'Science', 'Travel', 'Education'
   ]);
 
-  const { news_categories, savePost, getPost } = useAuth();
+  const { news_categories, savePost, getPost, router } = useAuth();
 
   const all_cat: Category[] = news_categories.map((category: any, index: number) => {
     return {
@@ -133,7 +133,7 @@ export default function CreatePost({ postId = null }) {
       categories: categoryIds
     }));
   };
-
+  
   const handleExternalImageInsert = (imageData: ImageData) => {
     if (editorRef.current) {
       editorRef.current.insertImageIntoEditor({

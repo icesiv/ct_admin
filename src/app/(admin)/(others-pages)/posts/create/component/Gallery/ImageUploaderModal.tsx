@@ -4,13 +4,29 @@ import { X, Upload, Tag, AlertCircle, CheckCircle, FileImage } from 'lucide-reac
 import { BASE_URL } from '@/config/config';
 import { ImagesSection } from './ImagesSection';
 
-// Type definitions
-interface ImageData {
+interface Thumbnail {
+  name: string;
+  file_name: string;
+  file_path: string;
+  file_url: string;
+  width: number;
+  height: number;
+  file_size: number;
+}
+
+interface Dimensions {
+  width: number;
+  height: number;
+}
+
+export interface ImageData {
   id: number;
   url: string;
   tags: string[];
   name: string;
-  fileName?: string;
+  fileName: string;
+  dimensions: Dimensions;
+  thumbnails: Thumbnail[];
 }
 
 interface ApiImageData {
