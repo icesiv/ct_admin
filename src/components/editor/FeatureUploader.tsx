@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Upload, X} from 'lucide-react';
 
-
+type UploadStatus = 'idle' | 'uploading' | 'success' | 'error';
 
 
 export interface FeatureImageUploaderProps {

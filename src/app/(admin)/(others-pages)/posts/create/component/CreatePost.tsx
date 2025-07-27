@@ -48,7 +48,7 @@ interface SavePostData {
 
 
 
-export default function CreatePost({ postId = null }) {
+export default function CreatePost({ postId : postId }: { postId: string | null | undefined }) {
   const isEditMode = !!postId;
   const editorRef = useRef<WysiwygEditorRef>(null);
   const [isFeature, setIsFeature] = useState<boolean>(true);
