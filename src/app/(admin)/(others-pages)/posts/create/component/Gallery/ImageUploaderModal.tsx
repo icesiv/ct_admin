@@ -681,7 +681,6 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
     setTagInput(e.target.value);
     clearValidationError('tags');
   };
-  console.log('images Hoil', images);
   return (
     <>
       {/* Open Modal Button */}
