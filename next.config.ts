@@ -62,6 +62,19 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+
+      {
+        protocol: 'https',
+        hostname: 'beta.campustimes.press',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'ticktock.campustimes.press',
+        port: '',
+        pathname: '/**',
+      },
     ],
 
     dangerouslyAllowSVG: true,
