@@ -75,10 +75,10 @@ const SortableNewsList: React.FC<SortableNewsListProps> = ({ leadPosts, fetchLea
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const data: ApiResponse = await response.json();
-      if (!data.success) {
-        throw new Error(data.message || 'Failed to delete news');
-      }
+      // const data: ApiResponse = await response.json();
+      // if (!data.success) {
+      //   throw new Error(data.message || 'Failed to delete news');
+      // }
     } catch (error) {
       console.error('Error deleting news:', error);
       throw error;

@@ -551,9 +551,14 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
     try {
       const uploadPromises = pendingFiles.map(file => uploadToAPI(file, currentTitle.trim(), currentTags));
       const results = await Promise.all(uploadPromises);
-      
+      const success_upload_lists = transformApiDataToImageData(results.filter(result => result.success).map(result=>{
+        return result.data.data;
+      }));
+        // const success_upload_lists_ = transformApiDataToImageData(success_upload_lists);
+
+      // console.log('success_upload_lists', success_upload_lists, images);
       const failedUploads = results.filter(result => !result.success);
-      
+      setImages([...success_upload_lists,...images]);
       if (failedUploads.length === 0) {
         setUploadStatus({ 
           type: 'success', 
@@ -676,7 +681,6 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
     setTagInput(e.target.value);
     clearValidationError('tags');
   };
-  console.log('images Hoil', images);
   return (
     <>
       {/* Open Modal Button */}
