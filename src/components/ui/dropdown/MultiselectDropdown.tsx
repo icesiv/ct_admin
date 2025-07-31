@@ -5,6 +5,7 @@ import { ChevronDown, X, Search } from 'lucide-react';
 interface Category {
     id: number;
     name: string;
+    slug: string;
 }
 
 interface MultiselectDropdownProps {
@@ -26,9 +27,10 @@ const MultiselectDropdown: React.FC<MultiselectDropdownProps> = ({
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     // Filter categories based on search term
-    const filteredCategories = news_categories.filter(category =>
-        category.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+const filteredCategories = news_categories.filter(category =>
+    category.name.toLowerCase().includes(searchTerm.trim().toLowerCase()) ||
+    category.slug.toLowerCase().includes(searchTerm.trim().toLowerCase())
+);
 
     // Handle category selection
     const handleCategoryToggle = (category: Category): void => {

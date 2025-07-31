@@ -64,14 +64,14 @@ const navItems: NavItem[] = [
       { name: "Manage Galleries", path: "/photo-gallery" },
     ],
   },
-  // {
-  //   name: "Videos",
-  //   icon: <FileVideo2 />,
-  //   subItems: [
-  //     { name: "Create Video", path: "/coming-soon" },
-  //     { name: "Homepage Videos", path: "/coming-soon" },
-  //   ],
-  // },
+  {
+    name: "Videos",
+    icon: <FileVideo2 />,
+    subItems: [
+      { name: "Create Video", path: "/coming-soon" },
+      { name: "Homepage Videos", path: "/video/home" },
+    ],
+  },
   {
     name: "Topics",
     icon: <Hash />,

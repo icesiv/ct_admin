@@ -79,6 +79,7 @@ export default function CreatePost({ postId : postId }: { postId: string | null 
     return {
       id: Number(category.id),
       name: category.name,
+      slug: category.slug,
       color: available_colors[index % 10]
     };
   });
@@ -300,7 +301,7 @@ export default function CreatePost({ postId : postId }: { postId: string | null 
           <img
             src={imagePreview || formData.featuredImage || ''}
             alt="Featured"
-            className="w-full h-64 object-cover rounded-lg mb-6"
+            className="w-auto mx-auto h-120 rounded-lg mb-6"
           />
         )}
 
@@ -325,9 +326,9 @@ export default function CreatePost({ postId : postId }: { postId: string | null 
           {formData.title || 'Article Title'}
         </h1>
 
-        <p className="text-xl text-gray-600 mb-6 leading-relaxed">
+        {/* <p className="text-xl text-gray-600 mb-6 leading-relaxed">
           {formData.excerpt || 'Article excerpt will appear here...'}
-        </p>
+        </p> */}
 
         {/* Tags in Preview */}
         {formData.tags.length > 0 && (
@@ -364,43 +365,65 @@ export default function CreatePost({ postId : postId }: { postId: string | null 
     );
   }
 
+  const ArticleHeader = ({
+  isEditMode,
+  isPreview,
+  isLoading,
+  setIsPreview,
+  handleCancel,
+  handleSubmit
+}: {
+  isEditMode: boolean;
+  isPreview: boolean;
+  isLoading: boolean;
+  setIsPreview: (preview: boolean) => void;
+  handleCancel: () => void;
+  handleSubmit: () => void;
+}) => {
+  return (
+    <div className="flex justify-end my-4 items-center">
+     
+      <div className="flex space-x-3">
+                <button
+          onClick={handleCancel}
+          className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back
+        </button>
+        <button
+          type="button"
+          onClick={() => setIsPreview(!isPreview)}
+          className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
+        >
+          <Eye className="w-4 h-4 mr-2" />
+          {isPreview ? 'Edit' : 'Preview'}
+        </button>
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={isLoading}
+          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <Save className="w-4 h-4 mr-2" />
+          {isLoading ? 'Saving...' : (isEditMode ? 'Update Article' : 'Save Article')}
+        </button>
+      </div>
+    </div>
+  );
+};
+
   return (
     <div>
       {/* Header with title and action buttons */}
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center space-x-4">
-          <button
-            onClick={handleCancel}
-            className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
-          </button>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            {isEditMode ? 'Edit Article' : 'Create New Article'}
-          </h1>
-        </div>
-
-        <div className="flex space-x-3">
-          <button
-            type="button"
-            onClick={() => setIsPreview(!isPreview)}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
-          >
-            <Eye className="w-4 h-4 mr-2" />
-            {isPreview ? 'Edit' : 'Preview'}
-          </button>
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={isLoading}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Save className="w-4 h-4 mr-2" />
-            {isLoading ? 'Saving...' : (isEditMode ? 'Update Article' : 'Save Article')}
-          </button>
-        </div>
-      </div>
+<ArticleHeader
+        isEditMode={isEditMode}
+        isPreview={isPreview}
+        isLoading={isLoading}
+        setIsPreview={setIsPreview}
+        handleCancel={handleCancel}
+        handleSubmit={handleSubmit}
+      />
 
       <div className="max-w-7xl mx-auto lg:px-8 py-4">
         {notification && (
@@ -509,7 +532,7 @@ export default function CreatePost({ postId : postId }: { postId: string | null 
                 </div>
 
                 {/* Popular Tags */}
-                <div className="mb-4">
+                {/* <div className="mb-4">
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Popular tags:</p>
                   <div className="flex flex-wrap gap-2">
                     {availableTags.filter(tag => !formData.tags.includes(tag)).map((tag: string) => (
@@ -523,7 +546,7 @@ export default function CreatePost({ postId : postId }: { postId: string | null 
                       </button>
                     ))}
                   </div>
-                </div>
+                </div> */}
 
                 {/* Selected Tags */}
                 {formData.tags.length > 0 && (
@@ -578,6 +601,16 @@ export default function CreatePost({ postId : postId }: { postId: string | null 
           </div>
         )}
       </div>
+
+            {/* Header with title and action buttons */}
+<ArticleHeader
+        isEditMode={isEditMode}
+        isPreview={isPreview}
+        isLoading={isLoading}
+        setIsPreview={setIsPreview}
+        handleCancel={handleCancel}
+        handleSubmit={handleSubmit}
+      />
     </div>
   );
 }

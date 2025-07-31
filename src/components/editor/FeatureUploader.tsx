@@ -20,8 +20,6 @@ export const FeatureImageUploader = ({
   const [uploadStatus, setUploadStatus] = useState<UploadStatus>('idle');
   
 
-  
-
   useEffect(() => {
     if (featuredImage !== null && featuredImage !== '' && featuredImage !== undefined) {
       if (featuredImage !== imagePreview) {
@@ -30,20 +28,11 @@ export const FeatureImageUploader = ({
     }
   }, [featuredImage, imagePreview]);
 
-  
-
-  
-
- 
-
   const removeImage = (): void => {
     setImagePreview(null);
    
   };
 
-  
-
- 
   return (
     <div>
       <label className="block text-sm font-medium text-gray-500 mb-2">
@@ -57,7 +46,7 @@ export const FeatureImageUploader = ({
             OpenModal(true, true);
           }}
           disabled={uploadStatus === 'uploading'}
-          className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
         >
           <Upload className="w-4 h-4 mr-2" />
           {uploadStatus === 'uploading' ? 'Uploading...' : 'Upload Image'}
@@ -70,19 +59,19 @@ export const FeatureImageUploader = ({
      
 
       {imagePreview && (
-        <div className="mt-4 relative">
+        <div className="mt-4 flex">
           <img
             src={imagePreview}
             alt="Preview"
-            className="w-full max-w-md h-48 object-cover rounded-lg border border-gray-200"
+            className="w-80 h-48 rounded-lg border border-gray-200"
           />
           <button
             type="button"
             onClick={removeImage}
-            className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+            className=" bg-red-500 w-8 h-8 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
             aria-label="Remove image"
           >
-            <X className="w-4 h-4" />
+            <X className="w-6 h-6" />
           </button>
 
          

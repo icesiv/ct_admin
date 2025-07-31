@@ -7,7 +7,7 @@ import React, {
   useEffect,
   useMemo,
   memo,
-  forwardRef, 
+  forwardRef,
   useImperativeHandle,
   type ChangeEvent,
   type DragEvent,
@@ -71,7 +71,7 @@ interface WysiwygEditorProps {
   maxImageSize?: number;
   placeholder?: string;
   className?: string;
-  OpenModal: (flag: boolean,isFeature: boolean) => void;
+  OpenModal: (flag: boolean, isFeature: boolean) => void;
 }
 
 // Add interface for the ref methods
@@ -769,7 +769,7 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(({
         if (selection?.rangeCount) {
           setSavedRange(selection.getRangeAt(0).cloneRange());
         }
-        OpenModal(true,false);
+        OpenModal(true, false);
       },
       title: 'Insert Image'
     },
@@ -907,12 +907,13 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(({
             ref={editorRef}
             contentEditable
             suppressContentEditableWarning={true}
-            className={`min-h-96 p-4 focus:outline-none text-gray-800 dark:text-gray-200 leading-relaxed ${
+            className={`min-h-96 p-4 focus:outline-none bg-gray-100 dark:bg-gray-400 text-fuchsia-700 leading-relaxed ${ 
               dragOver ? 'bg-blue-50 dark:bg-blue-900/20 border-2 border-dashed border-blue-300 dark:border-blue-500' : ''
-            }`}
+              }`}
             style={{
-              fontSize: '16px',
-              lineHeight: '1.6'
+              fontSize: '18px',
+              lineHeight: '1.6',
+        
             }}
             onInput={handleContentChange}
             onMouseUp={handleTextSelection}
