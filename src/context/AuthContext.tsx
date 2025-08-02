@@ -75,7 +75,7 @@ interface AuthProviderProps {
 }
 
 // Create context with proper typing
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
 const initialStateAuth: AuthState = {
     user: null,
