@@ -5,28 +5,28 @@ type UploadStatus = 'idle' | 'uploading' | 'success' | 'error';
 
 
 export interface FeatureImageUploaderProps {
-  featuredImage?: string | null;
+  featured_image?: string | null;
   title?: string;
   OpenModal: (flag: boolean | false, isFeature: boolean) => void;
 }
 
 export const FeatureImageUploader = ({  
-  featuredImage, 
+  featured_image, 
   title = 'Featured Image',
   OpenModal, 
 }: FeatureImageUploaderProps) => {
 
-  const [imagePreview, setImagePreview] = useState<string | null>(featuredImage || null);
+  const [imagePreview, setImagePreview] = useState<string | null>(featured_image || null);
   const [uploadStatus, setUploadStatus] = useState<UploadStatus>('idle');
   
 
   useEffect(() => {
-    if (featuredImage !== null && featuredImage !== '' && featuredImage !== undefined) {
-      if (featuredImage !== imagePreview) {
-        setImagePreview(featuredImage);
+    if (featured_image !== null && featured_image !== '' && featured_image !== undefined) {
+      if (featured_image !== imagePreview) {
+        setImagePreview(featured_image);
       }
     }
-  }, [featuredImage, imagePreview]);
+  }, [featured_image, imagePreview]);
 
   const removeImage = (): void => {
     setImagePreview(null);
@@ -51,12 +51,8 @@ export const FeatureImageUploader = ({
           <Upload className="w-4 h-4 mr-2" />
           {uploadStatus === 'uploading' ? 'Uploading...' : 'Upload Image'}
         </button>
-
-      
       </div>
 
-      
-     
 
       {imagePreview && (
         <div className="mt-4 flex">
@@ -73,12 +69,8 @@ export const FeatureImageUploader = ({
           >
             <X className="w-6 h-6" />
           </button>
-
-         
         </div>
-      )}
-
-     
+      )}     
     </div>
   );
 };

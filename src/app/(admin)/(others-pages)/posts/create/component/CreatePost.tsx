@@ -9,12 +9,13 @@ import { Notification } from '@/components/ui/notification/Notification';
 import MultiselectDropdown from '@/components/ui/dropdown/MultiselectDropdown';
 import ImageUploaderModal from './Gallery/ImageUploaderModal';
 import WysiwygEditor, { WysiwygEditorRef } from '@/components/editor/WysiwygEditor';
-import {ImageData} from '@/app/(admin)/(others-pages)/posts/create/component/Gallery/ImageUploaderModal';
+import { ImageData } from '@/app/(admin)/(others-pages)/posts/create/component/Gallery/ImageUploaderModal';
 // Type definitions
 
 interface Category {
   id: number;
   name: string;
+  slug: string;
   color?: string;
 }
 
@@ -23,32 +24,26 @@ interface Tag {
   name: string;
 }
 
-interface FormData {
-  title: string;
-  excerpt: string;
-  postContent: string;
-  featuredImage: string | null;
-  categories: number[];
-  tags: string[];
-}
-
 interface NotificationState {
   message: string;
   type: 'success' | 'error' | 'warning' | 'info';
 }
 
-interface SavePostData {
+interface FormData {
   title: string;
   excerpt: string;
   post_content: string;
-  featured_image: File | string | null;
+  short_title?: string | null;
+  subtitle?: string | null;
+  highlight?: string | null;
+  author?: string | null;
+  writer_id?: number | null;
+  featured_image: string | null;
   categories: number[];
   tags: string[];
 }
 
-
-
-export default function CreatePost({ postId : postId }: { postId: string | null | undefined }) {
+export default function CreatePost({ postId: postId }: { postId: string | null | undefined }) {
   const isEditMode = !!postId;
   const editorRef = useRef<WysiwygEditorRef>(null);
   const [isFeature, setIsFeature] = useState<boolean>(true);
@@ -60,18 +55,19 @@ export default function CreatePost({ postId : postId }: { postId: string | null 
   const [formData, setFormData] = useState<FormData>({
     title: '',
     excerpt: '',
-    postContent: '    ',
-    featuredImage: '',
+    short_title: '',
+    subtitle: '',
+    highlight: '',
+    author: '',
+    writer_id: null,
+    post_content: '',
+    featured_image: '',
     categories: [],
     tags: []
   });
 
   // Tag-related state
   const [tagInput, setTagInput] = useState<string>('');
-  const [availableTags, setAvailableTags] = useState<string[]>([
-    'Breaking News', 'Politics', 'Technology', 'Sports', 'Entertainment',
-    'Business', 'Health', 'Science', 'Travel', 'Education'
-  ]);
 
   const { news_categories, savePost, getPost, router } = useAuth();
 
@@ -96,14 +92,20 @@ export default function CreatePost({ postId : postId }: { postId: string | null 
       try {
         const response = await getPost(postId);
         const post = response.data;
-        // console.log('post', post);
-        setFormData({...formData,
+        console.log('post', post);
+
+        setFormData({
+          ...formData,
           title: post.title || '',
+          short_title: post.short_title || '',
+          subtitle: post.subtitle || '',
+          highlight: post.highlight || '',
+          author: post.author || '',
           excerpt: post.excerpt || '',
-          postContent: post.post_content || '',
-          featuredImage: post.featured_image || '',
-          categories: response.data.categories.map((cat: Category) => Number(cat.id)), // Fixed line
-          tags: response.data.tags.map((tag: Tag) => tag.name)
+          post_content: post.post_content || '',
+          featured_image: post.image || '',
+          categories: post.categories?.map?.((cat: Category) => Number(cat.id)) || [],
+          tags: post.tags?.map?.((tag: Tag) => tag.name) || []
         });
 
         setImagePreview(post.featured_image || '');
@@ -134,7 +136,7 @@ export default function CreatePost({ postId : postId }: { postId: string | null 
       categories: categoryIds
     }));
   };
-  
+
   const handleExternalImageInsert = (imageData: ImageData) => {
     if (editorRef.current) {
       editorRef.current.insertImageIntoEditor({
@@ -215,7 +217,7 @@ export default function CreatePost({ postId : postId }: { postId: string | null 
     if (!formData.excerpt.trim()) {
       errors.push('Excerpt is required');
     }
-    if (!formData.postContent.trim()) {
+    if (!formData.post_content.trim()) {
       errors.push('Content is required');
     }
     if (formData.categories.length === 0) {
@@ -224,7 +226,7 @@ export default function CreatePost({ postId : postId }: { postId: string | null 
     if (formData.categories.length > 5) {
       errors.push('Please select maximum 5 categories');
     }
-    if (!formData.featuredImage) {
+    if (!formData.featured_image) {
       errors.push('Please Add Feature Image');
     }
     if (formData.tags.length > 10) {
@@ -244,11 +246,16 @@ export default function CreatePost({ postId : postId }: { postId: string | null 
 
     setIsLoading(true);
     try {
-      const saveData: SavePostData = {
+      const saveData: FormData = {
         title: formData.title,
+        short_title: formData.short_title,
+        subtitle: formData.subtitle,
+        highlight: formData.highlight,
+        author: formData.author,
+        writer_id: formData.writer_id,
         excerpt: formData.excerpt,
-        post_content: formData.postContent,
-        featured_image: formData.featuredImage,
+        post_content: formData.post_content,
+        featured_image: formData.featured_image,
         categories: formData.categories,
         tags: formData.tags,
       };
@@ -297,9 +304,9 @@ export default function CreatePost({ postId : postId }: { postId: string | null 
   const renderPreview = () => {
     return (
       <div className="max-w-4xl mx-auto p-6 bg-white">
-        {(imagePreview || formData.featuredImage) && (
+        {(imagePreview || formData.featured_image) && (
           <img
-            src={imagePreview || formData.featuredImage || ''}
+            src={imagePreview || formData.featured_image || ''}
             alt="Featured"
             className="w-auto mx-auto h-120 rounded-lg mb-6"
           />
@@ -326,6 +333,8 @@ export default function CreatePost({ postId : postId }: { postId: string | null 
           {formData.title || 'Article Title'}
         </h1>
 
+        {/* // Todo */}
+
         {/* <p className="text-xl text-gray-600 mb-6 leading-relaxed">
           {formData.excerpt || 'Article excerpt will appear here...'}
         </p> */}
@@ -349,7 +358,7 @@ export default function CreatePost({ postId : postId }: { postId: string | null 
         <div
           className="prose prose-lg max-w-none text-gray-800 leading-relaxed"
           dangerouslySetInnerHTML={{
-            __html: processContent(formData.postContent || 'Article content will appear here...')
+            __html: processContent(formData.post_content || 'Article content will appear here...')
           }}
         />
       </div>
@@ -366,57 +375,57 @@ export default function CreatePost({ postId : postId }: { postId: string | null 
   }
 
   const ArticleHeader = ({
-  isEditMode,
-  isPreview,
-  isLoading,
-  setIsPreview,
-  handleCancel,
-  handleSubmit
-}: {
-  isEditMode: boolean;
-  isPreview: boolean;
-  isLoading: boolean;
-  setIsPreview: (preview: boolean) => void;
-  handleCancel: () => void;
-  handleSubmit: () => void;
-}) => {
-  return (
-    <div className="flex justify-end my-4 items-center">
-     
-      <div className="flex space-x-3">
-                <button
-          onClick={handleCancel}
-          className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back
-        </button>
-        <button
-          type="button"
-          onClick={() => setIsPreview(!isPreview)}
-          className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
-        >
-          <Eye className="w-4 h-4 mr-2" />
-          {isPreview ? 'Edit' : 'Preview'}
-        </button>
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={isLoading}
-          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <Save className="w-4 h-4 mr-2" />
-          {isLoading ? 'Saving...' : (isEditMode ? 'Update Article' : 'Save Article')}
-        </button>
+    isEditMode,
+    isPreview,
+    isLoading,
+    setIsPreview,
+    handleCancel,
+    handleSubmit
+  }: {
+    isEditMode: boolean;
+    isPreview: boolean;
+    isLoading: boolean;
+    setIsPreview: (preview: boolean) => void;
+    handleCancel: () => void;
+    handleSubmit: () => void;
+  }) => {
+    return (
+      <div className="flex justify-end my-4 items-center">
+
+        <div className="flex space-x-3">
+          <button
+            onClick={handleCancel}
+            className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsPreview(!isPreview)}
+            className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
+          >
+            <Eye className="w-4 h-4 mr-2" />
+            {isPreview ? 'Edit' : 'Preview'}
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={isLoading}
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Save className="w-4 h-4 mr-2" />
+            {isLoading ? 'Saving...' : (isEditMode ? 'Update Article' : 'Save Article')}
+          </button>
+        </div>
       </div>
-    </div>
-  );
-};
+    );
+  };
 
   return (
     <div>
       {/* Header with title and action buttons */}
-<ArticleHeader
+      <ArticleHeader
         isEditMode={isEditMode}
         isPreview={isPreview}
         isLoading={isLoading}
@@ -452,6 +461,54 @@ export default function CreatePost({ postId : postId }: { postId: string | null 
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 text-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                   placeholder="Enter article title..."
                   required
+                />
+              </div>
+
+              {/* Short title */}
+              <div>
+                <label htmlFor="short_title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Short title
+                </label>
+                <input
+                  type="text"
+                  id="short_title"
+                  name="short_title"
+                  value={formData.short_title || ''}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                  placeholder="Short title for home page..."
+                />
+              </div>
+
+              {/* Author */}
+              <div>
+                <label htmlFor="author" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Writer's name
+                </label>
+                <input
+                  type="text"
+                  id="author"
+                  name="author"
+                  value={formData.author || ''}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                  placeholder="Writer's name..."
+                />
+              </div>
+
+              {/* highlight */}
+              <div>
+                <label htmlFor="highlight" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Highlight
+                </label>
+                <textarea
+                  id="highlight"
+                  name="highlight"
+                  value={formData.highlight || ''}
+                  onChange={handleInputChange}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                  placeholder="Highlight for the article..."
                 />
               </div>
 
@@ -531,23 +588,6 @@ export default function CreatePost({ postId : postId }: { postId: string | null 
                   </button>
                 </div>
 
-                {/* Popular Tags */}
-                {/* <div className="mb-4">
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Popular tags:</p>
-                  <div className="flex flex-wrap gap-2">
-                    {availableTags.filter(tag => !formData.tags.includes(tag)).map((tag: string) => (
-                      <button
-                        key={tag}
-                        type="button"
-                        onClick={() => handleTagAdd(tag)}
-                        className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors border border-gray-300 dark:border-gray-600"
-                      >
-                        + {tag}
-                      </button>
-                    ))}
-                  </div>
-                </div> */}
-
                 {/* Selected Tags */}
                 {formData.tags.length > 0 && (
                   <div>
@@ -579,13 +619,17 @@ export default function CreatePost({ postId : postId }: { postId: string | null 
 
               {/* Featured Image */}
               <FeatureImageUploader
-                featuredImage={formData.featuredImage}
+                featured_image={formData.featured_image}
                 OpenModal={OpenModal}
               />
             </div>
 
             {/* WYSIWYG Editor */}
-            <div className="shadow rounded-lg">
+
+            <div className="mt-6">
+              <div className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Main Content *
+              </div>
               <ImageUploaderModal
                 isOpen={isOpen}
                 callback={isFeature ? UpdateFeatureImage : handleExternalImageInsert}
@@ -595,15 +639,15 @@ export default function CreatePost({ postId : postId }: { postId: string | null 
                 ref={editorRef}
                 OpenModal={OpenModal}
                 updatePostContent={UpdatePostContent}
-                postContent={formData.postContent}
+                postContent={formData.post_content}
               />
             </div>
           </div>
         )}
       </div>
 
-            {/* Header with title and action buttons */}
-<ArticleHeader
+      {/* Header with title and action buttons */}
+      <ArticleHeader
         isEditMode={isEditMode}
         isPreview={isPreview}
         isLoading={isLoading}

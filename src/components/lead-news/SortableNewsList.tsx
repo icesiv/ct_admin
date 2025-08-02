@@ -291,18 +291,12 @@ const SortableNewsList: React.FC<SortableNewsListProps> = ({ leadPosts, fetchLea
                 hover:shadow-md
               `}
             >
-              <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 mt-2">
-                  <GripVertical className="w-5 h-5 text-gray-400" />
-                </div>
+              <div className="flex items-center gap-4">
 
-                <div className="flex-shrink-0">
-                  <img
-                    src={article.image}
-                    alt={article.title}
-                    className="w-20 h-20 object-cover rounded-lg"
-                    onError={handleImageError}
-                  />
+                <div className="flex-shrink-0 items-center flex justify-center w-12 h-12 bg-gray-100 rounded-full">
+                        <span className="text-3xl text-gray-500">
+                        #{index + 1}
+                      </span>
                 </div>
 
                 <div className="flex-grow">
@@ -311,9 +305,6 @@ const SortableNewsList: React.FC<SortableNewsListProps> = ({ leadPosts, fetchLea
                       {article.title}
                     </h3>
                     <div className="flex items-center gap-2 ml-4 flex-shrink-0">
-                      <span className="text-sm text-gray-500">
-                        #{index + 1}
-                      </span>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -327,19 +318,8 @@ const SortableNewsList: React.FC<SortableNewsListProps> = ({ leadPosts, fetchLea
                     </div>
                   </div>
 
-                  {article.summary && (
-                    <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                      {article.summary}
-                    </p>
-                  )}
 
                   <div className="flex items-center gap-4 text-sm text-gray-500">
-                    <div className="flex items-center gap-1">
-                      <Tag className="w-4 h-4" />
-                      <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">
-                        {article.category.name}
-                      </span>
-                    </div>
                     <div className="flex items-center gap-1">
                       <Calendar className="w-4 h-4" />
                       <span>{article.created_at_ago}</span>

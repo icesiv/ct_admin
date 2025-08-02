@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import { BASE_URL } from "@/config/config";
 
-
 export default function HomeVideoFrom() {
     const [videoId, setVideoId] = useState('');
     const [videoTitle, setVideoTitle] = useState('');
@@ -22,8 +21,7 @@ export default function HomeVideoFrom() {
                     method: 'GET',
                     headers: {
                         'Accept': 'application/json',
-                        'Content-Type': 'application/json',
-                       
+                        'Content-Type': 'application/json',                      
                     },
                 });
 

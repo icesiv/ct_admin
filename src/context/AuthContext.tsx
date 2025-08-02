@@ -24,6 +24,7 @@ interface AuthState {
 interface Category {
     id: string | number;
     name: string;
+    slug: string;
     // Add other category properties as needed
 }
 

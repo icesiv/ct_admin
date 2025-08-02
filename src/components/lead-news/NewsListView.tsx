@@ -10,6 +10,7 @@ import Pagination from '../tables/Pagination';
 interface Category {
     id: number;
     name: string;
+    slug: string;
 }
 
 interface NewsArticle {
@@ -83,7 +84,7 @@ const NewsListView: React.FC = () => {
             });
 
             if (!response.ok) {
-                throw new Error('Failed to fetch news data');
+                throw new Error('Failed to fetch Lead News data');
             }
 
             const data: ApiResponse = await response.json();
@@ -116,6 +117,8 @@ const NewsListView: React.FC = () => {
                     'Content-Type': 'application/json',
                 },
             });
+
+            console.log(response);
 
             if (!response.ok) {
                 throw new Error('Failed to fetch news data');
@@ -283,7 +286,7 @@ const NewsListView: React.FC = () => {
 
             {/* News Grid */}
             {!isLoadingNews && newsData.length > 0 && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                     {newsData.map((news) => (
                         <div key={news.id} className="bg-white dark:bg-gray-800  rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
                             {/* Image */}
