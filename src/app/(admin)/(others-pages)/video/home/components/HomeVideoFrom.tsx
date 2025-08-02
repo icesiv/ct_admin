@@ -17,11 +17,13 @@ export default function HomeVideoFrom() {
         const fetchHomeVideo = async () => {
             try {
                 setIsLoading(true);
-                const response = await fetch('/api/admin/video/home_video', {
+                const url = `${BASE_URL}home/segment/home_video`;
+                const response = await fetch(url, {
                     method: 'GET',
                     headers: {
                         'Accept': 'application/json',
                         'Content-Type': 'application/json',
+                       
                     },
                 });
 
@@ -52,12 +54,14 @@ export default function HomeVideoFrom() {
         setSuccess(null);
 
         try {
+            const token = localStorage.getItem('auth_token');
             const url = `${BASE_URL}admin/video/home_video`;
             const response = await fetch(url, {
                 method: 'POST',
                 headers: {
                     'Accept': 'application/json',
                     'Content-Type': 'application/json',
+                     'Authorization': `Bearer ${token}`,
                 },
                 body: JSON.stringify({
                     home_video_id: videoId,
