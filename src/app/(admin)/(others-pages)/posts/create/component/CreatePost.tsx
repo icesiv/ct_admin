@@ -622,6 +622,11 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
                 featured_image={formData.featured_image}
                 OpenModal={OpenModal}
               />
+              <ImageUploaderModal
+                isOpen={isOpen}
+                callback={isFeature ? UpdateFeatureImage : handleExternalImageInsert}
+                OpenModal={OpenModal}
+              />
             </div>
 
             {/* WYSIWYG Editor */}
@@ -630,11 +635,6 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
               <div className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Main Content *
               </div>
-              <ImageUploaderModal
-                isOpen={isOpen}
-                callback={isFeature ? UpdateFeatureImage : handleExternalImageInsert}
-                OpenModal={OpenModal}
-              />
               <WysiwygEditor
                 ref={editorRef}
                 OpenModal={OpenModal}
