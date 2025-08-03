@@ -119,7 +119,7 @@ const NewsListView: React.FC = () => {
                 },
             });
 
-            console.log(response);
+            console.log('selectedCategory', selectedCategory);
 
             if (!response.ok) {
                 throw new Error('Failed to fetch news data');
@@ -150,13 +150,14 @@ const NewsListView: React.FC = () => {
         if (isAuthenticated && news_categories.length > 0) {
             fetchNews(1);
         }
-    }, []);
+    }, [selectedCategory]);
 
     // Handle category change
     const handleCategoryChange = (category: Category[]): void => {
+        console.log('category', category);
         setSelectedCategory(category);
         setCurrentPage(1);
-        fetchNews(1);
+        // fetchNews(1);
     };
 
     // Handle page change
