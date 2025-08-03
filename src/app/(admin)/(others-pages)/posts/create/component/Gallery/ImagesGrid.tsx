@@ -2,8 +2,6 @@ import React from 'react';
 import { Upload, Trash2, RotateCcw } from 'lucide-react';
 import { ImageData } from './ImageUploaderModal';
 
-
-
 interface ImagesGridProps {
   images: ImageData[];
   searchTerm: string;
@@ -14,7 +12,7 @@ interface ImagesGridProps {
   totalImages?: number;
   currentPage?: number;
   isSearchMode?: boolean;
-  callback?: (imageData: ImageData) => void;
+  callback?: (imageData: ImageData) => void; 
   OpenModal: (flag: boolean, isFeature: boolean) => void;
 }
 

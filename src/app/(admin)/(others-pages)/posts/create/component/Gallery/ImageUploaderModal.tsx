@@ -76,7 +76,8 @@ interface ImageUploaderModalProps {
   initialImages?: ImageData[];
   onImagesChange?: (images: ImageData[]) => void;
   isOpen: boolean;
-  callback?: (imageData: ImageData) => void;
+    callback?: (imageData: ImageData) => void;
+
   OpenModal: (flag: boolean, isFeature: boolean) => void;
 }
 
@@ -97,17 +98,17 @@ interface FileValidationResult {
   invalid: Array<{ file: File; reason: string }>;
 }
 
-const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({ 
+const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
   initialImages = [],
   onImagesChange,
-  isOpen=false,
+  isOpen = false,
   callback,
   OpenModal
 }) => {
   // Add mobile view state
   const [activeTab, setActiveTab] = useState<'upload' | 'gallery'>('upload');
   const [isMobile, setIsMobile] = useState<boolean>(false);
-  
+
   // Existing state
   const [images, setImages] = useState<ImageData[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -135,10 +136,10 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
-    
+
     checkMobile();
     window.addEventListener('resize', checkMobile);
-    
+
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
@@ -168,7 +169,7 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
   };
 
   // API endpoint configuration
-  const API_ENDPOINT = BASE_URL+'admin/images/upload-image/gallery';
+  const API_ENDPOINT = BASE_URL + 'admin/images/upload-image/gallery';
 
   // Transform API data to local ImageData format
   const transformApiDataToImageData = (apiData: ApiImageData[]): ImageData[] => {
@@ -193,16 +194,16 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
       setLoading(true);
       setCurrentPage(1);
     }
-    
+
     try {
       const token = localStorage.getItem('auth_token');
-      
+
       // Build URL with query parameters
       let url = `${API_ENDPOINT}?page=${page}`;
       if (query.trim()) {
         url += `&query=${encodeURIComponent(query.trim())}`;
       }
-      
+
       const response = await fetch(url, {
         method: 'GET',
         headers: {
@@ -216,7 +217,7 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
       }
 
       const data: ApiResponse = await response.json();
-      
+
       if (data.success) {
         const transformedImages = transformApiDataToImageData(data.data);
         if (append) {
@@ -232,23 +233,23 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
           setImages(allImages);
           onImagesChange?.(allImages);
         }
-        
+
         // Update pagination info
         setCurrentPage(data.pagination.current_page);
         setHasMorePages(data.pagination.has_more_pages);
         setTotalImages(data.pagination.total);
-        
+
       } else {
-        setUploadStatus({ 
-          type: 'error', 
-          message: 'Failed to fetch images from server' 
+        setUploadStatus({
+          type: 'error',
+          message: 'Failed to fetch images from server'
         });
       }
     } catch (error) {
       console.error('Fetch images error:', error);
-      setUploadStatus({ 
-        type: 'error', 
-        message: 'Failed to load images. Please check your connection and try again.' 
+      setUploadStatus({
+        type: 'error',
+        message: 'Failed to load images. Please check your connection and try again.'
       });
     } finally {
       if (append) {
@@ -297,7 +298,7 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
     if (isOpen) {
       fetchImages(1, false, '');
     }
-    
+
     // Cleanup timeout on unmount
     return () => {
       if (searchTimeoutRef.current) {
@@ -308,31 +309,31 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
 
   const validateTag = (tag: string): string | null => {
     const trimmed = tag.trim();
-    
+
     if (!trimmed) {
       return 'Tag cannot be empty';
     }
-    
+
     if (trimmed.length < VALIDATION_RULES.tags.minLength) {
       return `Tag must be at least ${VALIDATION_RULES.tags.minLength} characters long`;
     }
-    
+
     if (trimmed.length > VALIDATION_RULES.tags.maxLength) {
       return `Tag must not exceed ${VALIDATION_RULES.tags.maxLength} characters`;
     }
-    
+
     if (!VALIDATION_RULES.tags.pattern.test(trimmed)) {
       return 'Tag can only contain letters, numbers, hyphens, and underscores';
     }
-    
+
     if (currentTags.includes(trimmed)) {
       return 'This tag already exists';
     }
-    
+
     if (currentTags.length >= VALIDATION_RULES.tags.maxCount) {
       return `Maximum ${VALIDATION_RULES.tags.maxCount} tags allowed`;
     }
-    
+
     return null;
   };
 
@@ -340,30 +341,30 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
     return new Promise((resolve) => {
       const img = new Image();
       const url = URL.createObjectURL(file);
-      
+
       img.onload = () => {
         URL.revokeObjectURL(url);
-        
-        if (img.width < VALIDATION_RULES.images.minDimensions.width || 
-            img.height < VALIDATION_RULES.images.minDimensions.height) {
+
+        if (img.width < VALIDATION_RULES.images.minDimensions.width ||
+          img.height < VALIDATION_RULES.images.minDimensions.height) {
           resolve(`Image dimensions too small. Minimum: ${VALIDATION_RULES.images.minDimensions.width}x${VALIDATION_RULES.images.minDimensions.height}px`);
           return;
         }
-        
-        if (img.width > VALIDATION_RULES.images.maxDimensions.width || 
-            img.height > VALIDATION_RULES.images.maxDimensions.height) {
+
+        if (img.width > VALIDATION_RULES.images.maxDimensions.width ||
+          img.height > VALIDATION_RULES.images.maxDimensions.height) {
           resolve(`Image dimensions too large. Maximum: ${VALIDATION_RULES.images.maxDimensions.width}x${VALIDATION_RULES.images.maxDimensions.height}px`);
           return;
         }
-        
+
         resolve(null);
       };
-      
+
       img.onerror = () => {
         URL.revokeObjectURL(url);
         resolve('Invalid image file');
       };
-      
+
       img.src = url;
     });
   };
@@ -371,51 +372,51 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
   const validateFiles = async (files: File[]): Promise<FileValidationResult> => {
     const valid: File[] = [];
     const invalid: Array<{ file: File; reason: string }> = [];
-    
+
     if (files.length > VALIDATION_RULES.images.maxCount) {
       return {
         valid: [],
         invalid: files.map(file => ({ file, reason: `Maximum ${VALIDATION_RULES.images.maxCount} files allowed at once` }))
       };
     }
-    
+
     for (const file of files) {
       // Check file type
       if (!VALIDATION_RULES.images.allowedTypes.includes(file.type)) {
-        invalid.push({ 
-          file, 
-          reason: `Invalid file type. Allowed: ${VALIDATION_RULES.images.allowedTypes.join(', ')}` 
+        invalid.push({
+          file,
+          reason: `Invalid file type. Allowed: ${VALIDATION_RULES.images.allowedTypes.join(', ')}`
         });
         continue;
       }
-      
+
       // Check file size
       if (file.size < VALIDATION_RULES.images.minSize) {
-        invalid.push({ 
-          file, 
-          reason: `File too small. Minimum size: ${Math.round(VALIDATION_RULES.images.minSize / 1024)}KB` 
+        invalid.push({
+          file,
+          reason: `File too small. Minimum size: ${Math.round(VALIDATION_RULES.images.minSize / 1024)}KB`
         });
         continue;
       }
-      
+
       if (file.size > VALIDATION_RULES.images.maxSize) {
-        invalid.push({ 
-          file, 
-          reason: `File too large. Maximum size: ${Math.round(VALIDATION_RULES.images.maxSize / 1024 / 1024)}MB` 
+        invalid.push({
+          file,
+          reason: `File too large. Maximum size: ${Math.round(VALIDATION_RULES.images.maxSize / 1024 / 1024)}MB`
         });
         continue;
       }
-      
+
       // Check dimensions
       const dimensionError = await validateImageDimensions(file);
       if (dimensionError) {
         invalid.push({ file, reason: dimensionError });
         continue;
       }
-      
+
       valid.push(file);
     }
-    
+
     return { valid, invalid };
   };
 
@@ -429,21 +430,21 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
 
   const handleFileSelect = async (files: FileList | null): Promise<void> => {
     if (!files) return;
-    
+
     const filesArray = Array.from(files);
     const validationResult = await validateFiles(filesArray);
-    
+
     if (validationResult.invalid.length > 0) {
       setInvalidFiles(validationResult.invalid);
-      setUploadStatus({ 
-        type: 'error', 
-        message: `${validationResult.invalid.length} file(s) rejected. Check details below.` 
+      setUploadStatus({
+        type: 'error',
+        message: `${validationResult.invalid.length} file(s) rejected. Check details below.`
       });
     } else {
       setInvalidFiles([]);
       clearValidationError('images');
     }
-    
+
     if (validationResult.valid.length > 0) {
       setPendingFiles(prev => [...prev, ...validationResult.valid]);
       setUploadStatus({ type: null, message: '' });
@@ -467,28 +468,28 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
 
   const uploadToAPI = async (file: File, title: string, tags: string[]): Promise<UploadResponse> => {
     const formData = new FormData();
-    
+
     // 1. image (binary)
     formData.append('image', file);
-    
+
     // 2. generate_thumbnails
     formData.append('generate_thumbnails', 'true');
-    
+
     // 3. thumbnail_sizes[]
     formData.append('thumbnail_sizes[]', '400');
     formData.append('thumbnail_sizes[]', '500');
-    
+
     // 4. title
     formData.append('title', title);
-    
+
     // 5. tag (multiple tags)
     tags.forEach(tag => {
       formData.append('tag[]', tag);
     });
-    
+
     // Get auth token from localStorage
     const token = localStorage.getItem('auth_token');
-    
+
     try {
       const response = await fetch(API_ENDPOINT, {
         method: 'POST',
@@ -508,9 +509,9 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
       return { success: true, data };
     } catch (error) {
       console.error('Upload error:', error);
-      return { 
-        success: false, 
-        message: error instanceof Error ? error.message : 'Upload failed' 
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Upload failed'
       };
     }
   };
@@ -518,12 +519,12 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
   const uploadPendingFiles = async (): Promise<void> => {
     // Validate all fields before upload
     const errors: ValidationErrors = {};
-   
-    
+
+
     if (pendingFiles.length === 0) {
       errors.images = 'No files selected for upload';
     }
-    
+
     if (Object.keys(errors).length > 0) {
       setValidationErrors(errors);
       setUploadStatus({ type: 'error', message: 'Please fix the validation errors before uploading' });
@@ -537,19 +538,19 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
     try {
       const uploadPromises = pendingFiles.map(file => uploadToAPI(file, currentTitle.trim(), currentTags));
       const results = await Promise.all(uploadPromises);
-      const success_upload_lists = transformApiDataToImageData(results.filter(result => result.success).map(result=>{
+      const success_upload_lists = transformApiDataToImageData(results.filter(result => result.success).map(result => {
         return result.data.data;
       }));
 
       const failedUploads = results.filter(result => !result.success);
-      setImages([...success_upload_lists,...images]);
-      
+      setImages([...success_upload_lists, ...images]);
+
       if (failedUploads.length === 0) {
-        setUploadStatus({ 
-          type: 'success', 
-          message: `Successfully uploaded ${pendingFiles.length} image${pendingFiles.length > 1 ? 's' : ''}` 
+        setUploadStatus({
+          type: 'success',
+          message: `Successfully uploaded ${pendingFiles.length} image${pendingFiles.length > 1 ? 's' : ''}`
         });
-        
+
         pendingFiles.forEach((file, index) => {
           const reader = new FileReader();
           reader.onload = (e: ProgressEvent<FileReader>) => {
@@ -559,27 +560,27 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
           };
           reader.readAsDataURL(file);
         });
-        
+
         // Reset form
         setPendingFiles([]);
         setCurrentTags([]);
         setCurrentTitle('');
         setInvalidFiles([]);
-        
+
         // Auto-switch to gallery on mobile after successful upload
         if (isMobile) {
           setActiveTab('gallery');
         }
       } else {
-        setUploadStatus({ 
-          type: 'error', 
-          message: `${failedUploads.length} out of ${pendingFiles.length} uploads failed. ${failedUploads[0].message || 'Please try again.'}` 
+        setUploadStatus({
+          type: 'error',
+          message: `${failedUploads.length} out of ${pendingFiles.length} uploads failed. ${failedUploads[0].message || 'Please try again.'}`
         });
       }
     } catch (error) {
-      setUploadStatus({ 
-        type: 'error', 
-        message: 'Upload failed. Please check your connection and try again.' 
+      setUploadStatus({
+        type: 'error',
+        message: 'Upload failed. Please check your connection and try again.'
       });
     } finally {
       setIsUploading(false);
@@ -597,12 +598,12 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
 
   const addTag = (): void => {
     const tagError = validateTag(tagInput);
-    
+
     if (tagError) {
       setValidationErrors(prev => ({ ...prev, tags: tagError }));
       return;
     }
-    
+
     setCurrentTags([...currentTags, tagInput.trim()]);
     setTagInput('');
     clearValidationError('tags');
@@ -658,21 +659,19 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
     <div className="flex bg-gray-100 rounded-lg p-1 mb-4">
       <button
         onClick={() => setActiveTab('upload')}
-        className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-          activeTab === 'upload'
+        className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'upload'
             ? 'bg-white text-blue-600 shadow-sm'
             : 'text-gray-600 hover:text-gray-800'
-        }`}
+          }`}
       >
         Upload
       </button>
       <button
         onClick={() => setActiveTab('gallery')}
-        className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-          activeTab === 'gallery'
+        className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'gallery'
             ? 'bg-white text-blue-600 shadow-sm'
             : 'text-gray-600 hover:text-gray-800'
-        }`}
+          }`}
       >
         Gallery ({totalImages})
       </button>
@@ -689,14 +688,13 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
           <span className="text-sm">Loading images...</span>
         </div>
       )}
-      
+
       {/* Upload Status */}
       {uploadStatus.type && (
-        <div className={`p-3 rounded-lg flex items-center gap-2 ${
-          uploadStatus.type === 'success' 
-            ? 'bg-green-50 text-green-800 border border-green-200' 
+        <div className={`p-3 rounded-lg flex items-center gap-2 ${uploadStatus.type === 'success'
+            ? 'bg-green-50 text-green-800 border border-green-200'
             : 'bg-red-50 text-red-800 border border-red-200'
-        }`}>
+          }`}>
           {uploadStatus.type === 'success' ? (
             <CheckCircle size={20} />
           ) : (
@@ -705,7 +703,7 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
           <span className="text-sm">{uploadStatus.message}</span>
         </div>
       )}
-      
+
       {/* Title Input */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="image-title">
@@ -717,11 +715,10 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
           value={currentTitle}
           onChange={handleTitleChange}
           placeholder="Enter a title for your images"
-          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 text-sm ${
-            validationErrors.title 
-              ? 'border-red-300 focus:ring-red-500' 
+          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 text-sm ${validationErrors.title
+              ? 'border-red-300 focus:ring-red-500'
               : 'border-gray-300 focus:ring-blue-500'
-          }`}
+            }`}
           maxLength={VALIDATION_RULES.title.maxLength}
           disabled={isUploading}
         />
@@ -735,7 +732,7 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
           {currentTitle.length}/{VALIDATION_RULES.title.maxLength}
         </div>
       </div>
-      
+
       {/* Tag Input */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="tag-input">
@@ -749,11 +746,10 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
             onChange={handleTagInputChange}
             onKeyPress={handleKeyPress}
             placeholder="Enter a tag"
-            className={`flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 text-sm ${
-              validationErrors.tags 
-                ? 'border-red-300 focus:ring-red-500' 
+            className={`flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 text-sm ${validationErrors.tags
+                ? 'border-red-300 focus:ring-red-500'
                 : 'border-gray-300 focus:ring-blue-500'
-            }`}
+              }`}
             maxLength={VALIDATION_RULES.tags.maxLength}
             disabled={isUploading}
           />
@@ -767,14 +763,14 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
             <Tag size={14} />
           </button>
         </div>
-        
+
         {validationErrors.tags && (
           <p className="mb-2 text-xs text-red-600 flex items-center gap-1">
             <AlertCircle size={12} />
             {validationErrors.tags}
           </p>
         )}
-        
+
         {/* Current Tags */}
         {currentTags.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-2">
@@ -797,7 +793,7 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
             ))}
           </div>
         )}
-        
+
         <div className="text-xs text-gray-500">
           {currentTags.length}/{VALIDATION_RULES.tags.maxCount} tags
         </div>
@@ -805,15 +801,14 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
 
       {/* File Drop Zone */}
       <div
-        className={`border-2 border-dashed rounded-xl p-4 sm:p-6 text-center transition-colors cursor-pointer ${
-          isUploading 
+        className={`border-2 border-dashed rounded-xl p-4 sm:p-6 text-center transition-colors cursor-pointer ${isUploading
             ? 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-50'
-            : dragActive 
-              ? 'border-blue-500 bg-blue-50' 
+            : dragActive
+              ? 'border-blue-500 bg-blue-50'
               : validationErrors.images
                 ? 'border-red-300 bg-red-50'
                 : 'border-gray-300 hover:border-gray-400'
-        }`}
+          }`}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -971,14 +966,14 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
                   <div className="p-4 border-b border-gray-200">
                     <TabNavigation />
                   </div>
-                  
+
                   <div className="flex-1 overflow-y-auto">
                     {activeTab === 'upload' ? (
                       <div className="p-4">
                         <UploadSection />
                       </div>
                     ) : (
-                      <ImagesSection 
+                      <ImagesSection
                         images={images}
                         searchTerm={searchTerm}
                         onSearchChange={handleSearchChange}
@@ -1008,7 +1003,7 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
 
                   {/* Right Column - Images Section */}
                   <div className="flex-1">
-                    <ImagesSection 
+                    <ImagesSection
                       images={images}
                       searchTerm={searchTerm}
                       onSearchChange={handleSearchChange}

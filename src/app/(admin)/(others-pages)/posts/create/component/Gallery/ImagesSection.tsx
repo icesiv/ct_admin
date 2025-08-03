@@ -4,9 +4,6 @@ import { SearchPanel } from './SearchPanel';
 import { ImagesGrid } from './ImagesGrid';
 import { ImageData } from './ImageUploaderModal';
 
-
-
-
 interface ImagesSectionProps {
   images: ImageData[];
   searchTerm: string;
@@ -22,10 +19,10 @@ interface ImagesSectionProps {
   OpenModal: (flag: boolean, isFeature: boolean) => void;
 }
 
-export const ImagesSection: React.FC<ImagesSectionProps> = ({ 
-  images, 
-  searchTerm, 
-  onSearchChange, 
+export const ImagesSection: React.FC<ImagesSectionProps> = ({
+  images,
+  searchTerm,
+  onSearchChange,
   onDeleteImage,
   loading = false,
   loadingMore = false,
@@ -52,9 +49,9 @@ export const ImagesSection: React.FC<ImagesSectionProps> = ({
           </div>
         ) : (
           /* Images Grid */
-          <ImagesGrid 
-            images={images} 
-            searchTerm={searchTerm} 
+          <ImagesGrid
+            images={images}
+            searchTerm={searchTerm}
             onDeleteImage={onDeleteImage}
             loadingMore={loadingMore}
             hasMorePages={hasMorePages}
@@ -64,7 +61,7 @@ export const ImagesSection: React.FC<ImagesSectionProps> = ({
             callback={callback}
             OpenModal={OpenModal}
           />
-    
+
         )}
       </div>
     </div>

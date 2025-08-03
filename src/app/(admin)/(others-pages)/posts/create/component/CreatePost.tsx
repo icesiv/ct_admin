@@ -617,9 +617,17 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
                 featured_image={formData.featured_image}
                 OpenModal={OpenModal}
               />
+
               <ImageUploaderModal
                 isOpen={isOpen}
-                callback={isFeature ? UpdateFeatureImage : handleExternalImageInsert}
+                callback={
+                  isFeature
+                    ? UpdateFeatureImage
+                    : (imageData) => {
+                      // Assuming handleExternalImageInsert needs the main image URL
+                      handleExternalImageInsert(imageData.url);
+                    }
+                }
                 OpenModal={OpenModal}
               />
             </div>
