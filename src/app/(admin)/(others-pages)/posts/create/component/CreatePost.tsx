@@ -8,7 +8,9 @@ import { FeatureImageUploader } from '@/components/editor/FeatureUploader';
 import { Notification } from '@/components/ui/notification/Notification';
 import MultiselectDropdown from '@/components/ui/dropdown/MultiselectDropdown';
 import ImageUploaderModal from './Gallery/ImageUploaderModal';
-import WysiwygEditor, { WysiwygEditorRef } from '@/components/editor/WysiwygEditor';
+
+import WysiwygEditor from '@/components/editor/WysiwygEditor';
+
 import { ImageData } from '@/app/(admin)/(others-pages)/posts/create/component/Gallery/ImageUploaderModal';
 // Type definitions
 
@@ -45,12 +47,13 @@ interface FormData {
 
 export default function CreatePost({ postId: postId }: { postId: string | null | undefined }) {
   const isEditMode = !!postId;
-  const editorRef = useRef<WysiwygEditorRef>(null);
   const [isFeature, setIsFeature] = useState<boolean>(true);
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [notification, setNotification] = useState<NotificationState | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isLoadingPost, setIsLoadingPost] = useState<boolean>(isEditMode);
+  const [editorContent, setEditorContent] = useState('');
+
 
   const [formData, setFormData] = useState<FormData>({
     title: '',
@@ -121,12 +124,8 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
     loadPost();
   }, [isEditMode, postId, getPost]);
 
-  const UpdatePostContent = useCallback((value: string): void => {
-    setFormData(prev => ({ ...prev, postContent: value }));
-  }, []);
-
   const UpdateFeatureImage = useCallback((imageData: ImageData): void => {
-    setFormData(prev => ({ ...prev, featuredImage: imageData.url }));
+    setFormData(prev => ({ ...prev, featured_image: imageData.url }));
     setImagePreview(imageData.url);
   }, []);
 
@@ -137,15 +136,11 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
     }));
   };
 
-  const handleExternalImageInsert = (imageData: ImageData) => {
-    if (editorRef.current) {
-      editorRef.current.insertImageIntoEditor({
-        file_url: imageData.url,
-        width: imageData.dimensions.width,
-        height: imageData.dimensions.height,
-        thumb: imageData.thumbnails[0].file_url
-      });
-    }
+  const handleExternalImageInsert = (imageUrl: string): void => {
+    setFormData(prev => ({
+      ...prev,
+      post_content: prev.post_content + `\n![Image](${imageUrl})\n`
+    }));
     setIsOpen(false);
   };
 
@@ -254,7 +249,7 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
         author: formData.author,
         writer_id: formData.writer_id,
         excerpt: formData.excerpt,
-        post_content: formData.post_content,
+        post_content: editorContent || formData.post_content,
         featured_image: formData.featured_image,
         categories: formData.categories,
         tags: formData.tags,
@@ -636,9 +631,8 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
                 Main Content *
               </div>
               <WysiwygEditor
-                ref={editorRef}
                 OpenModal={OpenModal}
-                updatePostContent={UpdatePostContent}
+                updatePostContent={setEditorContent}
                 postContent={formData.post_content}
               />
             </div>

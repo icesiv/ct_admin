@@ -20,7 +20,9 @@ interface NewsArticle {
     post_content: string;
     image: string;
     category?: Category;
+    category_slug?: string;
     created_at_ago: string;
+    post_status: number;
 }
 
 interface PaginationData {
@@ -51,7 +53,6 @@ interface AuthContextType {
 }
 
 const NewsListView: React.FC = () => {
-
     const [articles, setArticles] = useState<NewsArticle[]>([]);
     const [tmp_lead_news, setTmpLeadnews] = useState<NewsArticle | null>(null);
     const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
@@ -106,8 +107,8 @@ const NewsListView: React.FC = () => {
             const ids = selectedCategory.map(c => c.id).join(',');
             // Build API URL with pagination and category filter
             const url = selectedCategory.length === 0
-                ? `${BASE_URL}admin/posts/allposts?page=${page}`
-                : `${BASE_URL}admin/posts/categories/${ids}?page=${page}`;
+                ? `${BASE_URL}admin/posts/allposts?per_page=24&page=${page}`
+                : `${BASE_URL}admin/posts/categories/${ids}?per_page=24&page=${page}`;
 
             const response = await fetch(url, {
                 method: 'GET',
@@ -286,84 +287,83 @@ const NewsListView: React.FC = () => {
 
             {/* News Grid */}
             {!isLoadingNews && newsData.length > 0 && (
-                <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    {newsData.map((news) => (
-                        <div key={news.id} className="bg-white dark:bg-gray-800  rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
-                            {/* Image */}
-                            <div className="h-48 w-full">
-                                <img
-                                    src={news.image}
-                                    alt={news.title}
-                                    className="w-full h-full object-cover"
-                                    onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-                                        const target = e.target as HTMLImageElement;
-                                        target.src = 'https://images.unsplash.com/photo-1495020689067-958852a7765e?w=400&h=250&fit=crop';
-                                    }}
-                                />
-                            </div>
+                <div className="mt-6 mb-8">
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full bg-white dark:bg-gray-800 rounded-lg shadow-md">
+                            <thead className="bg-gray-50 dark:bg-gray-700">
+                                <tr>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        ID
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        Title
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        Category
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        Date
+                                    </th>
+                                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        Actions
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                                {newsData.map((news) => (
+                                    <tr key={news.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200">
+                                        <td className="px-6 py-4 flex items-center whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                                            {/* Edit Button */}
+                                            <button
+                                                onClick={() => handleEdit(news.id)}
+                                                className="bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-700 p-2 mr-2 rounded-full shadow-md transition-all duration-200 hover:shadow-lg"
+                                                title="Edit Post"
+                                            >
+                                                <Edit className="h-4 w-4" />
+                                            </button>
+                                            <div className='text-green-500'>
+                                                {news.post_status === 1 ? <span className="text-green-500">{news.id}</span> : <span className="text-red-500">{news.id}</span>}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-left text-sm text-gray-900 dark:text-amber-100">
+                                            {news.title}
+                                        </td>
+                                        <td className="px-6 py-4 text-left whitespace-nowrap text-sm text-gray-500">
+                                            {news.category_slug}
+                                        </td>
+                                        <td className="px-6 py-4 text-left whitespace-nowrap text-sm text-gray-500">
+                                            {news.created_at_ago}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <div className="flex justify-end space-x-2">
+                                                {/* Make Lead News Button - only show if NOT in lead */}
+                                                {!articles.some(article => article.id === news.id) && (
+                                                    <button
+                                                        onClick={() => handleMakeLeadNews(news)}
+                                                        className="bg-yellow-500 bg-opacity-90 hover:bg-opacity-100 text-white p-2 rounded-full shadow-md transition-all duration-200 hover:shadow-lg"
+                                                        title="Make Lead News"
+                                                    >
+                                                        <Star className="h-4 w-4" />
+                                                    </button>
+                                                )}
 
-                            <div className="flex justify-between px-2 py-4">
-                                {/* Content */}
-                                <div className="text-start">
-                                    {/* ID */}
-                                    <p className="text-xs ">
-                                        ID: {news.id}
-                                        {/* Status */}
-                                        <span className="ml-2 text-xs text-green-500">
-                                            Status: Published
-                                        </span>
-                                    </p>
-
-                                    <h2 className="font-semibold dark:text-amber-100  line-clamp-2 mb-2">
-                                        {news.title}
-                                    </h2>
-
-                                    {/* Date */}
-                                    <div className="text-xs text-gray-500">
-                                        {news.category && (
-                                            <span>{news.category.name}</span>
-                                        )}
-                                        <span className="ml-2" />{news.created_at_ago}
-                                    </div>
-
-                                </div>
-
-                                {/* Action Buttons */}
-                                <div className="flex flex-col space-y-3">
-                                    {/* Edit Button */}
-                                    <button
-                                        onClick={() => handleEdit(news.id)}
-                                        className="bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-700 p-2 rounded-full shadow-md transition-all duration-200 hover:shadow-lg"
-                                        title="Edit Post"
-                                    >
-                                        <Edit className="h-4 w-4" />
-                                    </button>
-
-                                    {/* Make Lead News Button - only show if NOT in lead */}
-                                    {!articles.some(article => article.id === news.id) && (
-                                        <button
-                                            onClick={() => handleMakeLeadNews(news)}
-                                            className="bg-yellow-500 bg-opacity-90 hover:bg-opacity-100 text-white p-2 rounded-full shadow-md transition-all duration-200 hover:shadow-lg"
-                                            title="Make Lead News"
-                                        >
-                                            <Star className="h-4 w-4" />
-                                        </button>
-                                    )}
-
-                                    {/* Already in Lead Button - only show if IS in lead */}
-                                    {articles.some(article => article.id === news.id) && (
-                                        <button
-                                            className="bg-green-500 bg-opacity-90 text-white p-2 rounded-full shadow-md cursor-not-allowed"
-                                            title="Already in Lead News"
-                                            disabled
-                                        >
-                                            <Star className="h-4 w-4 fill-current" />
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    ))}
+                                                {/* Already in Lead Button - only show if IS in lead */}
+                                                {articles.some(article => article.id === news.id) && (
+                                                    <button
+                                                        className="bg-green-500 bg-opacity-90 text-white p-2 rounded-full shadow-md cursor-not-allowed"
+                                                        title="Already in Lead News"
+                                                        disabled
+                                                    >
+                                                        <Star className="h-4 w-4 fill-current" />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             )}
 
@@ -384,7 +384,7 @@ const NewsListView: React.FC = () => {
 
             {/* Confirmation Modal */}
             {showConfirmModal && tmp_lead_news && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-99999">
                     <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
                         {/* Modal Header */}
                         <div className="flex justify-between items-center mb-4">

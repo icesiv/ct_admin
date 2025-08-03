@@ -18,7 +18,6 @@ export default function AllPosts() {
           <NewsListView />
         </div>
       </div>
-
     </div>
   );
 }
