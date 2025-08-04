@@ -31,6 +31,14 @@ export interface SelectOption {
   command?: string;
 }
 
+export interface PasteFilterOptions {
+  allowHtml?: boolean;
+  allowBasicFormatting?: boolean;
+  blockCodePatterns?: boolean;
+  customBlockedPatterns?: RegExp[];
+  onBlockedPaste?: (blockedContent: string, detectedType: string) => void;
+}
+
 export interface WysiwygEditorProps {
   updatePostContent: (content: string) => void;
   postContent?: string | null;
@@ -39,8 +47,10 @@ export interface WysiwygEditorProps {
   placeholder?: string;
   className?: string;
   OpenModal: (flag: boolean, isFeature: boolean) => void;
+  pasteFilterOptions?: PasteFilterOptions;
 }
 
 export interface WysiwygEditorRef {
   insertImageIntoEditor: (imageData: ImageData) => void;
+  getCurrentContent: () => string;
 }

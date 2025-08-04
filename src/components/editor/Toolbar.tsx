@@ -26,7 +26,6 @@ interface ToolbarProps {
 
 export const Toolbar = memo<ToolbarProps>(({
   execCommand,
-  handleFontFamily,
   handleFontSize,
   onLinkClick,
   onImageClick,
@@ -61,24 +60,6 @@ export const Toolbar = memo<ToolbarProps>(({
         >
           {headingOptions.map((option, index) => (
             <option key={index} value={option.value}>{option.label}</option>
-          ))}
-        </select>
-
-        <select
-          className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[120px] bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-          onChange={(e: ChangeEvent<HTMLSelectElement>) => {
-            if (e.target.value) {
-              handleFontFamily(e.target.value);
-              e.target.value = '';
-            }
-          }}
-          defaultValue=""
-        >
-          <option value="" disabled>Font</option>
-          {fontFamilyOptions.map((option, index) => (
-            <option key={index} value={option.value} style={{ fontFamily: option.value }}>
-              {option.label}
-            </option>
           ))}
         </select>
 

@@ -53,7 +53,7 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
   const [notification, setNotification] = useState<NotificationState | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isLoadingPost, setIsLoadingPost] = useState<boolean>(isEditMode);
-  const [editorContent, setEditorContent] = useState('');
+  const [editorContent, setContent] = useState('');
   const editorRef = useRef<WysiwygEditorRef>(null);
   
   const [formData, setFormData] = useState<FormData>({
@@ -137,11 +137,6 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
   };
 
   const handleExternalImageInsert = (imageData: ImageData): void => {
-    // console.log('imageUrl',imageUrl);
-    // setFormData(prev => ({
-    //   ...prev,
-    //   post_content: prev.post_content + `\n![Image](${imageUrl})\n`
-    // }));
     console.log('imageData', imageData);
     if (editorRef.current) {
       editorRef.current.insertImageIntoEditor({
@@ -215,6 +210,8 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
 
   const validateForm = (): string[] => {
     const errors: string[] = [];
+    const currentContent = editorRef.current?.getCurrentContent() || formData.post_content;
+   
 
     if (!formData.title.trim()) {
       errors.push('Title is required');
@@ -222,7 +219,7 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
     if (!formData.excerpt.trim()) {
       errors.push('Excerpt is required');
     }
-    if (!formData.post_content.trim()) {
+    if (!currentContent.trim()) {
       errors.push('Content is required');
     }
     if (formData.categories.length === 0) {
@@ -251,6 +248,8 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
 
     setIsLoading(true);
     try {
+      const currentContent = editorRef.current?.getCurrentContent();
+     
       const saveData: FormData = {
         title: formData.title,
         short_title: formData.short_title,
@@ -259,7 +258,7 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
         author: formData.author,
         writer_id: formData.writer_id,
         excerpt: formData.excerpt,
-        post_content: editorContent || formData.post_content,
+        post_content: currentContent || formData.post_content,
         featured_image: formData.featured_image,
         categories: formData.categories,
         tags: formData.tags,
@@ -295,81 +294,6 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
     }
   };
 
-  const processContent = (content: string): string => {
-    return content
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      .replace(/^- (.+)$/gm, '<li>$1</li>')
-      .replace(/(<li>.*<\/li>)/, '<ul>$1</ul>')
-      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-blue-600 hover:underline">$1</a>')
-      .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="max-w-full h-auto rounded-lg my-4" />')
-      .replace(/\n/g, '<br />');
-  };
-
-  const renderPreview = () => {
-    return (
-      <div className="max-w-4xl mx-auto p-6 bg-white">
-        {(imagePreview || formData.featured_image) && (
-          <img
-            src={imagePreview || formData.featured_image || ''}
-            alt="Featured"
-            className="w-auto mx-auto h-120 rounded-lg mb-6"
-          />
-        )}
-
-        {/* Categories */}
-        {formData.categories.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-4">
-            {formData.categories.map(categoryId => {
-              const category = all_cat.find(cat => cat.id === categoryId);
-              return category ? (
-                <span
-                  key={categoryId}
-                  className={`px-3 py-1 rounded-full text-xs font-medium ${category.color}`}
-                >
-                  {category.name}
-                </span>
-              ) : null;
-            })}
-          </div>
-        )}
-
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">
-          {formData.title || 'Article Title'}
-        </h1>
-
-        {/* // Todo */}
-
-        {/* <p className="text-xl text-gray-600 mb-6 leading-relaxed">
-          {formData.excerpt || 'Article excerpt will appear here...'}
-        </p> */}
-
-        {/* Tags in Preview */}
-        {formData.tags.length > 0 && (
-          <div className="mb-6">
-            <div className="flex flex-wrap gap-2">
-              {formData.tags.map((tag: string, index: number) => (
-                <span
-                  key={index}
-                  className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium border"
-                >
-                  #{tag}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div
-          className="prose prose-lg max-w-none text-gray-800 leading-relaxed"
-          dangerouslySetInnerHTML={{
-            __html: processContent(formData.post_content || 'Article content will appear here...')
-          }}
-        />
-      </div>
-    );
-  };
-
   // Loading state for edit mode
   if (isLoadingPost) {
     return (
@@ -396,23 +320,7 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
   }) => {
     return (
       <div className="flex justify-end my-4 items-center">
-
         <div className="flex space-x-3">
-          <button
-            onClick={handleCancel}
-            className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
-          </button>
-          <button
-            type="button"
-            onClick={() => setIsPreview(!isPreview)}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
-          >
-            <Eye className="w-4 h-4 mr-2" />
-            {isPreview ? 'Edit' : 'Preview'}
-          </button>
           <button
             type="button"
             onClick={handleSubmit}
@@ -426,7 +334,7 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
       </div>
     );
   };
-  console.log('isFeature', isFeature);
+ 
   return (
     <div>
       {/* Header with title and action buttons */}
@@ -447,9 +355,7 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
             onClose={() => setNotification(null)}
           />
         )}
-        {isPreview ? (
-          renderPreview()
-        ) : (
+
           <div className="space-y-4">
             <div className="space-y-6">
               {/* Title */}
@@ -651,12 +557,12 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
               <WysiwygEditor
                 ref={editorRef}
                 OpenModal={OpenModal}
-                updatePostContent={setEditorContent}
+                updatePostContent={setContent}
                 postContent={formData.post_content}
               />
             </div>
           </div>
-        )}
+
       </div>
 
       {/* Header with title and action buttons */}

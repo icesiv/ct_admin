@@ -10,12 +10,14 @@ import React, {
   type ChangeEvent,
   type DragEvent,
   type FormEvent,
-  type KeyboardEvent
+  type KeyboardEvent,
+  type ClipboardEvent
 } from 'react';
 
 import { WysiwygEditorProps, WysiwygEditorRef, ImageData } from './types';
 import { useSelection, useImageUpload } from './hooks';
 import { extractYouTubeVideoId, createYouTubeEmbed, fixImageUrls } from './utils';
+import { createPasteHandler } from './pasteFilter';
 import { Toolbar } from './Toolbar';
 import { LinkModal, VideoModal, ImageModal } from './Modals';
 import { EditorStyles } from './EditorStyles';
@@ -27,9 +29,17 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(({
   maxImageSize = 10 * 1024 * 1024, // 10MB
   placeholder = 'Start writing your content here...',
   className = '',
-  OpenModal
+  OpenModal,
+  pasteFilterOptions = {
+    allowHtml: false,
+    allowBasicFormatting: true,
+    blockCodePatterns: true,
+    onBlockedPaste: (content, type) => {
+      alert(`Pasting ${type} code is not allowed. Please paste plain text only.`);
+    }
+  }
 }, ref) => {
-  const [content, setContent] = useState<string>(postContent || '');
+  const [content, setContent] = useState<string>('');
   const [showLinkModal, setShowLinkModal] = useState<boolean>(false);
   const [linkUrl, setLinkUrl] = useState<string>('');
   const [showImageModal, setShowImageModal] = useState<boolean>(false);
@@ -44,10 +54,11 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(({
   const { selectedText, savedRange, setSavedRange, handleTextSelection } = useSelection();
   const { uploading, uploadProgress, uploadImage } = useImageUpload(baseUrl);
 
-  // Initialize content
+  // Initialize content - FIXED
   useEffect(() => {
     if (editorRef.current && !isInitialized) {
-      const initialContent = postContent ?? '';
+      // Use postContent or empty string if null/undefined
+      const initialContent = postContent || '';
       const fixedContent = fixImageUrls(initialContent);
       editorRef.current.innerHTML = fixedContent;
       setContent(fixedContent);
@@ -55,12 +66,13 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(({
     }
   }, [postContent, isInitialized]);
 
-  // Update parent component
+  // Update parent component - IMPROVED
   useEffect(() => {
-    if (isInitialized && content !== postContent) {
+    // Only update parent if initialized and content has actually changed
+    if (isInitialized && updatePostContent) {
       updatePostContent(content);
     }
-  }, [content, updatePostContent, isInitialized, postContent]);
+  }, [content, updatePostContent, isInitialized]);
 
   // Command execution
   const execCommand = useCallback((command: string, value?: string) => {
@@ -194,10 +206,11 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(({
     setSavedRange(null);
   }, [savedRange, setSavedRange]);
 
-  // Expose the method to parent component using useImperativeHandle
+  // Expose methods to parent component using useImperativeHandle
   useImperativeHandle(ref, () => ({
-    insertImageIntoEditor
-  }), [insertImageIntoEditor]);
+    insertImageIntoEditor,
+    getCurrentContent: () => content
+  }), [insertImageIntoEditor, content]);
 
   const handleImageUpload = useCallback(async (file: File) => {
     if (!file.type.startsWith('image/')) {
@@ -328,11 +341,22 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(({
     e.target.value = '';
   }, [handleImageUpload]);
 
-  // Content change
+  // Content change - IMPROVED
   const handleContentChange = useCallback((e: FormEvent<HTMLDivElement>) => {
     const newContent = e.currentTarget.innerHTML;
     setContent(newContent);
   }, []);
+
+  // Paste handler
+  const handlePaste = useCallback((e: ClipboardEvent<HTMLDivElement>) => {
+    createPasteHandler(pasteFilterOptions)(e);
+    // Update content after paste
+    setTimeout(() => {
+      if (editorRef.current) {
+        setContent(editorRef.current.innerHTML);
+      }
+    }, 0);
+  }, [pasteFilterOptions]);
 
   // Keyboard shortcuts
   const handleKeyDown = useCallback((e: KeyboardEvent<HTMLDivElement>) => {
@@ -387,6 +411,16 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(({
     setShowVideoModal(true);
   }, [setSavedRange]);
 
+  // Debug logging - ADDED for troubleshooting
+  // useEffect(() => {
+  //   console.log('Editor state:', {
+  //     content,
+  //     postContent,
+  //     isInitialized,
+  //     editorHTML: editorRef.current?.innerHTML
+  //   });
+  // }, [content, postContent, isInitialized]);
+
   return (
     <div className={`max-w-7xl mx-auto rounded-lg ${className}`}>
       <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden shadow-lg">
@@ -418,6 +452,7 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(({
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onKeyDown={handleKeyDown}
+            onPaste={handlePaste}
           />
 
           {!content && (
