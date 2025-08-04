@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, DragEvent, ChangeEvent, KeyboardEvent } from 'react';
+import React, { useState, useRef, useEffect, DragEvent, ChangeEvent, KeyboardEvent, memo } from 'react';
 import { X, Upload, Tag, AlertCircle, CheckCircle, FileImage, ChevronLeft, ChevronRight } from 'lucide-react';
 import { BASE_URL } from '@/config/config';
 import { ImagesSection } from './ImagesSection';
@@ -678,9 +678,40 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
     </div>
   );
 
-  // Upload Section Component
-  const UploadSection = () => (
-    <div className="space-y-4">
+   
+   return (
+    <>
+      {isOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[99999] p-2 sm:p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full h-full sm:h-auto sm:max-w-4xl sm:max-h-[90vh] overflow-hidden flex flex-col">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 flex-shrink-0">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Image Manager</h2>
+              <button
+                onClick={() => {
+                  OpenModal(false, false);
+                }}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                type="button"
+                aria-label="Close modal"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="flex-1 overflow-hidden">
+              {isMobile ? (
+                /* Mobile Layout - Stacked with tabs */
+                <div className="h-full flex flex-col">
+                  <div className="p-4 border-b border-gray-200">
+                    <TabNavigation />
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto">
+                    {activeTab === 'upload' ? (
+                      <div className="p-4">
+                        <div className="space-y-4">
       {/* Loading State */}
       {loading && (
         <div className="p-3 rounded-lg flex items-center gap-2 bg-blue-50 text-blue-800 border border-blue-200">
@@ -936,41 +967,6 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
         </div>
       )}
     </div>
-  );
-
-  return (
-    <>
-      {isOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[99999] p-2 sm:p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full h-full sm:h-auto sm:max-w-4xl sm:max-h-[90vh] overflow-hidden flex flex-col">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 flex-shrink-0">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Image Manager</h2>
-              <button
-                onClick={() => {
-                  OpenModal(false, false);
-                }}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                type="button"
-                aria-label="Close modal"
-              >
-                <X size={24} />
-              </button>
-            </div>
-
-            {/* Modal Content */}
-            <div className="flex-1 overflow-hidden">
-              {isMobile ? (
-                /* Mobile Layout - Stacked with tabs */
-                <div className="h-full flex flex-col">
-                  <div className="p-4 border-b border-gray-200">
-                    <TabNavigation />
-                  </div>
-
-                  <div className="flex-1 overflow-y-auto">
-                    {activeTab === 'upload' ? (
-                      <div className="p-4">
-                        <UploadSection />
                       </div>
                     ) : (
                       <ImagesSection
@@ -997,7 +993,262 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
                   <div className="w-1/3 bg-gray-50 border-r border-gray-200 overflow-y-auto">
                     <div className="p-6">
                       <h3 className="text-lg font-semibold mb-4">Upload New Images</h3>
-                      <UploadSection />
+                      <div className="space-y-4">
+      {/* Loading State */}
+      {loading && (
+        <div className="p-3 rounded-lg flex items-center gap-2 bg-blue-50 text-blue-800 border border-blue-200">
+          <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
+          <span className="text-sm">Loading images...</span>
+        </div>
+      )}
+
+      {/* Upload Status */}
+      {uploadStatus.type && (
+        <div className={`p-3 rounded-lg flex items-center gap-2 ${uploadStatus.type === 'success'
+            ? 'bg-green-50 text-green-800 border border-green-200'
+            : 'bg-red-50 text-red-800 border border-red-200'
+          }`}>
+          {uploadStatus.type === 'success' ? (
+            <CheckCircle size={20} />
+          ) : (
+            <AlertCircle size={20} />
+          )}
+          <span className="text-sm">{uploadStatus.message}</span>
+        </div>
+      )}
+
+      {/* Title Input */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="image-title">
+          Title <span className="text-xs text-gray-500">({VALIDATION_RULES.title.minLength}-{VALIDATION_RULES.title.maxLength} chars)</span>
+        </label>
+        <input
+          id="image-title"
+          type="text"
+          value={currentTitle}
+          onChange={handleTitleChange}
+          placeholder="Enter a title for your images"
+          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 text-sm ${validationErrors.title
+              ? 'border-red-300 focus:ring-red-500'
+              : 'border-gray-300 focus:ring-blue-500'
+            }`}
+          maxLength={VALIDATION_RULES.title.maxLength}
+          disabled={isUploading}
+        />
+        {validationErrors.title && (
+          <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
+            <AlertCircle size={12} />
+            {validationErrors.title}
+          </p>
+        )}
+        <div className="mt-1 text-xs text-gray-500">
+          {currentTitle.length}/{VALIDATION_RULES.title.maxLength}
+        </div>
+      </div>
+
+      {/* Tag Input */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="tag-input">
+          Tags <span className="text-xs text-gray-500">(max {VALIDATION_RULES.tags.maxCount})</span>
+        </label>
+        <div className="flex gap-2 mb-2">
+          <input
+            id="tag-input"
+            type="text"
+            value={tagInput}
+            onChange={handleTagInputChange}
+            onKeyPress={handleKeyPress}
+            placeholder="Enter a tag"
+            className={`flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 text-sm ${validationErrors.tags
+                ? 'border-red-300 focus:ring-red-500'
+                : 'border-gray-300 focus:ring-blue-500'
+              }`}
+            maxLength={VALIDATION_RULES.tags.maxLength}
+            disabled={isUploading}
+          />
+          <button
+            onClick={addTag}
+            className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            type="button"
+            aria-label="Add tag"
+            disabled={isUploading || !tagInput.trim()}
+          >
+            <Tag size={14} />
+          </button>
+        </div>
+
+        {validationErrors.tags && (
+          <p className="mb-2 text-xs text-red-600 flex items-center gap-1">
+            <AlertCircle size={12} />
+            {validationErrors.tags}
+          </p>
+        )}
+
+        {/* Current Tags */}
+        {currentTags.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-2">
+            {currentTags.map(tag => (
+              <span
+                key={tag}
+                className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs flex items-center gap-1"
+              >
+                {tag}
+                <button
+                  onClick={() => removeTag(tag)}
+                  className="hover:bg-blue-200 rounded-full p-0.5 disabled:opacity-50"
+                  type="button"
+                  aria-label={`Remove ${tag} tag`}
+                  disabled={isUploading}
+                >
+                  <X size={10} />
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+
+        <div className="text-xs text-gray-500">
+          {currentTags.length}/{VALIDATION_RULES.tags.maxCount} tags
+        </div>
+      </div>
+
+      {/* File Drop Zone */}
+      <div
+        className={`border-2 border-dashed rounded-xl p-4 sm:p-6 text-center transition-colors cursor-pointer ${isUploading
+            ? 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-50'
+            : dragActive
+              ? 'border-blue-500 bg-blue-50'
+              : validationErrors.images
+                ? 'border-red-300 bg-red-50'
+                : 'border-gray-300 hover:border-gray-400'
+          }`}
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onClick={() => !isUploading && fileInputRef.current?.click()}
+        role="button"
+        tabIndex={isUploading ? -1 : 0}
+        onKeyDown={(e) => {
+          if (!isUploading && (e.key === 'Enter' || e.key === ' ')) {
+            fileInputRef.current?.click();
+          }
+        }}
+      >
+        <Upload size={isMobile ? 24 : 32} className="mx-auto mb-2 sm:mb-3 text-gray-400" />
+        <p className="text-sm font-medium text-gray-700 mb-1">
+          {isUploading ? 'Uploading...' : isMobile ? 'Tap to select images' : 'Drop images here or click'}
+        </p>
+        <p className="text-xs text-gray-500 mb-1">
+          {VALIDATION_RULES.images.allowedTypes.map(type => type.split('/')[1].toUpperCase()).join(', ')}
+        </p>
+        <p className="text-xs text-gray-400">
+          Max {Math.round(VALIDATION_RULES.images.maxSize / 1024 / 1024)}MB per file
+        </p>
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          accept={VALIDATION_RULES.images.allowedTypes.join(',')}
+          onChange={handleFileInputChange}
+          className="hidden"
+          aria-label="Select images to upload"
+          disabled={isUploading}
+        />
+      </div>
+
+      {validationErrors.images && (
+        <p className="mt-2 text-xs text-red-600 flex items-center gap-1">
+          <AlertCircle size={12} />
+          {validationErrors.images}
+        </p>
+      )}
+
+      {/* Invalid Files */}
+      {invalidFiles.length > 0 && (
+        <div>
+          <h4 className="text-xs font-medium text-red-700 mb-2 flex items-center gap-1">
+            <AlertCircle size={12} />
+            Rejected Files ({invalidFiles.length})
+          </h4>
+          <div className="bg-red-50 rounded-lg p-2 border border-red-200">
+            {invalidFiles.map((item, index) => (
+              <div key={`invalid-${index}`} className="flex items-start justify-between py-2 border-b border-red-200 last:border-b-0">
+                <div className="flex-1 min-w-0 pr-2">
+                  <span className="text-xs font-medium text-red-800 block truncate">{item.file.name}</span>
+                  <p className="text-xs text-red-600 mt-1">{item.reason}</p>
+                </div>
+                <button
+                  onClick={() => removeInvalidFile(index)}
+                  className="p-1 hover:bg-red-100 rounded flex-shrink-0"
+                  type="button"
+                  aria-label={`Remove ${item.file.name}`}
+                >
+                  <X size={12} className="text-red-600" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Pending Files Preview */}
+      {pendingFiles.length > 0 && (
+        <div>
+          <h4 className="text-xs font-medium text-gray-700 mb-2 flex items-center gap-1">
+            <FileImage size={12} />
+            Selected Files ({pendingFiles.length})
+          </h4>
+          <div className="bg-white rounded-lg p-2 mb-3 border">
+            <div className="space-y-2 mb-3 max-h-32 overflow-y-auto">
+              {pendingFiles.map((file, index) => (
+                <div key={`${file.name}-${index}`} className="flex items-center justify-between bg-gray-50 px-2 py-2 rounded text-xs">
+                  <div className="flex-1 min-w-0 pr-2">
+                    <span className="font-medium block truncate">{file.name}</span>
+                    <p className="text-gray-500">
+                      {(file.size / 1024 / 1024).toFixed(2)} MB
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => removePendingFile(index)}
+                    className="p-1 hover:bg-gray-200 rounded flex-shrink-0"
+                    type="button"
+                    aria-label={`Remove ${file.name}`}
+                    disabled={isUploading}
+                  >
+                    <X size={12} className="text-gray-600" />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <button
+                onClick={uploadPendingFiles}
+                className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-xs flex-1"
+                type="button"
+                disabled={isUploading}
+              >
+                {isUploading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent"></div>
+                    Uploading...
+                  </>
+                ) : (
+                  'Upload Images'
+                )}
+              </button>
+              <button
+                onClick={cancelUpload}
+                className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs"
+                type="button"
+                disabled={isUploading}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
                     </div>
                   </div>
 
@@ -1028,4 +1279,4 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
   );
 };
 
-export default ImageUploaderModal;
+export default memo(ImageUploaderModal);
