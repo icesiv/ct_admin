@@ -136,7 +136,7 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
     }));
   };
 
-  const handleExternalImageInsert = (imageData): void => {
+  const handleExternalImageInsert = (imageData: ImageData): void => {
     // console.log('imageUrl',imageUrl);
     // setFormData(prev => ({
     //   ...prev,
