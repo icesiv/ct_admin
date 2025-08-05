@@ -34,6 +34,7 @@ interface NotificationState {
 
 interface FormData {
   title: string;
+  sub_head: string;
   excerpt: string;
   post_content: string;
   short_title?: string | null;
@@ -60,6 +61,7 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
     title: '',
     excerpt: '',
     short_title: '',
+    sub_head: '',
     subtitle: '',
     highlight: '',
     author: '',
@@ -99,6 +101,7 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
     
         setFormData({
           ...formData,
+          sub_head: post.sub_head || '',
           title: post.title || '',
           short_title: post.short_title || '',
           subtitle: post.subtitle || '',
@@ -224,6 +227,10 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
       errors.push('Title need to be between 5 and 250 characters long');
     }
 
+        if (!formData.sub_head.trim().length || formData.sub_head.trim().length < 5 || formData.sub_head.trim().length > 250) {
+      errors.push('Sub-head need to be between 5 and 250 characters long');
+    }
+
     if (!formData.excerpt.trim()) {
       errors.push('Excerpt is required');
     }
@@ -260,6 +267,7 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
      
       const saveData: FormData = {
         title: formData.title,
+        sub_head: formData.sub_head,
         short_title: formData.short_title,
         subtitle: formData.subtitle,
         highlight: formData.highlight,
@@ -366,6 +374,23 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
 
           <div className="space-y-4">
             <div className="space-y-6">
+              {/* Sub-Head */}
+              <div>
+                <label htmlFor="sub_head" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Sub Head
+                </label>
+                <input
+                  type="text"
+                  id="sub_head"
+                  name="sub_head"
+                  value={formData.sub_head || ''}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                  placeholder="Enter article sub-head..."
+                />
+              </div>
+
+
               {/* Title */}
               <div>
                 <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -377,7 +402,7 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
                   name="title"
                   value={formData.title}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 text-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                   placeholder="Enter article title..."
                   required
                 />
@@ -415,22 +440,6 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
                 />
               </div>
 
-              {/* highlight */}
-              <div>
-                <label htmlFor="highlight" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Highlight
-                </label>
-                <textarea
-                  id="highlight"
-                  name="highlight"
-                  value={formData.highlight || ''}
-                  onChange={handleInputChange}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-                  placeholder="Highlight for the article..."
-                />
-              </div>
-
               {/* Excerpt */}
               <div>
                 <label htmlFor="excerpt" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -445,6 +454,39 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                   placeholder="Brief description of the article..."
                   required
+                />
+              </div>
+
+            </div>
+
+            {/* WYSIWYG Editor */}
+
+            <div className="mt-6">
+              <div className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Main Content *
+              </div>
+              <WysiwygEditor
+                ref={editorRef}
+                OpenModal={OpenModal}
+                updatePostContent={setContent}
+                postContent={formData.post_content}
+              />
+            </div>
+
+
+              {/* highlight */}
+              <div>
+                <label htmlFor="highlight" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Highlight
+                </label>
+                <textarea
+                  id="highlight"
+                  name="highlight"
+                  value={formData.highlight || ''}
+                  onChange={handleInputChange}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                  placeholder="Highlight for the article..."
                 />
               </div>
 
@@ -554,21 +596,6 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
                 }
                 OpenModal={OpenModal}
               />
-            </div>
-
-            {/* WYSIWYG Editor */}
-
-            <div className="mt-6">
-              <div className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Main Content *
-              </div>
-              <WysiwygEditor
-                ref={editorRef}
-                OpenModal={OpenModal}
-                updatePostContent={setContent}
-                postContent={formData.post_content}
-              />
-            </div>
           </div>
 
       </div>

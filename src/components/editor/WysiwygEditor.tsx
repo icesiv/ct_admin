@@ -438,7 +438,11 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(({
             ref={editorRef}
             contentEditable
             suppressContentEditableWarning={true}
-            className={`min-h-96 p-4 focus:outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 leading-relaxed ${ 
+            className={`min-h-96 
+              max-h-[calc(50vh-200px)] overflow-y-auto
+              
+              
+              p-4 focus:outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 leading-relaxed ${ 
               dragOver ? 'bg-blue-50 dark:bg-blue-900/20 border-2 border-dashed border-blue-300 dark:border-blue-500' : ''
               }`}
             style={{
