@@ -22,8 +22,6 @@ import {
   Ellipsis,
 } from 'lucide-react';
 
-import SidebarWidget from "./SidebarWidget";
-
 type NavItem = {
   name: string;
   icon: React.ReactNode;
@@ -37,7 +35,6 @@ const navItems: NavItem[] = [
     icon: <LayoutDashboard />,
     path: "/",
   },
-
   {
     name: "Posts",
     icon: <Newspaper />,
@@ -98,11 +95,6 @@ const othersItems: NavItem[] = [
     icon: <ChartBarStacked />,
     path: "/categories"
   },
-  //   {
-  //   name: "Settings",
-  //   icon: <Settings />,
-  //   path: "/coming-soon"
-  // },
 ];
 
 const AppSidebar: React.FC = () => {
@@ -225,7 +217,6 @@ const AppSidebar: React.FC = () => {
   );
   const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  // const isActive = (path: string) => path === pathname;
   const isActive = useCallback((path: string) => path === pathname, [pathname]);
 
   useEffect(() => {
@@ -282,7 +273,7 @@ const AppSidebar: React.FC = () => {
 
   return (
     <aside
-      className={`fixed mt-16 flex flex-col justify-between lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900  transition-all duration-300 ease-in-out z-50 border-r border-gray-200 
+      className={`fixed mt-16 flex flex-col justify-between lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900  transition-all duration-300 ease-in-out z-50 border-r border-gray-200 h-screen
         ${isExpanded || isMobileOpen
           ? "w-[290px]"
           : isHovered
@@ -294,12 +285,11 @@ const AppSidebar: React.FC = () => {
       onMouseEnter={() => !isExpanded && setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-
-      {/* Main */}
-      <div>
-        {/* logo */}
+      {/* Main Content Container */}
+      <div className="flex flex-col min-h-0 flex-1">
+        {/* Logo - Fixed at top */}
         <div
-          className={`py-6 flex  ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
+          className={`py-6 flex flex-shrink-0 ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
             }`}
         >
           <Link href="/">
@@ -331,14 +321,14 @@ const AppSidebar: React.FC = () => {
           </Link>
         </div>
 
-        {/* menu */}
-        <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar mt-4">
-          <nav>
-            <div className="flex flex-col gap-4">
+        {/* Scrollable Menu Container */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent hover:scrollbar-thumb-gray-400 dark:hover:scrollbar-thumb-gray-500">
+          <nav className="pb-4">
+            <div className="flex flex-col gap-6">
               {/* Main Menu */}
               <div>
                 <h2
-                  className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-320 dark:text-amber-50 ${!isExpanded && !isHovered
+                  className={`mb-4 text-xs font-semibold uppercase flex leading-[20px] text-gray-500 dark:text-gray-400 ${!isExpanded && !isHovered
                     ? "lg:justify-center"
                     : "justify-start"
                     }`}
@@ -346,16 +336,16 @@ const AppSidebar: React.FC = () => {
                   {isExpanded || isHovered || isMobileOpen ? (
                     "Main Menu"
                   ) : (
-                    <Ellipsis />
+                    <Ellipsis className="w-4 h-4" />
                   )}
                 </h2>
                 {renderMenuItems(navItems, "main")}
               </div>
 
               {/* Admin Menu */}
-              <div className="">
+              <div>
                 <h2
-                  className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-320 dark:text-amber-50 ${!isExpanded && !isHovered
+                  className={`mb-4 text-xs font-semibold uppercase flex leading-[20px] text-gray-500 dark:text-gray-400 ${!isExpanded && !isHovered
                     ? "lg:justify-center"
                     : "justify-start"
                     }`}
@@ -363,7 +353,7 @@ const AppSidebar: React.FC = () => {
                   {isExpanded || isHovered || isMobileOpen ? (
                     "Admin Menu"
                   ) : (
-                    <Ellipsis />
+                    <Ellipsis className="w-4 h-4" />
                   )}
                 </h2>
                 {renderMenuItems(othersItems, "others")}
@@ -371,12 +361,8 @@ const AppSidebar: React.FC = () => {
             </div>
           </nav>
         </div>
-
       </div>
 
-
-      {/* Widgets */}
-      {isExpanded || isHovered || isMobileOpen ? <SidebarWidget /> : null}
     </aside>
   );
 };

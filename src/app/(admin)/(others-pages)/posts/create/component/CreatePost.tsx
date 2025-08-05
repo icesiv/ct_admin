@@ -13,6 +13,10 @@ import WysiwygEditor from '@/components/editor/WysiwygEditor';
 
 import { ImageData } from '@/app/(admin)/(others-pages)/posts/create/component/Gallery/ImageUploaderModal';
 import { WysiwygEditorRef } from '@/components/editor';
+
+import Switch from "@/components/form/switch/Switch";
+
+
 // Type definitions
 
 interface Category {
@@ -43,7 +47,9 @@ interface FormData {
   author?: string | null;
   writer_id?: number | null;
   featured_image: string | null;
+  caption: string | null;
   categories: number[];
+  post_status?: number | 0 | 1; // 0 for draft, 1 for published
   tags: string[];
 }
 
@@ -56,7 +62,7 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
   const [isLoadingPost, setIsLoadingPost] = useState<boolean>(isEditMode);
   const [editorContent, setContent] = useState('');
   const editorRef = useRef<WysiwygEditorRef>(null);
-  
+
   const [formData, setFormData] = useState<FormData>({
     title: '',
     excerpt: '',
@@ -68,6 +74,8 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
     writer_id: null,
     post_content: '',
     featured_image: '',
+    caption: '',
+    post_status: 0, // Default to draft
     categories: [],
     tags: []
   });
@@ -98,7 +106,7 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
       try {
         const response = await getPost(postId);
         const post = response.data;
-    
+
         setFormData({
           ...formData,
           sub_head: post.sub_head || '',
@@ -110,6 +118,8 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
           excerpt: post.excerpt || '',
           post_content: post.post_content || '',
           featured_image: post.image || '',
+          caption: post.caption || '',
+          post_status: post.post_status || 0,
           categories: post.categories?.map?.((cat: Category) => Number(cat.id)) || [],
           tags: post.tags?.map?.((tag: Tag) => tag.name) || []
         });
@@ -140,7 +150,7 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
   };
 
   const handleExternalImageInsert = (imageData: ImageData): void => {
-    console.log('imageData', imageData);
+    // console.log('imageData', imageData);
     if (editorRef.current) {
       editorRef.current.insertImageIntoEditor({
         file_url: imageData.url,
@@ -196,6 +206,10 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
     }
   };
 
+  const handleSwitchChange = (checked: boolean): void => {
+   formData.post_status = checked ? 1 : 0; // 1 for published, 0 for draft
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -227,8 +241,12 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
       errors.push('Title need to be between 5 and 250 characters long');
     }
 
-        if (!formData.sub_head.trim().length || formData.sub_head.trim().length < 5 || formData.sub_head.trim().length > 250) {
-      errors.push('Sub-head need to be between 5 and 250 characters long');
+    if ( formData.sub_head.trim().length > 250) {
+      errors.push('Sub-head can be 250 characters long');
+    }
+
+    if ( formData.caption.trim().length > 250) {
+      errors.push('caption can be 250 characters long');
     }
 
     if (!formData.excerpt.trim()) {
@@ -264,7 +282,7 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
     setIsLoading(true);
     try {
       const currentContent = editorRef.current?.getCurrentContent();
-     
+
       const saveData: FormData = {
         title: formData.title,
         sub_head: formData.sub_head,
@@ -276,7 +294,9 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
         excerpt: formData.excerpt,
         post_content: currentContent || formData.post_content,
         featured_image: formData.featured_image,
+        caption: formData.caption || '',
         categories: formData.categories,
+        post_status: formData.post_status,
         tags: formData.tags,
       };
 
@@ -350,7 +370,7 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
       </div>
     );
   };
- 
+
   return (
     <div>
       {/* Header with title and action buttons */}
@@ -372,231 +392,255 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
           />
         )}
 
-          <div className="space-y-4">
-            <div className="space-y-6">
-              {/* Sub-Head */}
-              <div>
-                <label htmlFor="sub_head" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Sub Head
-                </label>
-                <input
-                  type="text"
-                  id="sub_head"
-                  name="sub_head"
-                  value={formData.sub_head || ''}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-                  placeholder="Enter article sub-head..."
-                />
-              </div>
+        <div className="space-y-4">
+          <div className="space-y-6">
+            {/* Publish Btn */}
+            <Switch
+              label="Publish"
+              defaultChecked={formData.post_status === 1}
+              onChange={handleSwitchChange}
+            />
 
 
-              {/* Title */}
-              <div>
-                <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Title *
-                </label>
-                <input
-                  type="text"
-                  id="title"
-                  name="title"
-                  value={formData.title}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-                  placeholder="Enter article title..."
-                  required
-                />
-              </div>
-
-              {/* Short title */}
-              <div>
-                <label htmlFor="short_title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Short title
-                </label>
-                <input
-                  type="text"
-                  id="short_title"
-                  name="short_title"
-                  value={formData.short_title || ''}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-                  placeholder="Short title for home page..."
-                />
-              </div>
-
-              {/* Author */}
-              <div>
-                <label htmlFor="author" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Writer's name
-                </label>
-                <input
-                  type="text"
-                  id="author"
-                  name="author"
-                  value={formData.author || ''}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-                  placeholder="Writer's name..."
-                />
-              </div>
-
-              {/* Excerpt */}
-              <div>
-                <label htmlFor="excerpt" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Excerpt *
-                </label>
-                <textarea
-                  id="excerpt"
-                  name="excerpt"
-                  value={formData.excerpt}
-                  onChange={handleInputChange}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-                  placeholder="Brief description of the article..."
-                  required
-                />
-              </div>
-
-            </div>
-
-            {/* WYSIWYG Editor */}
-
-            <div className="mt-6">
-              <div className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Main Content *
-              </div>
-              <WysiwygEditor
-                ref={editorRef}
-                OpenModal={OpenModal}
-                updatePostContent={setContent}
-                postContent={formData.post_content}
+            {/* Sub-Head */}
+            <div>
+              <label htmlFor="sub_head" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Sub Head
+              </label>
+              <input
+                type="text"
+                id="sub_head"
+                name="sub_head"
+                value={formData.sub_head || ''}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                placeholder="Enter article sub-head..."
               />
             </div>
 
 
-              {/* highlight */}
-              <div>
-                <label htmlFor="highlight" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Highlight
-                </label>
-                <textarea
-                  id="highlight"
-                  name="highlight"
-                  value={formData.highlight || ''}
-                  onChange={handleInputChange}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-                  placeholder="Highlight for the article..."
-                />
-              </div>
-
-              {/* Categories */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                  Categories *
-                </label>
-                <div className="block">
-                  <MultiselectDropdown
-                    resetDropSelected={handleCategoryChange}
-                    news_categories={all_cat}
-                    handleCategoryChange={handleCategoryChange}
-                    preselected={formData.categories}
-                  />
-                </div>
-
-                {formData.categories.length > 0 && (
-                  <div className="mt-3">
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Selected categories:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {formData.categories.map(categoryId => {
-                        const category = all_cat.find(cat => cat.id === categoryId);
-                        return category ? (
-                          <span
-                            key={categoryId}
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${category.color}`}
-                          >
-                            {category.name}
-                          </span>
-                        ) : null;
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Tags Section */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                  Tags
-                </label>
-
-                {/* Tag Input */}
-                <div className="flex gap-2 mb-4">
-                  <input
-                    type="text"
-                    value={tagInput}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTagInput(e.target.value)}
-                    onKeyPress={handleTagInputKeyPress}
-                    className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-                    placeholder="Type a tag and press Enter or comma..."
-                  />
-                  <button
-                    type="button"
-                    onClick={handleTagInputSubmit}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
-                </div>
-
-                {/* Selected Tags */}
-                {formData.tags.length > 0 && (
-                  <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Selected tags ({formData.tags.length}/10):</p>
-                    <div className="flex flex-wrap gap-2">
-                      {formData.tags.map((tag: string, index: number) => (
-                        <span
-                          key={index}
-                          className="inline-flex items-center px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium border border-blue-200 dark:border-blue-700"
-                        >
-                          #{tag}
-                          <button
-                            type="button"
-                            onClick={() => handleTagRemove(tag)}
-                            className="ml-2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 focus:outline-none"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                  Tags help categorize and make your content more discoverable. Press Enter or comma to add multiple tags.
-                </p>
-              </div>
-
-              {/* Featured Image */}
-              <FeatureImageUploader
-                featured_image={formData.featured_image}
-                OpenModal={OpenModal}
+            {/* Title */}
+            <div>
+              <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Title *
+              </label>
+              <input
+                type="text"
+                id="title"
+                name="title"
+                value={formData.title}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                placeholder="Enter article title..."
+                required
               />
+            </div>
 
-              <ImageUploaderModal
-                isOpen={isOpen}
-                callback={
-                  isFeature
-                    ? UpdateFeatureImage
-                    : (imageData) => {
-                      // Assuming handleExternalImageInsert needs the main image URL
-                      handleExternalImageInsert(imageData);
-                    }
-                }
-                OpenModal={OpenModal}
+            {/* Short title */}
+            <div>
+              <label htmlFor="short_title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Short title
+              </label>
+              <input
+                type="text"
+                id="short_title"
+                name="short_title"
+                value={formData.short_title || ''}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                placeholder="Short title for home page..."
               />
+            </div>
+
+            {/* Author */}
+            <div>
+              <label htmlFor="author" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Writer's name
+              </label>
+              <input
+                type="text"
+                id="author"
+                name="author"
+                value={formData.author || ''}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                placeholder="Writer's name..."
+              />
+            </div>
+
+            {/* Excerpt */}
+            <div>
+              <label htmlFor="excerpt" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Excerpt *
+              </label>
+              <textarea
+                id="excerpt"
+                name="excerpt"
+                value={formData.excerpt}
+                onChange={handleInputChange}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                placeholder="Brief description of the article..."
+                required
+              />
+            </div>
+
           </div>
+
+          {/* WYSIWYG Editor */}
+
+          <div className="mt-6">
+            <div className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Main Content *
+            </div>
+            <WysiwygEditor
+              ref={editorRef}
+              OpenModal={OpenModal}
+              updatePostContent={setContent}
+              postContent={formData.post_content}
+            />
+          </div>
+
+
+          {/* highlight */}
+          <div>
+            <label htmlFor="highlight" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Highlight
+            </label>
+            <textarea
+              id="highlight"
+              name="highlight"
+              value={formData.highlight || ''}
+              onChange={handleInputChange}
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+              placeholder="Highlight for the article..."
+            />
+          </div>
+
+          {/* Categories */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              Categories *
+            </label>
+            <div className="block">
+              <MultiselectDropdown
+                resetDropSelected={handleCategoryChange}
+                news_categories={all_cat}
+                handleCategoryChange={handleCategoryChange}
+                preselected={formData.categories}
+              />
+            </div>
+
+            {formData.categories.length > 0 && (
+              <div className="mt-3">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Selected categories:</p>
+                <div className="flex flex-wrap gap-2">
+                  {formData.categories.map(categoryId => {
+                    const category = all_cat.find(cat => cat.id === categoryId);
+                    return category ? (
+                      <span
+                        key={categoryId}
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${category.color}`}
+                      >
+                        {category.name}
+                      </span>
+                    ) : null;
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Tags Section */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              Tags
+            </label>
+
+            {/* Tag Input */}
+            <div className="flex gap-2 mb-4">
+              <input
+                type="text"
+                value={tagInput}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTagInput(e.target.value)}
+                onKeyPress={handleTagInputKeyPress}
+                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                placeholder="Type a tag and press Enter or comma..."
+              />
+              <button
+                type="button"
+                onClick={handleTagInputSubmit}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Selected Tags */}
+            {formData.tags.length > 0 && (
+              <div>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Selected tags ({formData.tags.length}/10):</p>
+                <div className="flex flex-wrap gap-2">
+                  {formData.tags.map((tag: string, index: number) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium border border-blue-200 dark:border-blue-700"
+                    >
+                      #{tag}
+                      <button
+                        type="button"
+                        onClick={() => handleTagRemove(tag)}
+                        className="ml-2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 focus:outline-none"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+              Tags help categorize and make your content more discoverable. Press Enter or comma to add multiple tags.
+            </p>
+          </div>
+
+          {/* Featured Image */}
+          <FeatureImageUploader
+            featured_image={formData.featured_image}
+            OpenModal={OpenModal}
+          />
+
+          {/* caption */}
+          <div>
+            <label htmlFor="caption" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Caption
+            </label>
+            <input
+              type="text"
+              id="caption"
+              name="caption"
+              value={formData.caption || ''}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+              placeholder="Image caption..."
+            />
+          </div>
+
+          <ImageUploaderModal
+            isOpen={isOpen}
+            callback={
+              isFeature
+                ? UpdateFeatureImage
+                : (imageData) => {
+                  // Assuming handleExternalImageInsert needs the main image URL
+                  handleExternalImageInsert(imageData);
+                }
+            }
+            OpenModal={OpenModal}
+          />
+        </div>
 
       </div>
 

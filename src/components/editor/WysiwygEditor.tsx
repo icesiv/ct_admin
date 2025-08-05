@@ -17,7 +17,7 @@ import React, {
 import { WysiwygEditorProps, WysiwygEditorRef, ImageData } from './types';
 import { useSelection, useImageUpload } from './hooks';
 import { extractYouTubeVideoId, createYouTubeEmbed, fixImageUrls } from './utils';
-import { createPasteHandler } from './pasteFilter';
+// import { createPasteHandler } from './pasteFilter';
 import { Toolbar } from './Toolbar';
 import { LinkModal, VideoModal, ImageModal } from './Modals';
 import { EditorStyles } from './EditorStyles';
@@ -31,7 +31,7 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(({
   className = '',
   OpenModal,
   pasteFilterOptions = {
-    allowHtml: false,
+    allowHtml: true,
     allowBasicFormatting: true,
     blockCodePatterns: true,
     onBlockedPaste: (content, type) => {
@@ -348,15 +348,15 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(({
   }, []);
 
   // Paste handler
-  const handlePaste = useCallback((e: ClipboardEvent<HTMLDivElement>) => {
-    createPasteHandler(pasteFilterOptions)(e);
-    // Update content after paste
-    setTimeout(() => {
-      if (editorRef.current) {
-        setContent(editorRef.current.innerHTML);
-      }
-    }, 0);
-  }, [pasteFilterOptions]);
+  // const handlePaste = useCallback((e: ClipboardEvent<HTMLDivElement>) => {
+  //   createPasteHandler(pasteFilterOptions)(e);
+  //   // Update content after paste
+  //   setTimeout(() => {
+  //     if (editorRef.current) {
+  //       setContent(editorRef.current.innerHTML);
+  //     }
+  //   }, 0);
+  // }, [pasteFilterOptions]);
 
   // Keyboard shortcuts
   const handleKeyDown = useCallback((e: KeyboardEvent<HTMLDivElement>) => {
@@ -456,7 +456,7 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(({
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onKeyDown={handleKeyDown}
-            onPaste={handlePaste}
+            // onPaste={handlePaste}
           />
 
           {!content && (
