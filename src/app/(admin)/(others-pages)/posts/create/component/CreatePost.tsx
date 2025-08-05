@@ -207,7 +207,7 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
   };
 
   const handleSwitchChange = (checked: boolean): void => {
-   formData.post_status = checked ? 1 : 0; // 1 for published, 0 for draft
+    formData.post_status = checked ? 1 : 0; // 1 for published, 0 for draft
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void => {
@@ -241,11 +241,12 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
       errors.push('Title need to be between 5 and 250 characters long');
     }
 
-    if ( formData.sub_head.trim().length > 250) {
+    if (formData.sub_head.trim().length > 250) {
       errors.push('Sub-head can be 250 characters long');
     }
 
-    if ( formData.caption.trim().length > 250) {
+
+    if (formData.caption && formData.caption.trim().length > 250) {
       errors.push('caption can be 250 characters long');
     }
 
