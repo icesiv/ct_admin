@@ -211,11 +211,19 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
   const validateForm = (): string[] => {
     const errors: string[] = [];
     const currentContent = editorRef.current?.getCurrentContent() || formData.post_content;
-   
+
+    if (!formData.post_content.trim() && !currentContent.trim()) {
+      errors.push('Content is required');
+    }
 
     if (!formData.title.trim()) {
       errors.push('Title is required');
     }
+
+    if (!formData.title.trim().length || formData.title.trim().length < 5 || formData.title.trim().length > 250) {
+      errors.push('Title need to be between 5 and 250 characters long');
+    }
+
     if (!formData.excerpt.trim()) {
       errors.push('Excerpt is required');
     }
