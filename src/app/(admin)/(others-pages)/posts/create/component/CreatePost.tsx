@@ -75,7 +75,7 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
     post_content: '',
     featured_image: '',
     caption: '',
-    post_status: 0, // Default to draft
+    post_status: 1, // Default to draft
     categories: [],
     tags: []
   });
@@ -119,7 +119,7 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
           post_content: post.post_content || '',
           featured_image: post.image || '',
           caption: post.caption || '',
-          post_status: post.post_status || 0,
+          post_status: post.post_status || 1,
           categories: post.categories?.map?.((cat: Category) => Number(cat.id)) || [],
           tags: post.tags?.map?.((tag: Tag) => tag.name) || []
         });
@@ -244,7 +244,6 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
     if (formData.sub_head.trim().length > 250) {
       errors.push('Sub-head can be 250 characters long');
     }
-
 
     if (formData.caption && formData.caption.trim().length > 250) {
       errors.push('caption can be 250 characters long');
@@ -395,14 +394,6 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
 
         <div className="space-y-4">
           <div className="space-y-6">
-            {/* Publish Btn */}
-            <Switch
-              label="Publish"
-              defaultChecked={formData.post_status === 1}
-              onChange={handleSwitchChange}
-            />
-
-
             {/* Sub-Head */}
             <div>
               <label htmlFor="sub_head" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -642,6 +633,15 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
             OpenModal={OpenModal}
           />
         </div>
+
+        {/* Publish Btn */}
+        <Switch
+          label="Publish"
+          defaultChecked={formData.post_status === 1}
+          onChange={handleSwitchChange}
+        />
+
+
 
       </div>
 
