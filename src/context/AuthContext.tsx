@@ -5,13 +5,7 @@ import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.share
 import { BASE_URL } from '@/config/config';
 import { rootReducer } from '@/reducers';
 
-// Types
-interface User {
-    id: string | number;
-    name: string;
-    email: string;
-    // Add other user properties as needed
-}
+import { User } from '@/types/user'; // Assuming you have a utility function for auth checks
 
 interface AuthState {
     user: User | null;
