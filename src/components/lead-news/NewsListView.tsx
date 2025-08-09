@@ -20,6 +20,8 @@ interface NewsArticle {
     post_content: string;
     image: string;
     category?: Category;
+      created_by: string; // Add this line
+
     category_slug?: string;
     created_at_ago: string;
     post_status: number;
