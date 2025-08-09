@@ -53,7 +53,7 @@ export const ImagesGrid: React.FC<ImagesGridProps> = ({
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {images.map(image => (
           <div key={image.id} className="group relative bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
-            <div className="aspect-square overflow-hidden">
+            <div className="aspect-video overflow-hidden">
               <a href='#' onClick={(e)=>{
                 e.preventDefault();
                 callback?.(image);
@@ -63,33 +63,6 @@ export const ImagesGrid: React.FC<ImagesGridProps> = ({
                 loading="lazy"
               />
               </a>
-            </div>
-            
-            {/* Delete Button */}
-            <button
-              onClick={() => onDeleteImage(image.id)}
-              className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 hover:bg-red-600 transition-all"
-              type="button"
-              aria-label={`Delete ${image.name}`}
-            >
-              <Trash2 size={14} />
-            </button>
-
-            {/* Image Info */}
-            <div className="p-3">
-              <h4 className="font-medium text-gray-800 truncate mb-2">
-                {image.name}
-              </h4>
-              <div className="flex flex-wrap gap-1">
-                {image.tags.map(tag => (
-                  <span
-                    key={tag}
-                    className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
             </div>
           </div>
         ))}

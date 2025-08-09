@@ -23,7 +23,7 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
           placeholder="Search images by title or tags..."
           value={searchTerm}
           onChange={onSearchChange}
-          className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-4/5 pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           aria-label="Search images"
         />
         
