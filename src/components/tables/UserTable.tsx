@@ -49,8 +49,7 @@ export default function UserTable() {
     try {
       setLoading(true);
       
-      // Get Bearer token from localStorage or environment variable
-      const token = localStorage.getItem('auth_token') || process.env.NEXT_PUBLIC_API_TOKEN;
+      const token = localStorage.getItem('auth_token');
       
       if (!token) {
         throw new Error('No authentication token found');
