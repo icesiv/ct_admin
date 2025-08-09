@@ -311,7 +311,6 @@ const NewsListView: React.FC = () => {
                                 </tr>
                             </thead>
                             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                                {console.log('newsData >>> ', newsData)}
                                 {newsData.map((news) => (
                                     <tr key={news.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200">
                                         <td className="px-6 py-4 flex items-center whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
