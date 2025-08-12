@@ -58,13 +58,13 @@ const SortableNewsList: React.FC<SortableNewsListProps> = ({ leadPosts, fetchLea
 
   const deleteLeadNews = async (news_id: string): Promise<void> => {
     const url = `${BASE_URL}admin/posts/${mode}/remove`;
-    const authtoken = localStorage.getItem('auth_token');
+    const auth_token = localStorage.getItem('auth_token');
     
     try {
       const response = await fetch(url, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${authtoken}`,
+          'Authorization': `Bearer ${auth_token}`,
           'Accept': 'application/json',
           'Content-Type': 'application/json',
         },
@@ -86,7 +86,7 @@ const SortableNewsList: React.FC<SortableNewsListProps> = ({ leadPosts, fetchLea
   };
 
   const saveOrder = async (): Promise<void> => {
-    const authtoken = localStorage.getItem('auth_token');
+    const auth_token = localStorage.getItem('auth_token');
     const url = `${BASE_URL}admin/posts/${mode}/reorder`;
 
     setIsSaving(true);
@@ -101,7 +101,7 @@ const SortableNewsList: React.FC<SortableNewsListProps> = ({ leadPosts, fetchLea
       const response = await fetch(url, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${authtoken}`,
+          'Authorization': `Bearer ${auth_token}`,
           'Accept': 'application/json',
           'Content-Type': 'application/json',
         },
@@ -213,13 +213,8 @@ const SortableNewsList: React.FC<SortableNewsListProps> = ({ leadPosts, fetchLea
     setDeleteConfirm(null);
   };
 
-  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>): void => {
-    const target = e.target as HTMLImageElement;
-    target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0yOCAzMkw0MCA0NEw1MiAzMkw2MCA0MEw2MCA2MEgyMFY0MEwyOCAzMloiIGZpbGw9IiNEMUQ1REIiLz4KPGNpcmNsZSBjeD0iMzIiIGN5PSIzMiIgcj0iNCIgZmlsbD0iI0QxRDVEQiIvPgo8L3N2Zz4K';
-  };
-
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-gray-50 min-h-screen">
+    <div className="max-w-5xl mx-auto  min-h-screen">
       {saveSuccess && (
         <div className="fixed bottom-6 right-6 z-50">
           <div className="bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2">
@@ -333,7 +328,7 @@ const SortableNewsList: React.FC<SortableNewsListProps> = ({ leadPosts, fetchLea
 
         {/* Delete Confirmation Modal */}
         {deleteConfirm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-9999">
             <div className="bg-white rounded-lg shadow-xl p-6 max-w-md mx-4">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">

@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Edit, Filter, Star, X } from 'lucide-react';
+import { Edit, Filter, Star, ShieldAlert, X } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { BASE_URL } from '@/config/config';
 import MultiselectDropdown from '@/components/ui/dropdown/MultiselectDropdown';
@@ -20,7 +20,7 @@ interface NewsArticle {
     post_content: string;
     image: string;
     category?: Category;
-      created_by: string; // Add this line
+    created_by: string; // Add this line
 
     category_slug?: string;
     created_at_ago: string;
@@ -338,7 +338,7 @@ const NewsListView: React.FC = () => {
                                             {news.created_by}<br />
                                             {news.created_at_ago}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <td className="px-6 py-4 flex justify-end space-x-2 whitespace-nowrap text-right text-sm font-medium">
                                             <div className="flex justify-end space-x-2">
                                                 {/* Make Lead News Button - only show if NOT in lead */}
                                                 {!articles.some(article => article.id === news.id) && (
@@ -359,6 +359,29 @@ const NewsListView: React.FC = () => {
                                                         disabled
                                                     >
                                                         <Star className="h-4 w-4 fill-current" />
+                                                    </button>
+                                                )}
+                                            </div>
+                                            <div className="flex justify-end space-x-2">
+                                                {/* Make Lead News Button - only show if NOT in lead */}
+                                                {!articles.some(article => article.id === news.id) && (
+                                                    <button
+                                                        onClick={() => handleMakeLeadNews(news)}
+                                                        className="bg-yellow-500 bg-opacity-90 hover:bg-opacity-100 text-white p-2 rounded-full shadow-md transition-all duration-200 hover:shadow-lg"
+                                                        title="Make Lead News"
+                                                    >
+                                                        <ShieldAlert className="h-4 w-4" />
+                                                    </button>
+                                                )}
+
+                                                {/* Already in Lead Button - only show if IS in lead */}
+                                                {articles.some(article => article.id === news.id) && (
+                                                    <button
+                                                        className="bg-green-500 bg-opacity-90 text-white p-2 rounded-full shadow-md cursor-not-allowed"
+                                                        title="Already in Lead News"
+                                                        disabled
+                                                    >
+                                                        <ShieldAlert className="h-4 w-4 fill-current" />
                                                     </button>
                                                 )}
                                             </div>

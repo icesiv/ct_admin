@@ -634,12 +634,28 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
           />
         </div>
 
-        {/* Publish Btn */}
-        <Switch
-          label="Publish"
-          defaultChecked={formData.post_status === 1}
-          onChange={handleSwitchChange}
-        />
+        <div className="mt-6 max-w-2xl flex justify-between items-center">
+          {/* Publish Btn */}
+          <Switch
+            label="Publish"
+            defaultChecked={formData.post_status === 1}
+            onChange={handleSwitchChange}
+          />
+
+          {/* Latest Post Btn */}
+          <Switch
+            label="Latest Post"
+            // defaultChecked={formData.post_status === 1}
+            onChange={handleSwitchChange}
+          />
+
+          {/* Breaking News Btn */}
+          <Switch
+            label="Breaking News "
+            // defaultChecked={formData.post_status === 1}
+            onChange={handleSwitchChange}
+          />
+        </div>
 
 
 
