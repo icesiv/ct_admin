@@ -51,6 +51,8 @@ interface FormData {
   categories: number[];
   post_status?: number | 0 | 1; // 0 for draft, 1 for published
   tags: string[];
+  lead_news: boolean,
+  breaking_news: boolean,
 }
 
 export default function CreatePost({ postId: postId }: { postId: string | null | undefined }) {
@@ -77,7 +79,10 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
     caption: '',
     post_status: 1, // Default to draft
     categories: [],
-    tags: []
+    tags: [],
+    lead_news: false,
+    breaking_news: false,
+
   });
 
   // Tag-related state
@@ -106,7 +111,6 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
       try {
         const response = await getPost(postId);
         const post = response.data;
-
         setFormData({
           ...formData,
           sub_head: post.sub_head || '',
@@ -119,9 +123,11 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
           post_content: post.post_content || '',
           featured_image: post.image || '',
           caption: post.caption || '',
-          post_status: post.post_status || 1,
+          post_status: post?.post_status === 1 ? 1 : 0,
           categories: post.categories?.map?.((cat: Category) => Number(cat.id)) || [],
-          tags: post.tags?.map?.((tag: Tag) => tag.name) || []
+          tags: post.tags?.map?.((tag: Tag) => tag.name) || [],
+          breaking_news: response.breaking_news,
+          lead_news: response.lead_news
         });
 
         setImagePreview(post.featured_image || '');
@@ -138,12 +144,12 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
   }, [isEditMode, postId, getPost]);
 
   const UpdateFeatureImage = useCallback((imageData: ImageData): void => {
-    setFormData(prev => ({ ...prev, featured_image: imageData.url }));
+    setFormData((prev: any) => ({ ...prev, featured_image: imageData.url }));
     setImagePreview(imageData.url);
   }, []);
 
   const handleCategoryToggle = (categoryIds: number[]): void => {
-    setFormData(prev => ({
+    setFormData((prev: any) => ({
       ...prev,
       categories: categoryIds
     }));
@@ -170,7 +176,7 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
   // Tag handling functions
   const handleTagAdd = (tagName: string): void => {
     if (tagName.trim() && !formData.tags.includes(tagName.trim())) {
-      setFormData(prev => ({
+      setFormData((prev: { tags: any; }) => ({
         ...prev,
         tags: [...prev.tags, tagName.trim()]
       }));
@@ -178,9 +184,9 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
   };
 
   const handleTagRemove = (tagToRemove: string): void => {
-    setFormData(prev => ({
+    setFormData((prev: { tags: any[]; }) => ({
       ...prev,
-      tags: prev.tags.filter(tag => tag !== tagToRemove)
+      tags: prev.tags.filter((tag: string) => tag !== tagToRemove)
     }));
   };
 
@@ -207,12 +213,12 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
   };
 
   const handleSwitchChange = (checked: boolean): void => {
-    formData.post_status = checked ? 1 : 0; // 1 for published, 0 for draft
+     setFormData({...formData, post_status: checked ? 1 : 0});
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev: any) => ({
       ...prev,
       [name]: value
     }));
@@ -298,6 +304,8 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
         categories: formData.categories,
         post_status: formData.post_status,
         tags: formData.tags,
+        lead_news: formData.lead_news,
+        breaking_news: formData.breaking_news
       };
 
       if (isEditMode) {
@@ -528,7 +536,7 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
               <div className="mt-3">
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Selected categories:</p>
                 <div className="flex flex-wrap gap-2">
-                  {formData.categories.map(categoryId => {
+                  {formData.categories.map((categoryId: number) => {
                     const category = all_cat.find(cat => cat.id === categoryId);
                     return category ? (
                       <span
@@ -625,7 +633,7 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
             callback={
               isFeature
                 ? UpdateFeatureImage
-                : (imageData) => {
+                : (imageData: ImageData) => {
                   // Assuming handleExternalImageInsert needs the main image URL
                   handleExternalImageInsert(imageData);
                 }
@@ -645,15 +653,19 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
           {/* Latest Post Btn */}
           <Switch
             label="Latest Post"
-            // defaultChecked={formData.post_status === 1}
-            onChange={handleSwitchChange}
+            defaultChecked={formData.lead_news}
+            onChange={(flag: boolean)=>{
+              setFormData({...formData, lead_news: flag});
+            }}
           />
 
           {/* Breaking News Btn */}
           <Switch
             label="Breaking News "
-            // defaultChecked={formData.post_status === 1}
-            onChange={handleSwitchChange}
+            defaultChecked={formData.breaking_news}
+            onChange={(flag: boolean)=>{
+              setFormData({...formData, breaking_news: flag});
+            }}
           />
         </div>
 
