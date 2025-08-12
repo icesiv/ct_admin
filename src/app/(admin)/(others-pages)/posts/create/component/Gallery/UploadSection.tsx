@@ -1,4 +1,162 @@
-const UploadSection = ({loading, uploadStatus, VALIDATION_RULES}) => {
+import React, { useRef, useState } from 'react';
+import { CheckCircle, AlertCircle, Upload, Tag, X, FileImage } from 'lucide-react';
+
+interface UploadSectionProps {
+    loading: boolean;
+    uploadStatus: { type: 'success' | 'error' | null; message: string };
+    VALIDATION_RULES: {
+        maxFileSize?: number;
+        allowedTypes?: string[];
+        title: {
+            minLength: number;
+            maxLength: number;
+        };
+        tags: {
+            maxCount: number;
+            maxLength: number;
+        };
+        images: {
+            allowedTypes: string[];
+            maxSize: number;
+        };
+    };
+}
+
+const UploadSection = ({ loading, uploadStatus, VALIDATION_RULES }: UploadSectionProps) => {
+    // State variables
+    const [currentTitle, setCurrentTitle] = useState('');
+    const [currentTags, setCurrentTags] = useState<string[]>([]);
+    const [tagInput, setTagInput] = useState('');
+    const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+    const [invalidFiles, setInvalidFiles] = useState<{ file: File; reason: string }[]>([]);
+    const [isUploading, setIsUploading] = useState(false);
+    const [dragActive, setDragActive] = useState(false);
+    const [validationErrors, setValidationErrors] = useState<{
+        title?: string;
+        tags?: string;
+        images?: string;
+    }>({});
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+    // Refs
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Event handlers
+    const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setCurrentTitle(value);
+        
+        // Clear validation error when user starts typing
+        if (validationErrors.title) {
+            setValidationErrors(prev => ({ ...prev, title: undefined }));
+        }
+    };
+
+    const handleTagInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setTagInput(e.target.value);
+    };
+
+    const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addTag();
+        }
+    };
+
+    const addTag = () => {
+        const trimmedTag = tagInput.trim();
+        if (trimmedTag && !currentTags.includes(trimmedTag) && currentTags.length < VALIDATION_RULES.tags.maxCount) {
+            setCurrentTags(prev => [...prev, trimmedTag]);
+            setTagInput('');
+            
+            // Clear validation error
+            if (validationErrors.tags) {
+                setValidationErrors(prev => ({ ...prev, tags: undefined }));
+            }
+        }
+    };
+
+    const removeTag = (tagToRemove: string) => {
+        setCurrentTags(prev => prev.filter(tag => tag !== tagToRemove));
+    };
+
+    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        setDragActive(false);
+        
+        if (isUploading) return;
+        
+        const files = Array.from(e.dataTransfer.files);
+        processFiles(files);
+    };
+
+    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        setDragActive(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        setDragActive(false);
+    };
+
+    const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files || []);
+        processFiles(files);
+    };
+
+    const processFiles = (files: File[]) => {
+        const validFiles: File[] = [];
+        const invalid: { file: File; reason: string }[] = [];
+
+        files.forEach(file => {
+            if (!VALIDATION_RULES.images.allowedTypes.includes(file.type)) {
+                invalid.push({ file, reason: 'Invalid file type' });
+            } else if (file.size > VALIDATION_RULES.images.maxSize) {
+                invalid.push({ file, reason: 'File too large' });
+            } else {
+                validFiles.push(file);
+            }
+        });
+
+        setPendingFiles(prev => [...prev, ...validFiles]);
+        setInvalidFiles(prev => [...prev, ...invalid]);
+    };
+
+    const removePendingFile = (index: number) => {
+        setPendingFiles(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const removeInvalidFile = (index: number) => {
+        setInvalidFiles(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const uploadPendingFiles = async () => {
+        setIsUploading(true);
+        
+        try {
+            // Simulate upload process
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Clear pending files on successful upload
+            setPendingFiles([]);
+            setCurrentTitle('');
+            setCurrentTags([]);
+        } catch (error) {
+            console.error('Upload failed:', error);
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    const cancelUpload = () => {
+        setPendingFiles([]);
+        setInvalidFiles([]);
+        setCurrentTitle('');
+        setCurrentTags([]);
+        setTagInput('');
+    };
+
     return (
         <div className="space-y-4">
             {/* Loading State */}
@@ -10,7 +168,7 @@ const UploadSection = ({loading, uploadStatus, VALIDATION_RULES}) => {
             )}
 
             {/* Upload Status */}
-            {uploadStatus.type && (
+            {uploadStatus && uploadStatus.type && (
                 <div className={`p-3 rounded-lg flex items-center gap-2 ${uploadStatus.type === 'success'
                     ? 'bg-green-50 text-green-800 border border-green-200'
                     : 'bg-red-50 text-red-800 border border-red-200'
@@ -257,6 +415,6 @@ const UploadSection = ({loading, uploadStatus, VALIDATION_RULES}) => {
             )}
         </div>
     );
-}
+};
 
 export default UploadSection;

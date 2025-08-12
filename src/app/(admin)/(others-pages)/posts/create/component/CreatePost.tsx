@@ -176,7 +176,7 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
   // Tag handling functions
   const handleTagAdd = (tagName: string): void => {
     if (tagName.trim() && !formData.tags.includes(tagName.trim())) {
-      setFormData((prev: { tags: any; }) => ({
+      setFormData((prev: FormData) => ({
         ...prev,
         tags: [...prev.tags, tagName.trim()]
       }));
@@ -184,7 +184,7 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
   };
 
   const handleTagRemove = (tagToRemove: string): void => {
-    setFormData((prev: { tags: any[]; }) => ({
+    setFormData((prev: FormData) => ({
       ...prev,
       tags: prev.tags.filter((tag: string) => tag !== tagToRemove)
     }));
@@ -213,7 +213,7 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
   };
 
   const handleSwitchChange = (checked: boolean): void => {
-     setFormData({...formData, post_status: checked ? 1 : 0});
+    setFormData({ ...formData, post_status: checked ? 1 : 0 });
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void => {
@@ -654,8 +654,8 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
           <Switch
             label="Latest Post"
             defaultChecked={formData.lead_news}
-            onChange={(flag: boolean)=>{
-              setFormData({...formData, lead_news: flag});
+            onChange={(flag: boolean) => {
+              setFormData({ ...formData, lead_news: flag });
             }}
           />
 
@@ -663,8 +663,8 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
           <Switch
             label="Breaking News "
             defaultChecked={formData.breaking_news}
-            onChange={(flag: boolean)=>{
-              setFormData({...formData, breaking_news: flag});
+            onChange={(flag: boolean) => {
+              setFormData({ ...formData, breaking_news: flag });
             }}
           />
         </div>
