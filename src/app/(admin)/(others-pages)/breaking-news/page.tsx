@@ -3,8 +3,6 @@ import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 
 import React, { useEffect, useState } from "react";
 
-import Input from "@/components/form/input/InputField";
-import Label from "@/components/form/Label";
 import SortableNewsList from "@/components/lead-news/SortableNewsList";
 import { BASE_URL } from "@/config/config";
 

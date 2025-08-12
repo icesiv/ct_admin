@@ -1,8 +1,7 @@
 "use client";
-import React, { useEffect, useState } from 'react';
-import { GripVertical, Calendar, Tag, X, Trash2, Save, Check } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Trash2, Save, Check } from 'lucide-react';
 import { BASE_URL } from '@/config/config';
-
 
 // Type definitions
 interface Category {
@@ -41,15 +40,17 @@ interface SortableNewsListProps {
   mode: string;
 }
 
-const SortableNewsList: React.FC<SortableNewsListProps> = ({ leadPosts, fetchLeadNews, mode  }) => {
+const SortableNewsList: React.FC<SortableNewsListProps> = ({ leadPosts, fetchLeadNews, mode }) => {
   const [articles, setArticles] = useState<Article[]>([]);
   const [draggedItem, setDraggedItem] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
-  const [sortedOrder, setSortedOrder] = useState<SortOrder[]>([]);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [hasChanges, setHasChanges] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
+
+  // Ref for the scrollable container
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setArticles(leadPosts);
@@ -59,7 +60,7 @@ const SortableNewsList: React.FC<SortableNewsListProps> = ({ leadPosts, fetchLea
   const deleteLeadNews = async (news_id: string): Promise<void> => {
     const url = `${BASE_URL}admin/posts/${mode}/remove`;
     const auth_token = localStorage.getItem('auth_token');
-    
+
     try {
       const response = await fetch(url, {
         method: 'POST',
@@ -74,11 +75,6 @@ const SortableNewsList: React.FC<SortableNewsListProps> = ({ leadPosts, fetchLea
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-
-      // const data: ApiResponse = await response.json();
-      // if (!data.success) {
-      //   throw new Error(data.message || 'Failed to delete news');
-      // }
     } catch (error) {
       console.error('Error deleting news:', error);
       throw error;
@@ -123,7 +119,6 @@ const SortableNewsList: React.FC<SortableNewsListProps> = ({ leadPosts, fetchLea
       }
     } catch (err) {
       console.error('Error saving order:', err);
-      // You might want to show an error message to the user here
     } finally {
       setIsSaving(false);
     }
@@ -137,6 +132,25 @@ const SortableNewsList: React.FC<SortableNewsListProps> = ({ leadPosts, fetchLea
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>, index: number): void => {
     e.preventDefault();
     setDragOverIndex(index);
+
+    const container = containerRef.current;
+    if (!container) return;
+
+    const rect = container.getBoundingClientRect();
+    const y = e.clientY;
+    const scrollSpeed = 15;
+    const inertia = 1.5;
+
+    // Auto-scroll logic
+    if (y < rect.top + 80) {
+      // Near top → scroll up
+      const speed = (rect.top + 80 - y) / inertia;
+      container.scrollTop -= Math.max(speed, 1);
+    } else if (y > rect.bottom - 80) {
+      // Near bottom → scroll down
+      const speed = (y - (rect.bottom - 80)) / inertia;
+      container.scrollTop += Math.max(speed, 1);
+    }
   };
 
   const handleDragLeave = (): void => {
@@ -163,15 +177,7 @@ const SortableNewsList: React.FC<SortableNewsListProps> = ({ leadPosts, fetchLea
     newArticles.splice(insertIndex, 0, draggedArticle);
 
     setArticles(newArticles);
-    setHasChanges(true); // Mark that changes have been made
-
-    // Update sorted order
-    const newOrder: SortOrder[] = newArticles.map((article, index) => ({
-      position: index + 1,
-      id: article.id,
-      title: article.title
-    }));
-    setSortedOrder(newOrder);
+    setHasChanges(true);
 
     setDraggedItem(null);
     setDragOverIndex(null);
@@ -190,22 +196,14 @@ const SortableNewsList: React.FC<SortableNewsListProps> = ({ leadPosts, fetchLea
     try {
       await deleteLeadNews(articleId);
       await fetchLeadNews();
-      
+
       const newArticles = articles.filter(article => article.id !== articleId);
       setArticles(newArticles);
-
-      // Update sorted order after deletion
-      const newOrder: SortOrder[] = newArticles.map((article, index) => ({
-        position: index + 1,
-        id: article.id,
-        title: article.title
-      }));
-      setSortedOrder(newOrder);
+      setHasChanges(true); // Reordering changes after delete
 
       setDeleteConfirm(null);
     } catch (error) {
       console.error('Error deleting article:', error);
-      // You might want to show an error message to the user here
     }
   };
 
@@ -214,32 +212,31 @@ const SortableNewsList: React.FC<SortableNewsListProps> = ({ leadPosts, fetchLea
   };
 
   return (
-    <div className="max-w-5xl mx-auto  min-h-screen">
+    <div className="max-w-5xl mx-auto">
+      {/* Success Toast */}
       {saveSuccess && (
         <div className="fixed bottom-6 right-6 z-50">
-          <div className="bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2">
+          <div className="bg-green-600 dark:bg-green-700 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2">
             <Check className="w-4 h-4" />
             <span>ক্রম সফলভাবে সংরক্ষণ হয়েছে</span>
           </div>
         </div>
       )}
-      
-      <div className="bg-white rounded-lg shadow-lg p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">সংবাদ তালিকা - ড্র্যাগ করে সাজান</h1>
 
+      <div className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg shadow-lg p-6">
+        <div className="flex flex-col md:flex-row gap-4 justify-between items-center mb-6">
           {/* Save Button */}
           <button
             onClick={saveOrder}
             disabled={!hasChanges || isSaving}
             className={`
-              flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200
-              ${hasChanges && !isSaving
+            flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200
+            ${hasChanges && !isSaving
                 ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg'
-                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-gray-300 text-gray-500 cursor-not-allowed dark:bg-gray-700 dark:text-gray-400'
               }
-              ${saveSuccess ? 'bg-green-600 text-white' : ''}
-            `}
+            ${saveSuccess ? 'bg-green-600 dark:bg-green-700' : ''}
+          `}
           >
             {isSaving ? (
               <>
@@ -258,17 +255,22 @@ const SortableNewsList: React.FC<SortableNewsListProps> = ({ leadPosts, fetchLea
               </>
             )}
           </button>
+
+          {hasChanges && !saveSuccess && (
+            <div className="p-3 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+              <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                <strong>সতর্কতা:</strong> আপনার পরিবর্তনগুলো এখনো সেভ হয়নি। ক্রম সেভ করুন বাটনে ক্লিক করুন।
+              </p>
+            </div>
+          )}
         </div>
 
-        {hasChanges && !saveSuccess && (
-          <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <p className="text-sm text-yellow-800">
-              <strong>সতর্কতা:</strong> আপনার পরিবর্তনগুলো এখনো সেভ হয়নি। ক্রম সেভ করুন বাটনে ক্লিক করুন।
-            </p>
-          </div>
-        )}
-
-        <div className="space-y-4">
+        {/* Scrollable List Container */}
+        <div
+          ref={containerRef}
+          className="space-y-4 max-h-[60vh] overflow-y-auto pr-2"
+          style={{ scrollbarWidth: 'thin' }}
+        >
           {articles.map((article, index) => (
             <div
               key={article.id}
@@ -279,25 +281,28 @@ const SortableNewsList: React.FC<SortableNewsListProps> = ({ leadPosts, fetchLea
               onDrop={(e) => handleDrop(e, index)}
               onDragEnd={handleDragEnd}
               className={`
-                bg-white border-2 rounded-lg p-4 cursor-move transition-all duration-200
-                ${draggedItem === index ? 'opacity-50 scale-95' : ''}
-                ${dragOverIndex === index ? 'border-blue-400 bg-blue-50' : 'border-gray-200 hover:border-gray-300'}
-                ${draggedItem === index ? 'border-blue-300' : ''}
-                hover:shadow-md
-              `}
+              border-2 rounded-lg p-4 cursor-move transition-all duration-200
+              ${draggedItem === index
+                  ? 'opacity-50 scale-95'
+                  : dragOverIndex === index
+                    ? 'border-blue-400 bg-blue-50 dark:border-blue-600 dark:bg-blue-900/30'
+                    : 'border-gray-200 bg-white hover:border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:hover:border-gray-500'
+                }
+              hover:shadow-md
+            `}
             >
               <div className="flex items-center gap-4">
-
-                <div className="flex-shrink-0 items-center flex justify-center w-12 h-12 bg-gray-100 rounded-full">
-                        <span className="text-3xl text-gray-500">
-                        #{index + 1}
-                      </span>
+                <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 bg-gray-100 dark:bg-gray-600 rounded-full">
+                  <span className="text-xl text-gray-500 dark:text-gray-200">#{index + 1}</span>
                 </div>
 
                 <div className="flex-grow">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-lg font-semibold text-gray-800 line-clamp-2">
+                  <div className="flex justify-between items-start">
+                    <h3 className="line-clamp-2 text-sm md:text-base text-gray-800 dark:text-gray-100">
                       {article.title}
+                      <span className="text-blue-400 hidden md:inline dark:text-blue-400 text-xs ml-1">
+                        {article.created_at_ago}
+                      </span>
                     </h3>
                     <div className="flex items-center gap-2 ml-4 flex-shrink-0">
                       <button
@@ -305,19 +310,13 @@ const SortableNewsList: React.FC<SortableNewsListProps> = ({ leadPosts, fetchLea
                           e.stopPropagation();
                           handleDeleteClick(article.id);
                         }}
-                        className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                        className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 
+                                 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/50 
+                                 rounded transition-colors"
                         title="মুছে ফেলুন"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-6 h-6" />
                       </button>
-                    </div>
-                  </div>
-
-
-                  <div className="flex items-center gap-4 text-sm text-gray-500">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="w-4 h-4" />
-                      <span>{article.created_at_ago}</span>
                     </div>
                   </div>
                 </div>
@@ -328,20 +327,22 @@ const SortableNewsList: React.FC<SortableNewsListProps> = ({ leadPosts, fetchLea
 
         {/* Delete Confirmation Modal */}
         {deleteConfirm && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-9999">
-            <div className="bg-white rounded-lg shadow-xl p-6 max-w-md mx-4">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg shadow-xl p-6 max-w-md mx-4">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                  <Trash2 className="w-6 h-6 text-red-600" />
+                <div className="w-14 h-14 bg-red-100 dark:bg-red-900/50 rounded-full flex items-center justify-center">
+                  <Trash2 className="w-6 h-6 text-red-600 dark:text-red-400" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">নিশ্চিত করুন</h3>
-                  <p className="text-sm text-gray-600">এই সংবাদটি মুছে ফেলতে চান?</p>
+                  <h3 className="text-lg font-semibold">নিশ্চিত করুন</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    এই সংবাদটি মুছে ফেলতে চান?
+                  </p>
                 </div>
               </div>
 
-              <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-700 font-medium">
+              <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <p className="text-sm text-gray-700 dark:text-gray-200 font-medium">
                   {articles.find(a => a.id === deleteConfirm)?.title}
                 </p>
               </div>
@@ -349,7 +350,9 @@ const SortableNewsList: React.FC<SortableNewsListProps> = ({ leadPosts, fetchLea
               <div className="flex gap-3 justify-end">
                 <button
                   onClick={handleDeleteCancel}
-                  className="px-4 py-2 text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors"
+                  className="px-4 py-2 text-gray-700 bg-gray-200 hover:bg-gray-300 
+                           dark:text-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 
+                           rounded-lg transition-colors"
                 >
                   বাতিল
                 </button>
@@ -363,16 +366,9 @@ const SortableNewsList: React.FC<SortableNewsListProps> = ({ leadPosts, fetchLea
             </div>
           </div>
         )}
-
-        <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-          <p className="text-sm text-blue-800">
-            <strong>নির্দেশনা:</strong> যেকোনো সংবাদ আইটেমের বাম পাশের গ্রিপ আইকন ধরে টেনে নিয়ে অন্য জায়গায় ছেড়ে দিন।
-            সাজানোর পর উপরের "ক্রম সেভ করুন" বাটনে ক্লিক করে নতুন ক্রম সংরক্ষণ করুন। ডান পাশের ট্র্যাশ আইকনে ক্লিক করে যেকোনো সংবাদ মুছে ফেলতে পারেন।
-          </p>
-        </div>
       </div>
     </div>
   );
-};
+}
 
 export default SortableNewsList;
