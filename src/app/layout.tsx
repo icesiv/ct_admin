@@ -5,6 +5,10 @@ import { SidebarProvider } from '@/context/SidebarContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { AuthProvider } from "@/context/AuthContext";
 
+
+import { ToastProvider } from "@/components/ToastProvider";
+
+
 const outfit = Outfit({
   subsets: ["latin"],
 });
@@ -35,7 +39,11 @@ export default function RootLayout({
       <body className={`${outfit.className} dark:bg-gray-900`}>
         <AuthProvider>
           <ThemeProvider>
-            <SidebarProvider>{children}</SidebarProvider>
+            <SidebarProvider>
+              <ToastProvider>
+                {children}
+              </ToastProvider>
+            </SidebarProvider>
           </ThemeProvider>
         </AuthProvider>
       </body>

@@ -1,11 +1,10 @@
 "use client";
 
 import { useCallback, useRef, useState, useEffect } from 'react';
-import { Save, Eye, X, Plus, ArrowLeft } from 'lucide-react';
+import { Save, X, Plus } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { available_colors } from '@/config/config';
 import { FeatureImageUploader } from '@/components/editor/FeatureUploader';
-import { Notification } from '@/components/ui/notification/Notification';
 import MultiselectDropdown from '@/components/ui/dropdown/MultiselectDropdown';
 import ImageUploaderModal from './Gallery/ImageUploaderModal';
 
@@ -16,9 +15,9 @@ import { WysiwygEditorRef } from '@/components/editor';
 
 import Switch from "@/components/form/switch/Switch";
 
+import { useToast } from "@/components/ToastProvider";
 
 // Type definitions
-
 interface Category {
   id: number;
   name: string;
@@ -31,11 +30,6 @@ interface Tag {
   name: string;
 }
 
-interface NotificationState {
-  message: string;
-  type: 'success' | 'error' | 'warning' | 'info';
-}
-
 interface FormData {
   title: string;
   sub_head: string;
@@ -44,7 +38,7 @@ interface FormData {
   short_title?: string | null;
   subtitle?: string | null;
   highlight?: string | null;
-  author?: string | null;
+  author: string | null;
   writer_id?: number | null;
   featured_image: string | null;
   caption: string | null;
@@ -59,11 +53,13 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
   const isEditMode = !!postId;
   const [isFeature, setIsFeature] = useState<boolean>(true);
   const [isOpen, setIsOpen] = useState<boolean>(false);
-  const [notification, setNotification] = useState<NotificationState | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isLoadingPost, setIsLoadingPost] = useState<boolean>(isEditMode);
   const [editorContent, setContent] = useState('');
   const editorRef = useRef<WysiwygEditorRef>(null);
+
+
+  const { addToast } = useToast();
 
   const [formData, setFormData] = useState<FormData>({
     title: '',
@@ -99,9 +95,6 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
     };
   });
 
-  const [imagePreview, setImagePreview] = useState<string>('');
-  const [isPreview, setIsPreview] = useState<boolean>(false);
-
   // Load post data for edit mode
   useEffect(() => {
     const loadPost = async () => {
@@ -130,10 +123,10 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
           lead_news: response.lead_news
         });
 
-        setImagePreview(post.featured_image || '');
+        // setImagePreview(post.featured_image || '');
       } catch (error) {
         console.error('Error loading post:', error);
-        showNotification('Failed to load post data. Please try again.', 'error');
+        addToast("Failed to load post data. Please try again!", "error");
 
       } finally {
         setIsLoadingPost(false);
@@ -145,7 +138,7 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
 
   const UpdateFeatureImage = useCallback((imageData: ImageData): void => {
     setFormData((prev: any) => ({ ...prev, featured_image: imageData.url }));
-    setImagePreview(imageData.url);
+    // setImagePreview(imageData.url);
   }, []);
 
   const handleCategoryToggle = (categoryIds: number[]): void => {
@@ -224,13 +217,6 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
     }));
   };
 
-  const showNotification = (message: string, type: NotificationState['type']): void => {
-    setNotification({ message, type });
-    if (type === 'success') {
-      setTimeout(() => setNotification(null), 5000);
-    }
-  };
-
   const validateForm = (): string[] => {
     const errors: string[] = [];
     const currentContent = editorRef.current?.getCurrentContent() || formData.post_content;
@@ -241,6 +227,10 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
 
     if (!formData.title.trim()) {
       errors.push('Title is required');
+    }
+
+    if (!formData.author || !formData.author.trim()) {
+      errors.push('Writer\'s name is required');
     }
 
     if (!formData.title.trim().length || formData.title.trim().length < 5 || formData.title.trim().length > 250) {
@@ -267,9 +257,11 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
     if (formData.categories.length > 5) {
       errors.push('Please select maximum 5 categories');
     }
+
     if (!formData.featured_image) {
       errors.push('Please Add Feature Image');
     }
+
     if (formData.tags.length > 10) {
       errors.push('Please select maximum 10 tags');
     }
@@ -281,7 +273,7 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
     const errors = validateForm();
 
     if (errors.length > 0) {
-      showNotification(errors.join(', '), 'error');
+      addToast(errors.join(',\n'), 'error');
       return;
     }
 
@@ -310,10 +302,12 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
 
       if (isEditMode) {
         await savePost({ ...saveData, id: postId });
-        showNotification('News article updated successfully!', 'success');
+        addToast("Article saved successfully!", "success");
+
       } else {
         await savePost(saveData);
-        showNotification('News article created successfully!', 'success');
+        addToast("Article created successfully!", "success");
+
       }
 
       // Redirect after successful save/update
@@ -323,7 +317,7 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
 
     } catch (e) {
       console.log('error', e);
-      showNotification(
+      addToast(
         `Failed to ${isEditMode ? 'update' : 'save'} article. Please try again.`,
         'error'
       );
@@ -349,16 +343,11 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
 
   const ArticleHeader = ({
     isEditMode,
-    isPreview,
     isLoading,
-    setIsPreview,
-    handleCancel,
     handleSubmit
   }: {
     isEditMode: boolean;
-    isPreview: boolean;
     isLoading: boolean;
-    setIsPreview: (preview: boolean) => void;
     handleCancel: () => void;
     handleSubmit: () => void;
   }) => {
@@ -381,127 +370,101 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
 
   return (
     <div>
-      {/* Header with title and action buttons */}
       <ArticleHeader
         isEditMode={isEditMode}
-        isPreview={isPreview}
         isLoading={isLoading}
-        setIsPreview={setIsPreview}
         handleCancel={handleCancel}
         handleSubmit={handleSubmit}
       />
 
-      <div className="max-w-7xl mx-auto lg:px-8 py-4">
-        {notification && (
-          <Notification
-            message={notification.message}
-            type={notification.type}
-            onClose={() => setNotification(null)}
-          />
-        )}
-
-        <div className="space-y-4">
-          <div className="space-y-6">
-            {/* Sub-Head */}
-            <div>
-              <label htmlFor="sub_head" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Sub Head
-              </label>
-              <input
-                type="text"
-                id="sub_head"
-                name="sub_head"
-                value={formData.sub_head || ''}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-                placeholder="Enter article sub-head..."
-              />
-            </div>
-
-
-            {/* Title */}
-            <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Title *
-              </label>
-              <input
-                type="text"
-                id="title"
-                name="title"
-                value={formData.title}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-                placeholder="Enter article title..."
-                required
-              />
-            </div>
-
-            {/* Short title */}
-            <div>
-              <label htmlFor="short_title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Short title
-              </label>
-              <input
-                type="text"
-                id="short_title"
-                name="short_title"
-                value={formData.short_title || ''}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-                placeholder="Short title for home page..."
-              />
-            </div>
-
-            {/* Author */}
-            <div>
-              <label htmlFor="author" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Writer's name
-              </label>
-              <input
-                type="text"
-                id="author"
-                name="author"
-                value={formData.author || ''}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-                placeholder="Writer's name..."
-              />
-            </div>
-
-            {/* Excerpt */}
-            <div>
-              <label htmlFor="excerpt" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Excerpt *
-              </label>
-              <textarea
-                id="excerpt"
-                name="excerpt"
-                value={formData.excerpt}
-                onChange={handleInputChange}
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-                placeholder="Brief description of the article..."
-                required
-              />
-            </div>
-
-          </div>
-
-          {/* WYSIWYG Editor */}
-
-          <div className="mt-6">
-            <div className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Main Content *
-            </div>
-            <WysiwygEditor
-              ref={editorRef}
-              OpenModal={OpenModal}
-              updatePostContent={setContent}
-              postContent={formData.post_content}
+      <div className="grid grid-cols-5 gap-8">
+        {/* Left */}
+        <div className="col-span-5 order-1 md:order-none md:col-span-3 space-y-6">
+          {/* Sub-Head */}
+          <div>
+            <label htmlFor="sub_head" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Sub Head
+            </label>
+            <input
+              type="text"
+              id="sub_head"
+              name="sub_head"
+              value={formData.sub_head || ''}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+              placeholder="Enter article sub-head..."
             />
           </div>
 
+          {/* Title */}
+          <div>
+            <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Title *
+            </label>
+            <input
+              type="text"
+              id="title"
+              name="title"
+              value={formData.title}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+              placeholder="Enter article title..."
+              required
+            />
+          </div>
 
+          {/* Short title */}
+          <div>
+            <label htmlFor="short_title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Short title
+            </label>
+            <input
+              type="text"
+              id="short_title"
+              name="short_title"
+              value={formData.short_title || ''}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+              placeholder="Short title for home page..."
+            />
+          </div>
+
+          {/* Author */}
+          <div>
+            <label htmlFor="author" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Writer's name *
+            </label>
+            <input
+              type="text"
+              id="author"
+              name="author"
+              value={formData.author || ''}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+              placeholder="Writer's name..."
+            />
+          </div>
+
+          {/* Excerpt */}
+          <div>
+            <label htmlFor="excerpt" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Excerpt *
+            </label>
+            <textarea
+              id="excerpt"
+              name="excerpt"
+              value={formData.excerpt}
+              onChange={handleInputChange}
+              rows={5}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+              placeholder="Brief description of the article..."
+              required
+            />
+          </div>
+        </div>
+
+        {/* Right */}
+        <div className="col-span-5 order-3 md:order-none md:col-span-2 md:col-start-4 space-y-6">
           {/* highlight */}
           <div>
             <label htmlFor="highlight" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -512,7 +475,7 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
               name="highlight"
               value={formData.highlight || ''}
               onChange={handleInputChange}
-              rows={3}
+              rows={7}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
               placeholder="Highlight for the article..."
             />
@@ -531,25 +494,6 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
                 preselected={formData.categories}
               />
             </div>
-
-            {formData.categories.length > 0 && (
-              <div className="mt-3">
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Selected categories:</p>
-                <div className="flex flex-wrap gap-2">
-                  {formData.categories.map((categoryId: number) => {
-                    const category = all_cat.find(cat => cat.id === categoryId);
-                    return category ? (
-                      <span
-                        key={categoryId}
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${category.color}`}
-                      >
-                        {category.name}
-                      </span>
-                    ) : null;
-                  })}
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Tags Section */}
@@ -558,7 +502,7 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
               Tags
             </label>
 
-            {/* Tag Input */}
+            {/* Tag input */}
             <div className="flex gap-2 mb-4">
               <input
                 type="text"
@@ -579,8 +523,7 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
 
             {/* Selected Tags */}
             {formData.tags.length > 0 && (
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Selected tags ({formData.tags.length}/10):</p>
+              <div className="flex gap-2">
                 <div className="flex flex-wrap gap-2">
                   {formData.tags.map((tag: string, index: number) => (
                     <span
@@ -598,14 +541,28 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
                     </span>
                   ))}
                 </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">({formData.tags.length}/10)</p>
               </div>
             )}
-
-            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-              Tags help categorize and make your content more discoverable. Press Enter or comma to add multiple tags.
-            </p>
           </div>
+        </div>
 
+        {/* WYSIWYG Editor */}
+        <div className="col-span-5 order-2 md:order-none md:row-start-2">
+          <div className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Main Content *
+          </div>
+          <WysiwygEditor
+            ref={editorRef}
+            OpenModal={OpenModal}
+            updatePostContent={setContent}
+            postContent={formData.post_content}
+          />
+        </div>
+      </div>
+
+      <div className="container mx-auto mt-6">
+        <div className="flex flex-col md:flex-row gap-6 items-start">
           {/* Featured Image */}
           <FeatureImageUploader
             featured_image={formData.featured_image}
@@ -613,7 +570,7 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
           />
 
           {/* caption */}
-          <div>
+          <div className='flex-1 w-full'>
             <label htmlFor="caption" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Caption
             </label>
@@ -627,58 +584,56 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
               placeholder="Image caption..."
             />
           </div>
-
-          <ImageUploaderModal
-            isOpen={isOpen}
-            callback={
-              isFeature
-                ? UpdateFeatureImage
-                : (imageData: ImageData) => {
-                  // Assuming handleExternalImageInsert needs the main image URL
-                  handleExternalImageInsert(imageData);
-                }
-            }
-            OpenModal={OpenModal}
-          />
-        </div>
-
-        <div className="mt-6 max-w-2xl flex justify-between items-center">
-          {/* Publish Btn */}
-          <Switch
-            label="Publish"
-            defaultChecked={formData.post_status === 1}
-            onChange={handleSwitchChange}
-          />
-
-          {/* Latest Post Btn */}
-          <Switch
-            label="Latest Post"
-            defaultChecked={formData.lead_news}
-            onChange={(flag: boolean) => {
-              setFormData({ ...formData, lead_news: flag });
-            }}
-          />
-
-          {/* Breaking News Btn */}
-          <Switch
-            label="Breaking News "
-            defaultChecked={formData.breaking_news}
-            onChange={(flag: boolean) => {
-              setFormData({ ...formData, breaking_news: flag });
-            }}
-          />
         </div>
 
 
 
       </div>
 
+      {/* Publish, Latest Post, Breaking News Switches */}
+      <div className="mt-6 px-24 md:px-4 py-3 gap-y-4 flex flex-col md:flex-row justify-between items-end border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400">
+        {/* Publish Btn */}
+        <Switch
+          label="Publish"
+          defaultChecked={formData.post_status === 1}
+          onChange={handleSwitchChange}
+        />
+
+        {/* Latest Post Btn */}
+        <Switch
+          label="Latest Post"
+          defaultChecked={formData.lead_news}
+          onChange={(flag: boolean) => {
+            setFormData({ ...formData, lead_news: flag });
+          }}
+        />
+
+        {/* Breaking News Btn */}
+        <Switch
+          label="Breaking News "
+          defaultChecked={formData.breaking_news}
+          onChange={(flag: boolean) => {
+            setFormData({ ...formData, breaking_news: flag });
+          }}
+        />
+      </div>
+
+      <ImageUploaderModal
+        isOpen={isOpen}
+        callback={
+          isFeature
+            ? UpdateFeatureImage
+            : (imageData: ImageData) => {
+              handleExternalImageInsert(imageData);
+            }
+        }
+        OpenModal={OpenModal}
+      />
+
       {/* Header with title and action buttons */}
       <ArticleHeader
         isEditMode={isEditMode}
-        isPreview={isPreview}
         isLoading={isLoading}
-        setIsPreview={setIsPreview}
         handleCancel={handleCancel}
         handleSubmit={handleSubmit}
       />

@@ -10,15 +10,11 @@ export const metadata: Metadata = {
 };
 
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
-    const { id } = await params;
-    return (
+  const { id } = await params;
+  return (
     <div>
       <PageBreadcrumb pageTitle="Edit Post" />
-
-      <div className="mt-6 rounded-2xl md:border border-gray-200 md:bg-white md:px-5 py-7 dark:border-gray-800 md:dark:bg-white/[0.03] xl:px-10 xl:py-12">
-        <CreatePost postId={id}/>
-      </div>
-
+      <CreatePost postId={id} />
     </div>
   );
 }

@@ -12,7 +12,7 @@ export interface FeatureImageUploaderProps {
 
 export const FeatureImageUploader = ({  
   featured_image, 
-  title = 'Featured Image',
+  title = 'Featured Image *',
   OpenModal, 
 }: FeatureImageUploaderProps) => {
 
@@ -27,11 +27,6 @@ export const FeatureImageUploader = ({
       }
     }
   }, [featured_image, imagePreview]);
-
-  const removeImage = (): void => {
-    setImagePreview(null);
-   
-  };
 
   return (
     <div>
@@ -61,14 +56,6 @@ export const FeatureImageUploader = ({
             alt="Preview"
             className="w-80 h-48 rounded-lg border border-gray-200"
           />
-          <button
-            type="button"
-            onClick={removeImage}
-            className=" bg-red-500 w-8 h-8 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
-            aria-label="Remove image"
-          >
-            <X className="w-6 h-6" />
-          </button>
         </div>
       )}     
     </div>

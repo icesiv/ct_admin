@@ -423,7 +423,7 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(({
 
   return (
     <div className={`max-w-7xl mx-auto rounded-lg ${className}`}>
-      <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden shadow-lg">
+      <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden shadow-sm">
         <Toolbar
           execCommand={execCommand}
           handleFontFamily={handleFontFamily}

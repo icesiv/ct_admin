@@ -371,7 +371,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         clearError,
         setShowLogin,
         router,
-        fetchCategories, // Fixed function name
+        fetchCategories, 
         news_categories: Array.isArray(data) ? data : (data?.data ? data.data : []),
         savePost,
         saveMenu,
