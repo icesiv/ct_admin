@@ -19,7 +19,7 @@ import { useSelection, useImageUpload } from './hooks';
 import { extractYouTubeVideoId, createYouTubeEmbed, fixImageUrls } from './utils';
 // import { createPasteHandler } from './pasteFilter';
 import { Toolbar } from './Toolbar';
-import { LinkModal, VideoModal, ImageModal } from './Modals';
+import { LinkModal, VideoModal, ImageModal, IframeModal, EmbedCodeModal } from './Modals';
 import { EditorStyles } from './EditorStyles';
 
 const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(({
@@ -45,6 +45,12 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(({
   const [showImageModal, setShowImageModal] = useState<boolean>(false);
   const [showVideoModal, setShowVideoModal] = useState<boolean>(false);
   const [videoUrl, setVideoUrl] = useState<string>('');
+  const [showIframeModal, setShowIframeModal] = useState<boolean>(false);
+  const [iframeCode, setIframeCode] = useState<string>('');
+  const [iframeWidth, setIframeWidth] = useState<string>('auto');
+  const [iframeHeight, setIframeHeight] = useState<string>('auto');
+  const [showEmbedCodeModal, setShowEmbedCodeModal] = useState<boolean>(false);
+  const [embedCode, setEmbedCode] = useState<string>('');
   const [dragOver, setDragOver] = useState<boolean>(false);
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
 
@@ -293,6 +299,149 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(({
     setSavedRange(null);
   }, [videoUrl, savedRange, setSavedRange]);
 
+  // Iframe/Embed handling
+  const insertIframe = useCallback(() => {
+    if (!iframeCode.trim()) return;
+
+    const url = iframeCode.trim();
+
+    // Basic URL validation
+    try {
+      new URL(url);
+    } catch {
+      alert('Please enter a valid URL');
+      return;
+    }
+
+    editorRef.current?.focus();
+
+    let range: Range | undefined;
+    const selection = window.getSelection();
+
+    if (savedRange && editorRef.current?.contains(savedRange.commonAncestorContainer)) {
+      range = savedRange.cloneRange();
+      selection?.removeAllRanges();
+      if (range) selection?.addRange(range);
+    } else if (selection?.rangeCount) {
+      range = selection.getRangeAt(0);
+    } else {
+      range = document.createRange();
+      if (editorRef.current) {
+        range.selectNodeContents(editorRef.current);
+        range.collapse(false);
+        selection?.removeAllRanges();
+        if (range) selection?.addRange(range);
+      }
+    }
+
+    // Get width and height values (default to auto if empty)
+    const finalWidth = iframeWidth.trim() || 'auto';
+    const finalHeight = iframeHeight.trim() || 'auto';
+
+    // Create wrapper div for the iframe
+    const wrapper = document.createElement('div');
+    wrapper.style.margin = '10px 0';
+    wrapper.style.display = 'block';
+
+    // Create iframe element from URL
+    const iframeElement = document.createElement('iframe');
+    iframeElement.src = url;
+    iframeElement.title = 'Embedded content';
+    iframeElement.style.width = finalWidth;
+    iframeElement.style.height = finalHeight;
+    iframeElement.style.border = 'none';
+    iframeElement.setAttribute('allowfullscreen', 'true');
+
+    wrapper.appendChild(iframeElement);
+
+    try {
+      if (range && !range.collapsed) {
+        range.deleteContents();
+      }
+      range?.insertNode(wrapper);
+
+      const br = document.createElement('br');
+      range?.setStartAfter(wrapper);
+      range?.insertNode(br);
+      range?.setStartAfter(br);
+      range?.collapse(true);
+
+      selection?.removeAllRanges();
+      if (range) selection?.addRange(range);
+    } catch (error) {
+      if (editorRef.current) {
+        editorRef.current.appendChild(wrapper);
+        const br = document.createElement('br');
+        editorRef.current.appendChild(br);
+      }
+    }
+
+    if (editorRef.current) setContent(editorRef.current.innerHTML);
+    setShowIframeModal(false);
+    setIframeCode('');
+    setIframeWidth('auto');
+    setIframeHeight('auto');
+    setSavedRange(null);
+  }, [iframeCode, iframeWidth, iframeHeight, savedRange, setSavedRange]);
+
+  // Embed Code handling
+  const insertEmbedCode = useCallback(() => {
+    if (!embedCode.trim()) return;
+
+    editorRef.current?.focus();
+
+    let range: Range | undefined;
+    const selection = window.getSelection();
+
+    if (savedRange && editorRef.current?.contains(savedRange.commonAncestorContainer)) {
+      range = savedRange.cloneRange();
+      selection?.removeAllRanges();
+      if (range) selection?.addRange(range);
+    } else if (selection?.rangeCount) {
+      range = selection.getRangeAt(0);
+    } else {
+      range = document.createRange();
+      if (editorRef.current) {
+        range.selectNodeContents(editorRef.current);
+        range.collapse(false);
+        selection?.removeAllRanges();
+        if (range) selection?.addRange(range);
+      }
+    }
+
+    // Create wrapper div for the embed code
+    const wrapper = document.createElement('div');
+    wrapper.style.margin = '10px 0';
+    wrapper.innerHTML = embedCode.trim();
+
+    try {
+      if (range && !range.collapsed) {
+        range.deleteContents();
+      }
+      range?.insertNode(wrapper);
+
+      const br = document.createElement('br');
+      range?.setStartAfter(wrapper);
+      range?.insertNode(br);
+      range?.setStartAfter(br);
+      range?.collapse(true);
+
+      selection?.removeAllRanges();
+      if (range) selection?.addRange(range);
+    } catch (error) {
+      if (editorRef.current) {
+        editorRef.current.appendChild(wrapper);
+        const br = document.createElement('br');
+        editorRef.current.appendChild(br);
+      }
+    }
+
+    if (editorRef.current) setContent(editorRef.current.innerHTML);
+    setShowEmbedCodeModal(false);
+    setEmbedCode('');
+    setSavedRange(null);
+  }, [embedCode, savedRange, setSavedRange]);
+
   const insertLink = useCallback(() => {
     if (!linkUrl) return;
 
@@ -411,6 +560,22 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(({
     setShowVideoModal(true);
   }, [setSavedRange]);
 
+  const handleIframeClick = useCallback(() => {
+    const selection = window.getSelection();
+    if (selection?.rangeCount) {
+      setSavedRange(selection.getRangeAt(0).cloneRange());
+    }
+    setShowIframeModal(true);
+  }, [setSavedRange]);
+
+  const handleEmbedCodeClick = useCallback(() => {
+    const selection = window.getSelection();
+    if (selection?.rangeCount) {
+      setSavedRange(selection.getRangeAt(0).cloneRange());
+    }
+    setShowEmbedCodeModal(true);
+  }, [setSavedRange]);
+
   // Debug logging - ADDED for troubleshooting
   // useEffect(() => {
   //   console.log('Editor state:', {
@@ -431,6 +596,8 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(({
           onLinkClick={handleLinkClick}
           onImageClick={handleImageClick}
           onVideoClick={handleVideoClick}
+          onIframeClick={handleIframeClick}
+          onEmbedCodeClick={handleEmbedCodeClick}
         />
 
         <div className="relative">
@@ -500,6 +667,34 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(({
         onInsert={insertYouTubeVideo}
         value={videoUrl}
         onChange={setVideoUrl}
+      />
+
+      <IframeModal
+        isOpen={showIframeModal}
+        onClose={() => {
+          setShowIframeModal(false);
+          setIframeCode('');
+          setIframeWidth('auto');
+          setIframeHeight('auto');
+        }}
+        onInsert={insertIframe}
+        value={iframeCode}
+        onChange={setIframeCode}
+        width={iframeWidth}
+        height={iframeHeight}
+        onWidthChange={setIframeWidth}
+        onHeightChange={setIframeHeight}
+      />
+
+      <EmbedCodeModal
+        isOpen={showEmbedCodeModal}
+        onClose={() => {
+          setShowEmbedCodeModal(false);
+          setEmbedCode('');
+        }}
+        onInsert={insertEmbedCode}
+        value={embedCode}
+        onChange={setEmbedCode}
       />
 
       <ImageModal

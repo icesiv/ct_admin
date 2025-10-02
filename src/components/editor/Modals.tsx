@@ -189,3 +189,157 @@ export const ImageModal = memo<ImageModalProps>(({
 });
 
 ImageModal.displayName = 'ImageModal';
+
+interface IframeModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onInsert: () => void;
+  value: string;
+  onChange: (value: string) => void;
+  width: string;
+  height: string;
+  onWidthChange: (width: string) => void;
+  onHeightChange: (height: string) => void;
+}
+
+export const IframeModal = memo<IframeModalProps>(({
+  isOpen,
+  onClose,
+  onInsert,
+  value,
+  onChange,
+  width,
+  height,
+  onWidthChange,
+  onHeightChange
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-99999">
+      <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
+        <h3 className="text-lg font-semibold mb-4">Embed Content (iframe)</h3>
+        <input
+          type="url"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="Paste URL here..."
+          className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+          autoFocus
+        />
+
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Width</label>
+            <input
+              type="text"
+              value={width}
+              onChange={(e) => onWidthChange(e.target.value)}
+              placeholder="auto"
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Height</label>
+            <input
+              type="text"
+              value={height}
+              onChange={(e) => onHeightChange(e.target.value)}
+              placeholder="auto"
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+
+        <div className="text-sm text-gray-500 mb-4">
+          <p className="mb-2">Dimensions: Use pixels (e.g., 600px), percentages (e.g., 100%), or leave as "auto"</p>
+          <p className="font-medium">Supported content:</p>
+          <ul className="list-disc list-inside mt-1 space-y-1">
+            <li>YouTube, Vimeo, Dailymotion videos</li>
+            <li>Google Maps, OpenStreetMap</li>
+            <li>Any embeddable URL</li>
+          </ul>
+        </div>
+        <div className="flex justify-end gap-2">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+            type="button"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onInsert}
+            className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors"
+            type="button"
+          >
+            Insert Embed
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+IframeModal.displayName = 'IframeModal';
+
+interface EmbedCodeModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onInsert: () => void;
+  value: string;
+  onChange: (value: string) => void;
+}
+
+export const EmbedCodeModal = memo<EmbedCodeModalProps>(({
+  isOpen,
+  onClose,
+  onInsert,
+  value,
+  onChange
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-99999">
+      <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
+        <h3 className="text-lg font-semibold mb-4">Embed Code</h3>
+        <textarea
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="Paste your embed code here..."
+          className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4 min-h-[150px] font-mono text-sm"
+          autoFocus
+        />
+        <div className="text-sm text-gray-500 mb-4">
+          Supported embed codes:
+          <ul className="list-disc list-inside mt-2 space-y-1">
+            <li>Twitter/X posts</li>
+            <li>Instagram posts</li>
+            <li>CodePen snippets</li>
+            <li>TikTok videos</li>
+            <li>Any HTML embed code</li>
+          </ul>
+        </div>
+        <div className="flex justify-end gap-2">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+            type="button"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onInsert}
+            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+            type="button"
+          >
+            Insert Code
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+EmbedCodeModal.displayName = 'EmbedCodeModal';

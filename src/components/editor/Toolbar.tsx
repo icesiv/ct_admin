@@ -8,6 +8,8 @@ import {
   Link,
   Image,
   Video,
+  Code,
+  FileCode,
   AlignLeft,
   AlignCenter,
   AlignRight
@@ -22,6 +24,8 @@ interface ToolbarProps {
   onLinkClick: () => void;
   onImageClick: () => void;
   onVideoClick: () => void;
+  onIframeClick: () => void;
+  onEmbedCodeClick: () => void;
 }
 
 export const Toolbar = memo<ToolbarProps>(({
@@ -29,7 +33,9 @@ export const Toolbar = memo<ToolbarProps>(({
   handleFontSize,
   onLinkClick,
   onImageClick,
-  onVideoClick
+  onVideoClick,
+  onIframeClick,
+  onEmbedCodeClick
 }) => {
   const toolbarButtons: ToolbarItem[] = [
     { icon: Bold, command: 'bold', title: 'Bold (Ctrl+B)' },
@@ -46,6 +52,8 @@ export const Toolbar = memo<ToolbarProps>(({
     { icon: Link, action: onLinkClick, title: 'Insert Link (Ctrl+K)' },
     { icon: Image, action: onImageClick, title: 'Insert Image' },
     { icon: Video, action: onVideoClick, title: 'Insert YouTube Video' },
+    { icon: Code, action: onIframeClick, title: 'Embed iframe' },
+    { icon: FileCode, action: onEmbedCodeClick, title: 'Embed code (HTML)' },
   ];
 
   return (
