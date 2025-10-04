@@ -78,7 +78,8 @@ export default function SignInForm() {
         const result: LoginResult = await login(formData);
 
         if (result.success) {
-            router.push('/dashboard');
+            location.reload = 'self.location';
+            // router.push('/dashboard');
         } else {
             setFormErrors(result.errors || {});
         }

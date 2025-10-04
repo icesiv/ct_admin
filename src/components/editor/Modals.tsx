@@ -235,7 +235,7 @@ export const IframeModal = memo<IframeModalProps>(({
               type="text"
               value={width}
               onChange={(e) => onWidthChange(e.target.value)}
-              placeholder="auto"
+              placeholder="800"
               className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -245,14 +245,14 @@ export const IframeModal = memo<IframeModalProps>(({
               type="text"
               value={height}
               onChange={(e) => onHeightChange(e.target.value)}
-              placeholder="auto"
+              placeholder="600"
               className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
         </div>
 
         <div className="text-sm text-gray-500 mb-4">
-          <p className="mb-2">Dimensions: Use pixels (e.g., 600px), percentages (e.g., 100%), or leave as "auto"</p>
+          <p className="mb-2">Dimensions: Enter numbers (px added automatically) or use units (%, em, auto)</p>
           <p className="font-medium">Supported content:</p>
           <ul className="list-disc list-inside mt-1 space-y-1">
             <li>YouTube, Vimeo, Dailymotion videos</li>

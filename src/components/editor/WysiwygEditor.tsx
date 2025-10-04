@@ -47,8 +47,8 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(({
   const [videoUrl, setVideoUrl] = useState<string>('');
   const [showIframeModal, setShowIframeModal] = useState<boolean>(false);
   const [iframeCode, setIframeCode] = useState<string>('');
-  const [iframeWidth, setIframeWidth] = useState<string>('auto');
-  const [iframeHeight, setIframeHeight] = useState<string>('auto');
+  const [iframeWidth, setIframeWidth] = useState<string>('800');
+  const [iframeHeight, setIframeHeight] = useState<string>('600');
   const [showEmbedCodeModal, setShowEmbedCodeModal] = useState<boolean>(false);
   const [embedCode, setEmbedCode] = useState<string>('');
   const [dragOver, setDragOver] = useState<boolean>(false);
@@ -334,9 +334,19 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(({
       }
     }
 
-    // Get width and height values (default to auto if empty)
-    const finalWidth = iframeWidth.trim() || 'auto';
-    const finalHeight = iframeHeight.trim() || 'auto';
+    // Get width and height values and add 'px' if not already specified
+    const processSize = (value: string): string => {
+      const trimmed = value.trim();
+      if (!trimmed) return '800px'; // Default fallback
+      // If already has a unit (px, %, em, rem, etc.) or is 'auto', use as is
+      if (/^\d+$/.test(trimmed)) {
+        return `${trimmed}px`; // Add px if it's just a number
+      }
+      return trimmed; // Return as is if it has units or is auto/other value
+    };
+
+    const finalWidth = processSize(iframeWidth);
+    const finalHeight = processSize(iframeHeight);
 
     // Create wrapper div for the iframe
     const wrapper = document.createElement('div');
@@ -379,8 +389,8 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(({
     if (editorRef.current) setContent(editorRef.current.innerHTML);
     setShowIframeModal(false);
     setIframeCode('');
-    setIframeWidth('auto');
-    setIframeHeight('auto');
+    setIframeWidth('800');
+    setIframeHeight('600');
     setSavedRange(null);
   }, [iframeCode, iframeWidth, iframeHeight, savedRange, setSavedRange]);
 
@@ -674,8 +684,8 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(({
         onClose={() => {
           setShowIframeModal(false);
           setIframeCode('');
-          setIframeWidth('auto');
-          setIframeHeight('auto');
+          setIframeWidth('800');
+          setIframeHeight('600');
         }}
         onInsert={insertIframe}
         value={iframeCode}
