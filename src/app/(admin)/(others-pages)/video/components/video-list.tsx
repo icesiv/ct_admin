@@ -2,15 +2,15 @@
 
 import { useEffect, useState } from "react";
 import Button from "@/components/ui/button/Button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+// import { Input } from "@/components/ui/input";
+// import { Textarea } from "@/components/ui/textarea";
+// import {
+//   Dialog,
+//   DialogContent,
+//   DialogHeader,
+//   DialogTitle,
+//   DialogTrigger,
+// } from "@/components/ui/dialog";
 
 type Video = {
   id: number;
@@ -72,7 +72,7 @@ export default function VideoPage() {
 
   return (
     <div className="p-6">
-      <div className="flex justify-between mb-4">
+      {/* <div className="flex justify-between mb-4">
         <h1 className="text-2xl font-bold">Manage Videos</h1>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
@@ -100,7 +100,7 @@ export default function VideoPage() {
             />
           </DialogContent>
         </Dialog>
-      </div>
+      </div> */}
 
       {loading ? (
         <p>Loading...</p>
@@ -136,7 +136,7 @@ export default function VideoPage() {
                   </Button>
                   <Button
                     size="sm"
-                    variant="destructive"
+                    // variant="destructive"
                     className="ml-2"
                     onClick={() => handleDelete(v.id)}
                   >
@@ -200,7 +200,7 @@ function VideoForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
-      <Input
+      {/* <Input
         placeholder="Video ID"
         value={form.video_id || ""}
         onChange={(e) => setForm({ ...form, video_id: e.target.value })}
@@ -227,7 +227,7 @@ function VideoForm({
         onChange={(e) =>
           setForm({ ...form, display_order: parseInt(e.target.value) })
         }
-      />
+      /> */}
       <select
         className="border rounded p-2 w-full"
         value={form.source}
@@ -244,9 +244,9 @@ function VideoForm({
         />
         <span>Active</span>
       </label>
-      <Button type="submit" className="w-full">
+      {/* <Button type="submit" className="w-full">
         {initialData ? "Update Video" : "Create Video"}
-      </Button>
+      </Button> */}
     </form>
   );
 }
