@@ -76,7 +76,7 @@ const [formData, setFormData] = useState<EditFormData>({
       if (profileImage.startsWith('http')) {
         return profileImage;
       } else {
-        return `http://newsapi.test/storage/images/${profileImage}`;
+        return `/storage/images/${profileImage}`;
       }
     }
     return '/images/user/default-avatar.jpg';

@@ -6,6 +6,7 @@ import React, { useEffect, useState } from "react";
 import SortableNewsList from "@/components/lead-news/SortableNewsList";
 import { BASE_URL } from "@/config/config";
 
+
 // Type definitions
 interface Article {
   id: string;

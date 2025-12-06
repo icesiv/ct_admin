@@ -1,7 +1,7 @@
 // src/pages/Profile.tsx
 'use client';
 import UserInfoCard from '@/components/user-profile/UserInfoCard';
-import UserMetaCard from '@/components/user-profile/UserMetaCard';
+// import UserMetaCard from '@/components/user-profile/UserMetaCard';
 import { useAuth } from '@/context/AuthContext';
 import React from 'react';
 import { User } from '@/types/user';
@@ -42,7 +42,7 @@ export default function Profile() {
           Profile
         </h3>
         <div className="space-y-6">
-          <UserMetaCard user={normalizedUser} />
+          {/* <UserMetaCard user={normalizedUser} /> */}
           <UserInfoCard user={normalizedUser} />
         </div>
       </div>

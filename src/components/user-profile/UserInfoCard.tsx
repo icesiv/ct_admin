@@ -30,6 +30,17 @@ export default function UserInfoCard({ user }: UserInfoCardProps) {
   return (
     <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6">
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+
+        {/* Profile Image */}
+        {user?.profile_image && (
+          <div className="flex-shrink-0">
+            <img
+              src={ user.profile_image}
+              alt={user.name}
+              className="w-20 h-20 rounded-full object-cover border-2 border-gray-200 dark:border-gray-700"
+            />
+          </div>
+        )}
         <div className="flex-1">
           <h4 className="text-lg font-semibold text-gray-800 dark:text-white/90 lg:mb-6">
             Personal Information
@@ -74,16 +85,6 @@ export default function UserInfoCard({ user }: UserInfoCardProps) {
           </div>
         </div>
 
-        {/* Profile Image */}
-        {user?.profile_image && (
-          <div className="flex-shrink-0">
-            <img
-              src={user.profile_image}
-              alt={user.name}
-              className="w-20 h-20 rounded-full object-cover border-2 border-gray-200 dark:border-gray-700"
-            />
-          </div>
-        )}
 
         <button
           onClick={() => handleEdit()}
