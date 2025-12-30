@@ -19,6 +19,8 @@ import {
   CircleUserRound,
   ChevronDown,
   Ellipsis,
+  Megaphone,
+  Type,
 } from 'lucide-react';
 
 type UserRole = 'admin' | 'editor' | 'basic';
@@ -48,6 +50,12 @@ const navItems: NavItem[] = [
     ],
   },
   {
+    name: "Text Converter",
+    icon: <Type />,
+    path: "/text-converter",
+    roles: ['admin', 'editor'],
+  },
+  {
     name: "Lead News",
     icon: <Star />,
     path: "/lead-news",
@@ -62,11 +70,12 @@ const navItems: NavItem[] = [
   {
     name: "Photo Galleries",
     icon: <Images />,
-    roles: ['admin'],
+    path: "#",
+    roles: ['admin', 'editor'],
     subItems: [
-      { name: "Create Gallery", path: "/coming-soon" }, // Inherits parent role if not specified
-      { name: "Manage Galleries", path: "/photo-gallery" },
-    ],
+      { name: "Create Gallery", path: "/gallery/create" },
+      { name: "Manage Galleries", path: "/gallery/manage" },
+    ]
   },
   {
     name: "Videos",
@@ -82,10 +91,17 @@ const navItems: NavItem[] = [
     icon: <Hash />,
     path: "/topics",
     roles: ['admin'],
-  }
+  },
 ];
 
 const othersItems: NavItem[] = [
+
+  {
+    name: "Advertisement",
+    icon: <Megaphone />,
+    path: "/ads",
+    roles: ['admin', 'editor'],
+  },
   {
     name: "Users",
     icon: <Users />,
@@ -163,18 +179,16 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ userRole }) => {
           {nav.subItems ? (
             <button
               onClick={() => handleSubmenuToggle(index, menuType)}
-              className={`menu-item group ${
-                openSubmenu?.type === menuType && openSubmenu?.index === index
-                  ? "menu-item-active"
-                  : "menu-item-inactive"
-              } cursor-pointer ${!isExpanded && !isHovered ? "lg:justify-center" : "lg:justify-start"}`}
+              className={`menu-item group ${openSubmenu?.type === menuType && openSubmenu?.index === index
+                ? "menu-item-active"
+                : "menu-item-inactive"
+                } cursor-pointer ${!isExpanded && !isHovered ? "lg:justify-center" : "lg:justify-start"}`}
             >
               <span
-                className={`${
-                  openSubmenu?.type === menuType && openSubmenu?.index === index
-                    ? "menu-item-icon-active"
-                    : "menu-item-icon-inactive"
-                }`}
+                className={`${openSubmenu?.type === menuType && openSubmenu?.index === index
+                  ? "menu-item-icon-active"
+                  : "menu-item-icon-inactive"
+                  }`}
               >
                 {nav.icon}
               </span>
@@ -183,11 +197,10 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ userRole }) => {
               )}
               {(isExpanded || isHovered || isMobileOpen) && (
                 <ChevronDown
-                  className={`ml-auto w-5 h-5 transition-transform duration-200 ${
-                    openSubmenu?.type === menuType && openSubmenu?.index === index
-                      ? "rotate-180 text-brand-500" // Make sure text-brand-500 is defined in your CSS
-                      : ""
-                  }`}
+                  className={`ml-auto w-5 h-5 transition-transform duration-200 ${openSubmenu?.type === menuType && openSubmenu?.index === index
+                    ? "rotate-180 text-brand-500" // Make sure text-brand-500 is defined in your CSS
+                    : ""
+                    }`}
                 />
               )}
             </button>
@@ -222,19 +235,17 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ userRole }) => {
                   <li key={subItem.name}>
                     <Link
                       href={subItem.path}
-                      className={`menu-dropdown-item ${
-                        isActive(subItem.path) ? "menu-dropdown-item-active" : "menu-dropdown-item-inactive"
-                      }`}
+                      className={`menu-dropdown-item ${isActive(subItem.path) ? "menu-dropdown-item-active" : "menu-dropdown-item-inactive"
+                        }`}
                     >
                       {subItem.name}
                       <span className="flex items-center gap-1 ml-auto">
                         {subItem.new && (
                           <span
-                            className={`ml-auto ${
-                              isActive(subItem.path)
-                                ? "menu-dropdown-badge-active"
-                                : "menu-dropdown-badge-inactive"
-                            } menu-dropdown-badge`}
+                            className={`ml-auto ${isActive(subItem.path)
+                              ? "menu-dropdown-badge-active"
+                              : "menu-dropdown-badge-inactive"
+                              } menu-dropdown-badge`}
                           >
                             new
                           </span>
@@ -279,9 +290,8 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ userRole }) => {
               {filteredNavItems.length > 0 && (
                 <div>
                   <h2
-                    className={`mb-4 text-xs font-semibold uppercase flex leading-[20px] text-gray-500 dark:text-gray-400 ${
-                      !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
-                    }`}
+                    className={`mb-4 text-xs font-semibold uppercase flex leading-[20px] text-gray-500 dark:text-gray-400 ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
+                      }`}
                   >
                     {isExpanded || isHovered || isMobileOpen ? "Main Menu" : <Ellipsis className="w-4 h-4" />}
                   </h2>
@@ -291,9 +301,8 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ userRole }) => {
               {filteredOthersItems.length > 0 && (
                 <div>
                   <h2
-                    className={`mb-4 text-xs font-semibold uppercase flex leading-[20px] text-gray-500 dark:text-gray-400 ${
-                      !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
-                    }`}
+                    className={`mb-4 text-xs font-semibold uppercase flex leading-[20px] text-gray-500 dark:text-gray-400 ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
+                      }`}
                   >
                     {isExpanded || isHovered || isMobileOpen ? "Admin Menu" : <Ellipsis className="w-4 h-4" />}
                   </h2>

@@ -3,7 +3,6 @@
 import { useCallback, useRef, useState, useEffect } from 'react';
 import { Save, X, Plus } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import { available_colors } from '@/config/config';
 import { FeatureImageUploader } from '@/components/editor/FeatureUploader';
 import MultiselectDropdown from '@/components/ui/dropdown/MultiselectDropdown';
 import ImageUploaderModal from './Gallery/ImageUploaderModal';
@@ -91,7 +90,6 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
       id: Number(category.id),
       name: category.name,
       slug: category.slug,
-      color: available_colors[index % 10]
     };
   });
 

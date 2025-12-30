@@ -7,6 +7,7 @@ import { AuthProvider } from "@/context/AuthContext";
 
 
 import { ToastProvider } from "@/components/ToastProvider";
+import QueryProvider from '@/components/QueryProvider';
 
 
 const outfit = Outfit({
@@ -37,15 +38,17 @@ export default function RootLayout({
         />
       </head>
       <body className={`${outfit.className} dark:bg-gray-900`}>
-        <AuthProvider>
-          <ThemeProvider>
-            <SidebarProvider>
-              <ToastProvider>
-                {children}
-              </ToastProvider>
-            </SidebarProvider>
-          </ThemeProvider>
-        </AuthProvider>
+        <QueryProvider>
+          <AuthProvider>
+            <ThemeProvider>
+              <SidebarProvider>
+                <ToastProvider>
+                  {children}
+                </ToastProvider>
+              </SidebarProvider>
+            </ThemeProvider>
+          </AuthProvider>
+        </QueryProvider>
       </body>
     </html>
   );
