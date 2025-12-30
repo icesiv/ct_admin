@@ -149,7 +149,7 @@ export default function AlbumPhotosPage({ params }: { params: Promise<{ id: stri
 
         try {
             const token = localStorage.getItem("auth_token");
-            const baseUrl = BASE_URL.endsWith('/') ? BASE_URL : `${BASE_URL}/`;
+            const baseUrl = BASE_URL!.endsWith('/') ? BASE_URL! : `${BASE_URL!}/`;
             const res = await fetch(`${baseUrl}admin/gallery/photos/${photoId}`, {
                 method: "DELETE",
                 headers: { Authorization: `Bearer ${token}` }
