@@ -16,8 +16,8 @@ const LeadNewsWrapper: React.FC = () => {
     { icon: Home, label: 'Home', href: '/' },
     { icon: User, label: 'Profile', href: '/profile' },
     { icon: Settings, label: 'Settings', href: '/settings' },
-    { icon: Mail, label: 'Contact', href: '/contact' },
-    { icon: Info, label: 'About', href: '/about' },
+    { icon: Mail, label: 'Contact', href: '/contact-us' },
+    { icon: Info, label: 'About', href: '/about-us' },
   ];
 
   return (

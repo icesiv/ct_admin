@@ -183,7 +183,7 @@ export default function TextConverterPage() {
                             <textarea
                                 value={unicodeText}
                                 onChange={handleUnicodeChange}
-                                placeholder="ekhane likhun..."
+                                placeholder="এখানে লিখুন ..."
                                 className="w-full h-80 p-5 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all resize-none shadow-sm text-lg"
                             />
                             <div className="absolute bottom-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -228,7 +228,7 @@ export default function TextConverterPage() {
                             <textarea
                                 value={bijoyText}
                                 onChange={handleBijoyChange}
-                                placeholder="Bijoy output here..."
+                                placeholder="বিজয় দিয়ে এখানে লিখুন..."
                                 className="w-full h-80 p-5 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all resize-none shadow-sm text-lg font-bijoy"
                                 style={{ fontFamily: '"SutonnyMJ", "SutonnyOMJ", "SolaimanLipi", sans-serif' }}
                             />
