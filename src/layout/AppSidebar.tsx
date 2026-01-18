@@ -81,10 +81,7 @@ const navItems: NavItem[] = [
     name: "Videos",
     icon: <FileVideo2 />,
     roles: ['admin'],
-    subItems: [
-      { name: "Create Video", path: "/coming-soon" },
-      { name: "Homepage Videos", path: "/video/home" },
-    ],
+    path: "/video",
   },
   {
     name: "Topics",
