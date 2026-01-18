@@ -12,13 +12,13 @@ interface ImagesGridProps {
   totalImages?: number;
   currentPage?: number;
   isSearchMode?: boolean;
-  callback?: (imageData: ImageData) => void; 
+  callback?: (imageData: ImageData) => void;
   OpenModal: (flag: boolean, isFeature: boolean) => void;
 }
 
-export const ImagesGrid: React.FC<ImagesGridProps> = ({ 
-  images, 
-  searchTerm, 
+export const ImagesGrid: React.FC<ImagesGridProps> = ({
+  images,
+  searchTerm,
   onDeleteImage,
   loadingMore = false,
   hasMorePages = false,
@@ -31,7 +31,7 @@ export const ImagesGrid: React.FC<ImagesGridProps> = ({
 }) => {
 
   return (
-    <div>
+    <div className='h-[calc(100vh-300px)] overflow-y-auto'>
       {/* Images Count Info */}
       {totalImages > 0 && (
         <div className="mb-4 text-sm text-gray-600 flex items-center justify-between">
@@ -54,14 +54,14 @@ export const ImagesGrid: React.FC<ImagesGridProps> = ({
         {images.map(image => (
           <div key={image.id} className="group relative bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
             <div className="aspect-video overflow-hidden">
-              <a href='#' onClick={(e)=>{
+              <a href='#' onClick={(e) => {
                 e.preventDefault();
                 callback?.(image);
                 OpenModal(false, false);
               }}>
                 <img src={image.url} alt={image.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                loading="lazy"
-              />
+                  loading="lazy"
+                />
               </a>
             </div>
           </div>

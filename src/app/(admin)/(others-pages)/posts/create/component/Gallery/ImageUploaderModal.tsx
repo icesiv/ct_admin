@@ -660,8 +660,8 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
       <button
         onClick={() => setActiveTab('upload')}
         className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'upload'
-            ? 'bg-white text-blue-600 shadow-sm'
-            : 'text-gray-600 hover:text-gray-800'
+          ? 'bg-white text-blue-600 shadow-sm'
+          : 'text-gray-600 hover:text-gray-800'
           }`}
       >
         Upload
@@ -669,8 +669,8 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
       <button
         onClick={() => setActiveTab('gallery')}
         className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'gallery'
-            ? 'bg-white text-blue-600 shadow-sm'
-            : 'text-gray-600 hover:text-gray-800'
+          ? 'bg-white text-blue-600 shadow-sm'
+          : 'text-gray-600 hover:text-gray-800'
           }`}
       >
         Gallery ({totalImages || 50})
@@ -703,15 +703,15 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
                 <TabNavigation />
               </div>
 
-              <div className="flex-1 overflow-hidden">
+              <div className="flex-1 overflow-hidden flex flex-col">
                 {activeTab === 'upload' ? (
                   <div className="h-full overflow-y-auto p-4">
                     <div className="space-y-4">
                       {/* Upload Status */}
                       {uploadStatus.type && (
                         <div className={`p-3 rounded-lg flex items-center gap-2 ${uploadStatus.type === 'success'
-                            ? 'bg-green-50 text-green-800 border border-green-200'
-                            : 'bg-red-50 text-red-800 border border-red-200'
+                          ? 'bg-green-50 text-green-800 border border-green-200'
+                          : 'bg-red-50 text-red-800 border border-red-200'
                           }`}>
                           {uploadStatus.type === 'success' ? (
                             <CheckCircle size={20} />
@@ -725,10 +725,10 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
                       {/* File Drop Zone */}
                       <div
                         className={`border-2 border-dashed rounded-xl p-6 text-center transition-colors cursor-pointer ${isUploading
-                            ? 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-50'
-                            : dragActive
-                              ? 'border-blue-500 bg-blue-50'
-                              : 'border-gray-300 hover:border-gray-400'
+                          ? 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-50'
+                          : dragActive
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-300 hover:border-gray-400'
                           }`}
                         onDrop={handleDrop}
                         onDragOver={handleDragOver}
@@ -898,8 +898,8 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
                     {/* Upload Status */}
                     {uploadStatus.type && (
                       <div className={`p-3 rounded-lg flex items-center gap-2 ${uploadStatus.type === 'success'
-                          ? 'bg-green-50 text-green-800 border border-green-200'
-                          : 'bg-red-50 text-red-800 border border-red-200'
+                        ? 'bg-green-50 text-green-800 border border-green-200'
+                        : 'bg-red-50 text-red-800 border border-red-200'
                         }`}>
                         {uploadStatus.type === 'success' ? (
                           <CheckCircle size={20} />
@@ -913,10 +913,10 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
                     {/* File Drop Zone */}
                     <div
                       className={`border-2 border-dashed rounded-xl p-6 text-center transition-colors cursor-pointer ${isUploading
-                          ? 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-50'
-                          : dragActive
-                            ? 'border-blue-500 bg-blue-50'
-                            : 'border-gray-300 hover:border-gray-400'
+                        ? 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-50'
+                        : dragActive
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-300 hover:border-gray-400'
                         }`}
                       onDrop={handleDrop}
                       onDragOver={handleDragOver}
