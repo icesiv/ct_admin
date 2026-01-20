@@ -22,24 +22,6 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'api.top-news24.com',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'http',
-        hostname: 'api.top-news24.com',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'http',
-        hostname: 'newsapi.test',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
         hostname: 'campustimes.press',
         port: '',
         pathname: '/**',
@@ -47,25 +29,6 @@ const nextConfig: NextConfig = {
       {
         protocol: 'http',
         hostname: 'campustimes.press',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'http',
-        hostname: 'placehold.co',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'placehold.co',
-        port: '',
-        pathname: '/**',
-      },
-
-      {
-        protocol: 'https',
-        hostname: 'beta.campustimes.press',
         port: '',
         pathname: '/**',
       },

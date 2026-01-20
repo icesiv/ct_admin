@@ -295,14 +295,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 body: JSON.stringify(data)
             });
 
-            if (!response.ok) {
-                throw new Error('Failed to save menu');
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                throw new Error(result.message || 'Failed to save menu');
             }
 
-            return await response.json();
+            return result;
         } catch (error) {
             console.error('Save menu error:', error);
-            throw error; // Re-throw to allow caller to handle
+            throw error;
         }
     };
 
@@ -371,7 +373,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         clearError,
         setShowLogin,
         router,
-        fetchCategories, 
+        fetchCategories,
         news_categories: Array.isArray(data) ? data : (data?.data ? data.data : []),
         savePost,
         saveMenu,

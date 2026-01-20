@@ -21,6 +21,7 @@ import {
   Ellipsis,
   Megaphone,
   Type,
+  MapPin,
 } from 'lucide-react';
 
 type UserRole = 'admin' | 'editor' | 'basic';
@@ -75,6 +76,16 @@ const navItems: NavItem[] = [
     subItems: [
       { name: "Create Gallery", path: "/gallery/create" },
       { name: "Manage Galleries", path: "/gallery/manage" },
+    ]
+  },
+  {
+    name: "News by Location",
+    icon: <MapPin />,
+    path: "#",
+    roles: ['admin', 'editor'],
+    subItems: [
+      { name: "By Division", path: "/location-news/division" },
+      { name: "By District", path: "/location-news/district" },
     ]
   },
   {

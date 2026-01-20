@@ -167,18 +167,20 @@ const MenuBuilder: React.FC = () => {
 
   const removeFromTree = (items: MenuItem[], id: number): { tree: MenuItem[]; removed: MenuItem | null } => {
     let removed: MenuItem | null = null;
-    const tree = items.filter((it) => {
+    const tree = items.reduce((acc, it) => {
       if (it.id === id) {
         removed = it;
-        return false;
+        return acc;
       }
-      if (it.children) {
+      if (it.children && it.children.length > 0) {
         const res = removeFromTree(it.children, id);
-        it.children = res.tree;
         if (res.removed) removed = res.removed;
+        acc.push({ ...it, children: res.tree });
+      } else {
+        acc.push({ ...it });
       }
-      return true;
-    });
+      return acc;
+    }, [] as MenuItem[]);
     return { tree, removed };
   };
 
@@ -238,6 +240,24 @@ const MenuBuilder: React.FC = () => {
     return null;
   };
 
+  // --- HELPER TO CLEAN MENU DATA BEFORE SAVING --------------------------
+  const cleanMenuData = (items: MenuItem[]): MenuItem[] => {
+    return items.map(item => {
+      const cleaned: MenuItem = {
+        id: item.id,
+        label: item.label,
+        slug: item.slug,
+        isExpanded: item.isExpanded
+      };
+
+      if (item.children && item.children.length > 0) {
+        cleaned.children = cleanMenuData(item.children);
+      }
+
+      return cleaned;
+    });
+  };
+
   // --- DRAG HANDLERS -----------------------------------------------------
   const handleDragStart = (e: DragEvent<HTMLDivElement>, item: MenuItem) => {
     e.dataTransfer.effectAllowed = 'move';
@@ -268,7 +288,7 @@ const MenuBuilder: React.FC = () => {
 
     // Simplified approach: Clone the tree and perform the move operation
     const newMenuItems = JSON.parse(JSON.stringify(menuItems)) as MenuItem[];
-    
+
     // Remove the dragged item from its current position
     const { tree: treeWithoutDragged, removed: draggedItemRemoved } = removeFromTree(newMenuItems, draggedItem.id);
     if (!draggedItemRemoved) {
@@ -289,7 +309,7 @@ const MenuBuilder: React.FC = () => {
 
     // Determine the parent ID for insertion
     let insertParentId: number | null = null;
-    
+
     // Check if target is a child (has a parent that's not the root array)
     const targetParent = findParentItem(treeWithoutDragged, targetItem.id);
     if (targetParent) {
@@ -303,7 +323,7 @@ const MenuBuilder: React.FC = () => {
     // Insert the dragged item after the target
     const insertIndex = targetLocation.index + 1;
     const finalTree = insertAt(treeWithoutDragged, insertParentId, draggedItemRemoved, insertIndex);
-    
+
     updateMenuItems(finalTree);
     setDraggedItem(null);
     setDragOverItem(null);
@@ -340,7 +360,7 @@ const MenuBuilder: React.FC = () => {
     updateMenuItems((prevMenuItems) => updateItemInTree(prevMenuItems, editingItem));
     setEditingItem(null);
   };
- 
+
   const cancelEdit = (): void => setEditingItem(null);
 
   const deleteItem = (id: number): void => {
@@ -410,113 +430,113 @@ const MenuBuilder: React.FC = () => {
     const isEditing = editingItem?.id === item.id;
     const isParentItem = level === 0; // Only top-level items are considered parent items
     const isDraggedOver = dragOverItem?.id === item.id;
-    
+
     return (
-      <>
-      <div key={item.id} className="w-full">
-        <div
-          draggable
-          onDragStart={(e) => handleDragStart(e, item)}
-          onDragOver={(e) => handleDragOver(e, item)}
-          onDragLeave={handleDragLeave}
-          onDrop={(e) => handleDrop(e, item)} 
-          className={`flex items-center gap-2 p-3 border border-gray-200 dark:border-gray-700 rounded-lg mb-2
+      <React.Fragment key={item.id}>
+        <div className="w-full">
+          <div
+            draggable
+            onDragStart={(e) => handleDragStart(e, item)}
+            onDragOver={(e) => handleDragOver(e, item)}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, item)}
+            className={`flex items-center gap-2 p-3 border border-gray-200 dark:border-gray-700 rounded-lg mb-2
             bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
             hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-grab
             ${isDraggedOver ? 'ring-2 ring-indigo-500 ring-opacity-70 bg-indigo-50 dark:bg-indigo-900/20' : ''} 
             ${level > 0 ? 'ml-6' : ''}`}
-          style={{ marginLeft: level * 24 }}
-        >
-          {hasChildren ? (
-            <button
-              onClick={() => toggleExpanded(item.id)}
-              className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded"
-            >
-              {item.isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-            </button>
-          ) : (
-            <div className="w-6" />
-          )}
-          
-          {/* Level indicator for better visual feedback */}
-          {level > 0 && (
-            <div className="w-1 h-6 bg-gray-300 dark:bg-gray-600 rounded-full mr-2" />
-          )}
-          
-          {isEditing ? (
-            <div className="flex-1 flex gap-2">
-              <input
-                type="text"
-                value={editingItem.label}
-                onChange={(e) => setEditingItem({ ...editingItem, label: e.target.value })}
-                className="flex-1 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                placeholder="Label"
-              />
-              <input
-                type="text"
-                value={editingItem.slug}
-                onChange={(e) => setEditingItem({ ...editingItem, slug: e.target.value })}
-                className="flex-1 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                placeholder="Slug"
-              />
+            style={{ marginLeft: level * 24 }}
+          >
+            {hasChildren ? (
               <button
-                onClick={saveEdit}
-                className="p-1 bg-green-500 text-white rounded hover:bg-green-600"
+                onClick={() => toggleExpanded(item.id)}
+                className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded"
               >
-                <Save size={14} />
+                {item.isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
               </button>
-              <button
-                onClick={cancelEdit}
-                className="p-1 bg-gray-500 text-white rounded hover:bg-gray-600"
-              >
-                <X size={14} />
-              </button>
-            </div>
-          ) : (
-            <>
-              <div className="flex-1">
-                <div className="font-medium">{item.label}</div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                  {item.slug ? `/${item.slug}` : '<empty slug>'}
-                  {level > 0 && <span className="ml-2 text-xs">(submenu)</span>}
+            ) : (
+              <div className="w-6" />
+            )}
+
+            {/* Level indicator for better visual feedback */}
+            {level > 0 && (
+              <div className="w-1 h-6 bg-gray-300 dark:bg-gray-600 rounded-full mr-2" />
+            )}
+
+            {isEditing ? (
+              <div className="flex-1 flex gap-2">
+                <input
+                  type="text"
+                  value={editingItem.label}
+                  onChange={(e) => setEditingItem({ ...editingItem, label: e.target.value })}
+                  className="flex-1 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                  placeholder="Label"
+                />
+                <input
+                  type="text"
+                  value={editingItem.slug}
+                  onChange={(e) => setEditingItem({ ...editingItem, slug: e.target.value })}
+                  className="flex-1 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                  placeholder="Slug"
+                />
+                <button
+                  onClick={saveEdit}
+                  className="p-1 bg-green-500 text-white rounded hover:bg-green-600"
+                >
+                  <Save size={14} />
+                </button>
+                <button
+                  onClick={cancelEdit}
+                  className="p-1 bg-gray-500 text-white rounded hover:bg-gray-600"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="flex-1">
+                  <div className="font-medium">{item.label}</div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                    {item.slug ? `/${item.slug}` : '<empty slug>'}
+                    {level > 0 && <span className="ml-2 text-xs">(submenu)</span>}
+                  </div>
                 </div>
-              </div>
-              <div className="flex gap-1">
-                {/* Only show Add button for parent items (level 0) */}
-                {isParentItem && (
+                <div className="flex gap-1">
+                  {/* Only show Add button for parent items (level 0) */}
+                  {isParentItem && (
+                    <button
+                      onClick={() => openAddModal(item.id)}
+                      className="p-1 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-800 rounded"
+                      title="Add submenu"
+                    >
+                      <Plus size={14} />
+                    </button>
+                  )}
                   <button
-                    onClick={() => openAddModal(item.id)}
-                    className="p-1 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-800 rounded"
-                    title="Add submenu"
+                    onClick={() => startEditing(item)}
+                    className="p-1 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600 rounded"
+                    title="Edit"
                   >
-                    <Plus size={14} />
+                    <Edit2 size={14} />
                   </button>
-                )}
-                <button
-                  onClick={() => startEditing(item)}
-                  className="p-1 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600 rounded"
-                  title="Edit"
-                >
-                  <Edit2 size={14} />
-                </button>
-                <button
-                  onClick={() => deleteItem(item.id)}
-                  className="p-1 text-red-600 hover:bg-red-100 dark:hover:bg-red-800 rounded"
-                  title="Delete"
-                >
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            </>
+                  <button
+                    onClick={() => deleteItem(item.id)}
+                    className="p-1 text-red-600 hover:bg-red-100 dark:hover:bg-red-800 rounded"
+                    title="Delete"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+          {hasChildren && item.isExpanded && (
+            <div className="ml-4 border-l-2 border-gray-200 dark:border-gray-700 pl-4">
+              {item.children!.map((child) => menuItem(child, level + 1))}
+            </div>
           )}
         </div>
-        {hasChildren && item.isExpanded && (
-          <div className="ml-4 border-l-2 border-gray-200 dark:border-gray-700 pl-4">
-            {item.children!.map((child) => menuItem(child, level + 1))}
-          </div>
-        )}
-      </div>
-      </>
+      </React.Fragment>
     );
   };
 
@@ -538,17 +558,18 @@ const MenuBuilder: React.FC = () => {
           onClick={async () => {
             try {
               await onSave();
-              setHasUnsavedChanges(false); 
+              setHasUnsavedChanges(false);
+              alert('Menu saved successfully!');
             } catch (error) {
               console.error('Error saving menu:', error);
+              alert(`Failed to save menu: ${error instanceof Error ? error.message : 'Unknown error'}`);
             }
           }}
-          disabled={!hasUnsavedChanges} 
-          className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm ${
-            hasUnsavedChanges
-              ? 'bg-purple-600 hover:bg-purple-700 text-white'
-              : 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed text-gray-200 dark:text-gray-400'
-          }`}
+          disabled={!hasUnsavedChanges}
+          className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm ${hasUnsavedChanges
+            ? 'bg-purple-600 hover:bg-purple-700 text-white'
+            : 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed text-gray-200 dark:text-gray-400'
+            }`}
         >
           <Save size={16} /> Save
         </button>
@@ -568,10 +589,10 @@ const MenuBuilder: React.FC = () => {
     <div className="space-y-4 max-w-4xl mx-auto">
       <MenuHeader
         onReload={reload}
-        onSave={() => saveMenu({ name: 'main_navigation', menu: JSON.stringify(menuItems) })}
+        onSave={() => saveMenu({ name: 'main_navigation', menu: JSON.stringify(cleanMenuData(menuItems)) })}
         onAdd={() => openAddModal()}
       />
-      
+
       <AddItemModal
         isOpen={showAddModal}
         onClose={closeAddModal}
@@ -582,18 +603,18 @@ const MenuBuilder: React.FC = () => {
       />
 
       <div className="space-y-2">{menuItems.map((item) => menuItem(item))}</div>
-      
+
       <MenuHeader
         onReload={reload}
-        onSave={() => saveMenu({ name: 'main_navigation', menu: JSON.stringify(menuItems) })}
+        onSave={() => saveMenu({ name: 'main_navigation', menu: JSON.stringify(cleanMenuData(menuItems)) })}
         onAdd={() => openAddModal()}
       />
-      
+
       {menuItems.length === 0 && (
         <div className="text-center py-8 text-gray-500 dark:text-gray-400">
           No menu items yet. Add your first menu item or load sample data to get started!
         </div>
-    )}
+      )}
     </div>
   );
 };
