@@ -39,9 +39,10 @@ export default function TagManager() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [newTagName, setNewTagName] = useState<string>("");
+  const [newTagSlug, setNewTagSlug] = useState<string>("");
   const [isAdding, setIsAdding] = useState<boolean>(false);
+  const [editingTag, setEditingTag] = useState<Tag | null>(null);
   const [globalFilter, setGlobalFilter] = useState("");
-
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 25, // default page size
@@ -92,7 +93,10 @@ export default function TagManager() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
         },
-        body: JSON.stringify({ name: newTagName.trim() }),
+        body: JSON.stringify({
+          name: newTagName.trim(),
+          slug: newTagSlug.trim() || undefined // Only send slug if provided
+        }),
       });
 
       if (!response.ok) {
@@ -103,12 +107,70 @@ export default function TagManager() {
       const result = await response.json();
       setTags([result.data, ...tags]);
       setNewTagName("");
+      setNewTagSlug("");
       addToast("Tag added successfully!", "success");
     } catch (err: any) {
       addToast(err.message, "error");
     } finally {
       setIsAdding(false);
     }
+  };
+
+  // Update an existing tag
+  const handleUpdateTag = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTag || !newTagName.trim()) return;
+
+    try {
+      setIsAdding(true);
+      const response = await fetch(`${BASE_URL}tags/${editingTag.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+        },
+        body: JSON.stringify({
+          name: newTagName.trim(),
+          slug: newTagSlug.trim() || undefined // Send slug if changed/provided
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to update tag");
+      }
+
+      const result = await response.json();
+
+      // Update the tag in the local state
+      setTags(tags.map(t => t.id === editingTag.id ? result.data : t));
+
+      // Reset form
+      setNewTagName("");
+      setNewTagSlug("");
+      setEditingTag(null);
+      addToast("Tag updated successfully!", "success");
+    } catch (err: any) {
+      addToast(err.message, "error");
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+  // Handle Edit Click
+  const handleEditClick = (tag: Tag) => {
+    setEditingTag(tag);
+    setNewTagName(tag.name);
+    setNewTagSlug(tag.slug);
+    // Optional: scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Cancel Edit
+  const handleCancelEdit = () => {
+    setEditingTag(null);
+    setNewTagName("");
+    setNewTagSlug("");
   };
 
   // Delete a tag
@@ -131,8 +193,57 @@ export default function TagManager() {
 
       setTags(tags.filter((t) => t.id !== id));
       addToast("Tag deleted successfully!", "success");
+
+      // If we were editing this tag, clear the form
+      if (editingTag?.id === id) {
+        handleCancelEdit();
+      }
     } catch (err: any) {
       addToast(err.message, "error");
+    }
+  };
+
+  /* Bulk Assign State */
+  const [sourceTagId, setSourceTagId] = useState<string>("");
+  const [targetTagId, setTargetTagId] = useState<string>("");
+  const [isBulkAssigning, setIsBulkAssigning] = useState<boolean>(false);
+
+  // Bulk Assign Handler
+  const handleBulkAssign = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!sourceTagId || !targetTagId || sourceTagId === targetTagId) return;
+
+    if (!window.confirm("Are you sure you want to assign the target topic to all posts with the source topic?")) return;
+
+    try {
+      setIsBulkAssigning(true);
+      const response = await fetch(`${BASE_URL}tags/assign`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+        },
+        body: JSON.stringify({
+          source_tag_id: sourceTagId,
+          target_tag_id: targetTagId
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to bulk assign tags");
+      }
+
+      const result = await response.json();
+      addToast(result.message, "success");
+
+      // Reset selection
+      setSourceTagId("");
+      setTargetTagId("");
+    } catch (err: any) {
+      addToast(err.message, "error");
+    } finally {
+      setIsBulkAssigning(false);
     }
   };
 
@@ -163,9 +274,13 @@ export default function TagManager() {
         const tag = row.original;
         return (
           <div className="flex space-x-4">
-            {/* <button className="text-blue-500 hover:text-blue-600" title="Edit">
+            <button
+              className="text-blue-500 hover:text-blue-600"
+              title="Edit"
+              onClick={() => handleEditClick(tag)}
+            >
               <Edit3 size={18} />
-            </button> */}
+            </button>
             <button
               onClick={() => handleDeleteTag(tag.id, tag.name)}
               className="text-red-500 hover:text-red-600"
@@ -202,10 +317,57 @@ export default function TagManager() {
 
   return (
     <div className="space-y-6">
-      {/* Add Tag Form */}
+      {/* Bulk Assign Tool */}
+      <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800 p-6 shadow-sm">
+        <h2 className="text-lg font-semibold text-blue-800 dark:text-blue-300 mb-4">Bulk Assign Topics</h2>
+        <p className="text-sm text-blue-600 dark:text-blue-400 mb-4">
+          Assign a <strong>Target Topic</strong> to all posts that currently have the <strong>Source Topic</strong>. existing tags are preserved.
+        </p>
+        <form onSubmit={handleBulkAssign} className="flex flex-col md:flex-row gap-3 items-end">
+          <div className="flex-1 w-full">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Source Topic</label>
+            <select
+              value={sourceTagId}
+              onChange={(e) => setSourceTagId(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+            >
+              <option value="">Select Source...</option>
+              {tags.map(tag => (
+                <option key={tag.id} value={tag.id}>{tag.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex-1 w-full">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Target Topic</label>
+            <select
+              value={targetTagId}
+              onChange={(e) => setTargetTagId(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+            >
+              <option value="">Select Target...</option>
+              {tags.map(tag => (
+                <option key={tag.id} value={tag.id}>{tag.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <button
+            type="submit"
+            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50 h-[42px]"
+            disabled={isBulkAssigning || !sourceTagId || !targetTagId || sourceTagId === targetTagId}
+          >
+            {isBulkAssigning ? "Assigning..." : "Assign"}
+          </button>
+        </form>
+      </div>
+
+      {/* Add/Edit Tag Form */}
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Add New Tag</h2>
-        <form onSubmit={handleAddTag} className="flex gap-3">
+        <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
+          {editingTag ? "Edit Tag" : "Add New Tag"}
+        </h2>
+        <form onSubmit={editingTag ? handleUpdateTag : handleAddTag} className="flex flex-col md:flex-row gap-3">
           <input
             type="text"
             value={newTagName}
@@ -217,23 +379,47 @@ export default function TagManager() {
             minLength={1}
             maxLength={255}
           />
-          <button
-            type="submit"
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50"
-            disabled={isAdding || !newTagName.trim()}
-          >
-            {isAdding ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                Adding...
-              </>
-            ) : (
-              <>
-                <Plus size={16} />
-                Add Tag
-              </>
+          <input
+            type="text"
+            value={newTagSlug}
+            onChange={(e) => setNewTagSlug(e.target.value)}
+            placeholder="Enter slug (optional)"
+            className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+            disabled={isAdding}
+            minLength={1}
+            maxLength={255}
+          />
+
+          <div className="flex gap-2">
+            {editingTag && (
+              <button
+                type="button"
+                onClick={handleCancelEdit}
+                className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg flex items-center gap-2 transition-colors whitespace-nowrap"
+                disabled={isAdding}
+              >
+                Cancel
+              </button>
             )}
-          </button>
+
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50 whitespace-nowrap"
+              disabled={isAdding || !newTagName.trim()}
+            >
+              {isAdding ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                  {editingTag ? "Updating..." : "Adding..."}
+                </>
+              ) : (
+                <>
+                  {editingTag ? <Edit3 size={16} /> : <Plus size={16} />}
+                  {editingTag ? "Update" : "Add Tag"}
+                </>
+              )}
+            </button>
+          </div>
         </form>
       </div>
 

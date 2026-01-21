@@ -46,24 +46,21 @@ export default function DashboardClient() {
     return null; // Will redirect in useEffect
   }
 
-return (
-  <div className="h-[calc(100vh-120px)] md:h-[calc(100vh-130px)] flex items-center justify-center p-4">
-    <QuickAccess />
-  </div>
-);
+  return (
+    <div className="grid grid-cols-12 gap-4 md:gap-6">
+      <div className="col-span-12 space-y-6 xl:col-span-7">
+        <QuickAccess />
+        <NewsMetrics />
 
- 
+        <ViewCountChart />
+      </div>
+
+      <div className="col-span-12 xl:col-span-5">
+        <TopTags />
+      </div>
+    </div>
+  );
+
+
 }
 
-    // <div className="grid grid-cols-12 gap-4 md:gap-6">
-    //   <div className="col-span-12 space-y-6 xl:col-span-7">
-    //     <QuickAccess />
-    //     <NewsMetrics />
-
-    //     <ViewCountChart />
-    //   </div>
-
-    //   <div className="col-span-12 xl:col-span-5">
-    //     <TopTags />
-    //   </div>
-    // </div>

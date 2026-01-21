@@ -2,7 +2,7 @@
 import { ApexOptions } from "apexcharts";
 import dynamic from "next/dynamic";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 
 // Dynamically import the ReactApexChart component
@@ -11,6 +11,31 @@ const ReactApexChart = dynamic(() => import("react-apexcharts"), {
 });
 
 export default function ViewCountChart() {
+  const [chartData, setChartData] = useState<{ categories: string[]; data: number[] }>({
+    categories: [],
+    data: [],
+  });
+
+  useEffect(() => {
+    const fetchChartData = async () => {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}admin/dashboard/chart-stats`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setChartData(data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch chart stats", error);
+      }
+    };
+
+    fetchChartData();
+  }, []);
+
   const options: ApexOptions = {
     colors: ["#465fff"],
     chart: {
@@ -20,6 +45,9 @@ export default function ViewCountChart() {
       toolbar: {
         show: false,
       },
+      zoom: {
+        enabled: false
+      }
     },
     plotOptions: {
       bar: {
@@ -38,29 +66,14 @@ export default function ViewCountChart() {
       colors: ["transparent"],
     },
     xaxis: {
-      categories: [
-        "-14",
-        "-13",
-        "-12",
-        "-11",
-        "-10",
-        "-9",
-        "-8",
-        "-7",
-        "-6",
-        "-5",
-        "-4",
-        "-3",
-        "-2",
-        "-1",
-      ],
+      categories: chartData.categories,
       axisBorder: {
         show: true,
       },
       axisTicks: {
         show: true,
       },
-         title: {
+      title: {
         text: 'days',
       },
     },
@@ -88,7 +101,7 @@ export default function ViewCountChart() {
 
     tooltip: {
       x: {
-        show: false,
+        show: true, // Show date on hover
       },
       y: {
         formatter: (val: number) => `${val}`,
@@ -98,7 +111,7 @@ export default function ViewCountChart() {
   const series = [
     {
       name: "Views",
-      data: [168, 385, 201, 298, 187, 195, 291, 110, 215, 390, 280,321,554, 112],
+      data: chartData.data,
     },
   ];
   const [isOpen, setIsOpen] = useState(false);
@@ -115,7 +128,7 @@ export default function ViewCountChart() {
     <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white px-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-          Views Stats last 2 weeks
+          Views Stats last 14 days
         </h3>
 
         <div className="relative inline-block">

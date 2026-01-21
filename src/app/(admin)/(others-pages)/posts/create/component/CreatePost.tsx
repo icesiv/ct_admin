@@ -282,7 +282,7 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
     return errors;
   };
 
-  const handleSubmit = async (): Promise<void> => {
+  const handleSubmit = async (shouldCreateNew: boolean = false): Promise<void> => {
     const errors = validateForm();
 
     if (errors.length > 0) {
@@ -324,10 +324,45 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
 
       }
 
-      // Redirect after successful save/update
-      setTimeout(() => {
-        router.push('/posts');
-      }, 2000);
+      if (shouldCreateNew) {
+        if (isEditMode) {
+          // If editing, redirect to create new page
+          router.push('/posts/create');
+        } else {
+          // If already creating, just reset the form
+          setFormData({
+            title: '',
+            excerpt: '',
+            short_title: '',
+            sub_head: '',
+            subtitle: '',
+            highlight: '',
+            author: '',
+            writer_id: null,
+            post_content: '',
+            featured_image: '',
+            caption: '',
+            post_status: 1,
+            categories: [],
+            districts: [],
+            tags: [],
+            lead_news: false,
+            breaking_news: false,
+          });
+          setTagInput('');
+          setContent(''); // Clear editor content state if used
+          // Note: editorRef might need specific clearing depending on implementation, 
+          // but normally updating key or remounting works. 
+          // Since we reset state, scrolling top is helpful.
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          addToast("Ready for new article!", "info");
+        }
+      } else {
+        // Redirect after successful save/update
+        setTimeout(() => {
+          router.push('/posts');
+        }, 2000);
+      }
 
     } catch (e) {
       console.log('error', e);
@@ -358,16 +393,28 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
   const ArticleHeader = ({
     isEditMode,
     isLoading,
-    handleSubmit
+    handleSubmit,
+    handleSaveAndCreateNew
   }: {
     isEditMode: boolean;
     isLoading: boolean;
     handleCancel: () => void;
     handleSubmit: () => void;
+    handleSaveAndCreateNew: () => void;
   }) => {
     return (
       <div className="flex justify-end my-4 items-center">
         <div className="flex space-x-3">
+          <button
+            type="button"
+            onClick={handleSaveAndCreateNew}
+            disabled={isLoading}
+            className="inline-flex items-center px-4 py-2 border border-blue-600 rounded-md shadow-sm text-sm font-medium text-blue-600 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Save & Create New
+          </button>
+
           <button
             type="button"
             onClick={handleSubmit}
@@ -388,7 +435,8 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
         isEditMode={isEditMode}
         isLoading={isLoading}
         handleCancel={handleCancel}
-        handleSubmit={handleSubmit}
+        handleSubmit={() => handleSubmit(false)}
+        handleSaveAndCreateNew={() => handleSubmit(true)}
       />
 
       <div className="grid grid-cols-5 gap-8">
@@ -664,7 +712,8 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
         isEditMode={isEditMode}
         isLoading={isLoading}
         handleCancel={handleCancel}
-        handleSubmit={handleSubmit}
+        handleSubmit={() => handleSubmit(false)}
+        handleSaveAndCreateNew={() => handleSubmit(true)}
       />
     </div>
   );
