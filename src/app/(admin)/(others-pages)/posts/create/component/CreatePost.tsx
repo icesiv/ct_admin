@@ -1,11 +1,11 @@
 "use client";
-
-import { useCallback, useRef, useState, useEffect } from 'react';
-import { Save, X, Plus } from 'lucide-react';
+import React, { useCallback, useRef, useState, useEffect } from 'react';
+import { Save, X, Plus, Image as ImageIcon } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { FeatureImageUploader } from '@/components/editor/FeatureUploader';
 import MultiselectDropdown from '@/components/ui/dropdown/MultiselectDropdown';
 import ImageUploaderModal from './Gallery/ImageUploaderModal';
+import LocationSelector from './LocationSelector';
 
 import WysiwygEditor from '@/components/editor/WysiwygEditor';
 
@@ -29,6 +29,11 @@ interface Tag {
   name: string;
 }
 
+interface District {
+  id: number;
+  name: string;
+}
+
 interface FormData {
   title: string;
   sub_head: string;
@@ -42,6 +47,7 @@ interface FormData {
   featured_image: string | null;
   caption: string | null;
   categories: number[];
+  districts: number[]; // Added districts
   post_status?: number | 0 | 1; // 0 for draft, 1 for published
   tags: string[];
   lead_news: boolean,
@@ -74,6 +80,7 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
     caption: '',
     post_status: 1, // Default to draft
     categories: [],
+    districts: [], // Initial empty array
     tags: [],
     lead_news: false,
     breaking_news: false,
@@ -116,6 +123,7 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
           caption: post.caption || '',
           post_status: post?.post_status === 1 ? 1 : 0,
           categories: post.categories?.map?.((cat: Category) => Number(cat.id)) || [],
+          districts: post.districts?.map?.((dist: District) => Number(dist.id)) || [], // Load districts
           tags: post.tags?.map?.((tag: Tag) => tag.name) || [],
           breaking_news: response.breaking_news,
           lead_news: response.lead_news
@@ -143,6 +151,13 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
     setFormData((prev: any) => ({
       ...prev,
       categories: categoryIds
+    }));
+  };
+
+  const handleDistrictChange = (districtIds: number[]): void => {
+    setFormData((prev: any) => ({
+      ...prev,
+      districts: districtIds
     }));
   };
 
@@ -292,6 +307,7 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
         featured_image: formData.featured_image,
         caption: formData.caption || '',
         categories: formData.categories,
+        districts: formData.districts, // Save districts
         post_status: formData.post_status,
         tags: formData.tags,
         lead_news: formData.lead_news,
@@ -559,62 +575,77 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
         </div>
       </div>
 
-      <div className="container mx-auto mt-6">
-        <div className="flex flex-col md:flex-row gap-6 items-start">
-          {/* Featured Image */}
-          <FeatureImageUploader
-            featured_image={formData.featured_image}
-            OpenModal={OpenModal}
+      <div className="container mx-auto mt-6 grid md:grid-cols-3 gap-6">
+        {/* Feature Image Card */}
+        <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm w-full flex flex-col">
+          <div className="flex items-center gap-2 mb-4">
+            <ImageIcon className="w-5 h-5 text-gray-500" />
+            <h3 className="font-medium text-gray-900">Feature Image</h3>
+          </div>
+
+          <div className="flex-1 flex flex-col gap-6">
+            <FeatureImageUploader
+              featured_image={formData.featured_image}
+              OpenModal={OpenModal}
+            />
+
+            {/* caption */}
+            <div className='w-full'>
+              <label htmlFor="caption" className="block text-sm font-medium text-gray-700 mb-2">
+                Caption
+              </label>
+              <input
+                type="text"
+                id="caption"
+                name="caption"
+                value={formData.caption || ''}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-500"
+                placeholder="Image caption..."
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Location Selector */}
+        <div className="md:col-span-2">
+          <LocationSelector
+            selectedDistrictIds={formData.districts}
+            onChange={handleDistrictChange}
           />
 
-          {/* caption */}
-          <div className='flex-1 w-full'>
-            <label htmlFor="caption" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Caption
-            </label>
-            <input
-              type="text"
-              id="caption"
-              name="caption"
-              value={formData.caption || ''}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-              placeholder="Image caption..."
+          {/* Publish, Latest Post, Breaking News Switches */}
+          <div className="mt-6 px-24 md:px-4 py-3 gap-y-4 flex flex-col md:flex-row justify-between items-end border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400">
+            {/* Publish Btn */}
+            <Switch
+              label="Publish"
+              defaultChecked={formData.post_status === 1}
+              onChange={handleSwitchChange}
+            />
+
+            {/* Latest Post Btn */}
+            <Switch
+              label="Latest Post"
+              defaultChecked={formData.lead_news}
+              onChange={(flag: boolean) => {
+                setFormData({ ...formData, lead_news: flag });
+              }}
+            />
+
+            {/* Breaking News Btn */}
+            <Switch
+              label="Breaking News "
+              defaultChecked={formData.breaking_news}
+              onChange={(flag: boolean) => {
+                setFormData({ ...formData, breaking_news: flag });
+              }}
             />
           </div>
         </div>
 
-
-
       </div>
 
-      {/* Publish, Latest Post, Breaking News Switches */}
-      <div className="mt-6 px-24 md:px-4 py-3 gap-y-4 flex flex-col md:flex-row justify-between items-end border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400">
-        {/* Publish Btn */}
-        <Switch
-          label="Publish"
-          defaultChecked={formData.post_status === 1}
-          onChange={handleSwitchChange}
-        />
 
-        {/* Latest Post Btn */}
-        <Switch
-          label="Latest Post"
-          defaultChecked={formData.lead_news}
-          onChange={(flag: boolean) => {
-            setFormData({ ...formData, lead_news: flag });
-          }}
-        />
-
-        {/* Breaking News Btn */}
-        <Switch
-          label="Breaking News "
-          defaultChecked={formData.breaking_news}
-          onChange={(flag: boolean) => {
-            setFormData({ ...formData, breaking_news: flag });
-          }}
-        />
-      </div>
 
       <ImageUploaderModal
         isOpen={isOpen}

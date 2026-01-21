@@ -20,5 +20,6 @@ export interface Post {
     created_at: string;
     view_count: number;
     categories: { id: number, name: string }[];
+    districts: { id: number, name: string }[];
     user: { id: number, name: string };
 }
