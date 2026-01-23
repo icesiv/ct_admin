@@ -131,6 +131,16 @@ const othersItems: NavItem[] = [
     path: "/categories",
     roles: ['admin'],
   },
+  {
+    name: "Author Profiles",
+    icon: <CircleUserRound />,
+    path: "#",
+    roles: ['admin'],
+    subItems: [
+      { name: "New Author", path: "/authors/create" },
+      { name: "Manage Author", path: "/authors" },
+    ]
+  },
 ];
 
 interface AppSidebarProps {

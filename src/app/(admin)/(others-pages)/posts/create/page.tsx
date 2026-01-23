@@ -1,7 +1,7 @@
-import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { Metadata } from "next";
 import React from "react";
 import CreatePost from "./component/CreatePost";
+import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 
 export const metadata: Metadata = {
   title: "New Posts | CT Admin",
@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 };
 
 export default function AllPosts() {
-    
+
   return (
     <div>
       <PageBreadcrumb pageTitle="Create Post" />

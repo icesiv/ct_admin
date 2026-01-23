@@ -34,6 +34,11 @@ interface District {
   name: string;
 }
 
+interface Author {
+  id: number;
+  name: string;
+}
+
 interface FormData {
   title: string;
   sub_head: string;
@@ -100,6 +105,40 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
     };
   });
 
+  // Author State & Logic
+  const [authors, setAuthors] = useState<Author[]>([]);
+  useEffect(() => {
+    const fetchAuthors = async () => {
+      try {
+        const token = localStorage.getItem('auth_token');
+        // Use BASE_URL from config or context if possible, here using import
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/'}admin/authors/list`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setAuthors(data.data || []);
+        }
+      } catch (e) { console.error(e); }
+    };
+    fetchAuthors();
+  }, []);
+
+  const handleAuthorSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedId = Number(e.target.value);
+    const selectedAuthor = authors.find(a => a.id === selectedId);
+
+    if (selectedAuthor) {
+      setFormData(prev => ({
+        ...prev,
+        writer_id: selectedAuthor.id,
+        // author: selectedAuthor.name // User requested to keep existing writer name
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, writer_id: null }));
+    }
+  };
+
   // Load post data for edit mode
   useEffect(() => {
     const loadPost = async () => {
@@ -126,7 +165,8 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
           districts: post.districts?.map?.((dist: District) => Number(dist.id)) || [], // Load districts
           tags: post.tags?.map?.((tag: Tag) => tag.name) || [],
           breaking_news: response.breaking_news,
-          lead_news: response.lead_news
+          lead_news: response.lead_news,
+          writer_id: post.writer_id || null // Load writer_id
         });
 
         // setImagePreview(post.featured_image || '');
@@ -491,8 +531,29 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
             />
           </div>
 
-          {/* Author */}
+
+
+
+          {/* Author Selection */}
           <div>
+            <label htmlFor="writer_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Select Author (Optional)
+            </label>
+            <select
+              id="writer_id"
+              name="writer_id"
+              value={formData.writer_id || ''}
+              onChange={handleAuthorSelect}
+              className="w-full px-3 py-2 mb-3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+            >
+              <option value="">-- Select an Author --</option>
+              {authors.map(author => (
+                <option key={author.id} value={author.id}>
+                  {author.name}
+                </option>
+              ))}
+            </select>
+
             <label htmlFor="author" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Writer's name *
             </label>

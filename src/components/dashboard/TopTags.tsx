@@ -110,7 +110,7 @@ export default function TopTags() {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={4} className="py-3 text-center text-gray-500 text-theme-sm dark:text-gray-400">
+                <TableCell className="py-3 text-center text-gray-500 text-theme-sm dark:text-gray-400">
                   No data available or loading...
                 </TableCell>
               </TableRow>
