@@ -99,7 +99,7 @@ export default function AuthorTable() {
   const fetchAuthors = async () => {
     try {
       setLoading(true);
-      const url = `${BASE_URL.replace(/\/$/, "")}/admin/authors`;
+      const url = `${(BASE_URL || "").replace(/\/$/, "")}/admin/authors`;
       const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
@@ -119,7 +119,7 @@ export default function AuthorTable() {
   const handleUpdate = async () => {
     if (!editingId) return;
     try {
-      const url = `${BASE_URL.replace(/\/$/, "")}/admin/authors/${editingId}`;
+      const url = `${(BASE_URL || "").replace(/\/$/, "")}/admin/authors/${editingId}`;
 
       // Use FormData for file upload
       const formData = new FormData();
@@ -160,7 +160,7 @@ export default function AuthorTable() {
   const handleDelete = async (id: number) => {
     if (!confirm("Are you sure?")) return;
     try {
-      const url = `${BASE_URL.replace(/\/$/, "")}/admin/authors/${id}`;
+      const url = `${(BASE_URL || "").replace(/\/$/, "")}/admin/authors/${id}`;
       await fetch(url, {
         method: 'DELETE',
         headers: {
