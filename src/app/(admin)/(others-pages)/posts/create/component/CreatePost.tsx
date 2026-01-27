@@ -95,7 +95,7 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
   // Tag-related state
   const [tagInput, setTagInput] = useState<string>('');
 
-  const { news_categories, savePost, getPost, router } = useAuth();
+  const { news_categories, savePost, getPost, router, authFetch } = useAuth();
 
   const all_cat: Category[] = news_categories.map((category: any, index: number) => {
     return {
@@ -110,11 +110,8 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
   useEffect(() => {
     const fetchAuthors = async () => {
       try {
-        const token = localStorage.getItem('auth_token');
         // Use BASE_URL from config or context if possible, here using import
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/'}admin/authors/list`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const response = await authFetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/'}admin/authors/list`);
         if (response.ok) {
           const data = await response.json();
           setAuthors(data.data || []);

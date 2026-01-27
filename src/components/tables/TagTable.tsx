@@ -23,6 +23,7 @@ import {
 
 import { Plus, Trash2, Edit3 } from "lucide-react";
 import { BASE_URL } from "@/config/config";
+import { useAuth } from "@/context/AuthContext";
 
 import { useToast } from "@/components/ToastProvider";
 
@@ -34,6 +35,7 @@ interface Tag {
 }
 
 export default function TagManager() {
+  const { authFetch } = useAuth();
   const { addToast } = useToast();
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -54,12 +56,7 @@ export default function TagManager() {
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`${BASE_URL}tags`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
-        },
-      });
+      const response = await authFetch(`${BASE_URL}tags`);
 
       if (!response.ok) {
         throw new Error(`Failed to fetch tags: ${response.status}`);
@@ -87,11 +84,10 @@ export default function TagManager() {
 
     try {
       setIsAdding(true);
-      const response = await fetch(`${BASE_URL}tags`, {
+      const response = await authFetch(`${BASE_URL}tags`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
         },
         body: JSON.stringify({
           name: newTagName.trim(),
@@ -123,11 +119,10 @@ export default function TagManager() {
 
     try {
       setIsAdding(true);
-      const response = await fetch(`${BASE_URL}tags/${editingTag.id}`, {
+      const response = await authFetch(`${BASE_URL}tags/${editingTag.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
         },
         body: JSON.stringify({
           name: newTagName.trim(),
@@ -178,12 +173,8 @@ export default function TagManager() {
     if (!window.confirm(`Are you sure you want to delete "${name}"?`)) return;
 
     try {
-      const response = await fetch(`${BASE_URL}tags/${id}`, {
+      const response = await authFetch(`${BASE_URL}tags/${id}`, {
         method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
-        },
       });
 
       if (!response.ok) {
@@ -217,11 +208,10 @@ export default function TagManager() {
 
     try {
       setIsBulkAssigning(true);
-      const response = await fetch(`${BASE_URL}tags/assign`, {
+      const response = await authFetch(`${BASE_URL}tags/assign`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
         },
         body: JSON.stringify({
           source_tag_id: sourceTagId,

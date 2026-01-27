@@ -5,9 +5,11 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { BASE_URL } from "@/config/config";
 import { Images, Save } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 export default function CreateGalleryPage() {
     const router = useRouter();
+    const { authFetch } = useAuth();
     const [title, setTitle] = useState("");
     const [loading, setLoading] = useState(false);
 
@@ -16,12 +18,10 @@ export default function CreateGalleryPage() {
         setLoading(true);
 
         try {
-            const token = localStorage.getItem("auth_token"); // Corrected token key
-            const response = await fetch(`${BASE_URL}admin/gallery/albums`, {
+            const response = await authFetch(`${BASE_URL}admin/gallery/albums`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
                 },
                 body: JSON.stringify({ title }),
             });

@@ -62,6 +62,7 @@ interface AuthContextType {
     saveMenu: (data: any) => Promise<any>; // Added missing function
     fetchMenu: () => Promise<any>; // Added missing function
     getPost: (id: string | number) => Promise<any>;
+    authFetch: (url: string, options?: RequestInit) => Promise<Response>;
 }
 
 interface AuthProviderProps {
@@ -88,6 +89,38 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     const { user, loading, isAuthenticated, error, showLogin } = state.auth;
     const { data } = state.categories;
+
+    // Defined early to be used by other functions
+    const authFetch = async (url: string, options: RequestInit = {}): Promise<Response> => {
+        const token = localStorage.getItem('auth_token');
+
+        const headers = {
+            'Accept': 'application/json',
+            ...(options.headers || {}),
+        } as Record<string, string>;
+
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        const config = {
+            ...options,
+            headers,
+        };
+
+        try {
+            const response = await fetch(url, config);
+
+            if (response.status === 401) {
+                await handleLogout();
+            }
+
+            return response;
+        } catch (error) {
+            console.error('Auth fetch error:', error);
+            throw error;
+        }
+    };
 
     // Check authentication on mount
     useEffect(() => {
@@ -127,12 +160,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         try {
             dispatch({ type: 'SET_LOADING', payload: true });
-            const response = await fetch(`${BASE_URL}user`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Accept': 'application/json',
-                }
-            });
+            const response = await authFetch(`${BASE_URL}user`);
 
             if (response.ok) {
                 const userData: User = await response.json();
@@ -227,12 +255,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         try {
             dispatch({ type: 'SET_CATEGORY_LOADING', payload: true });
-            const response = await fetch(`${BASE_URL}admin/categories`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Accept': 'application/json',
-                }
-            });
+            const response = await authFetch(`${BASE_URL}admin/categories`);
 
             if (response.ok) {
                 const data = await response.json();
@@ -250,57 +273,40 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     const savePost = async (data: any): Promise<any> => {
         const token = localStorage.getItem('auth_token');
-
-        if (!token) {
-            throw new Error('No authentication token found');
-        }
+        if (!token) throw new Error('No authentication token found');
 
         try {
-            const response = await fetch(`${BASE_URL}admin/posts/store`, {
+            const response = await authFetch(`${BASE_URL}admin/posts/store`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Accept': 'application/json',
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(data)
             });
 
-            if (!response.ok) {
-                throw new Error('Failed to save post');
-            }
-
+            if (!response.ok) throw new Error('Failed to save post');
             return await response.json();
         } catch (error) {
             console.error('Save post error:', error);
-            throw error; // Re-throw to allow caller to handle
+            throw error;
         }
     };
 
     const saveMenu = async (data: any): Promise<any> => {
         const token = localStorage.getItem('auth_token');
-
-        if (!token) {
-            throw new Error('No authentication token found');
-        }
+        if (!token) throw new Error('No authentication token found');
 
         try {
-            const response = await fetch(`${BASE_URL}admin/menus/store`, {
+            const response = await authFetch(`${BASE_URL}admin/menus/store`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Accept': 'application/json',
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(data)
             });
 
             const result = await response.json();
-
-            if (!response.ok || !result.success) {
-                throw new Error(result.message || 'Failed to save menu');
-            }
-
+            if (!response.ok || !result.success) throw new Error(result.message || 'Failed to save menu');
             return result;
         } catch (error) {
             console.error('Save menu error:', error);
@@ -310,55 +316,34 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     const fetchMenu = async (): Promise<any> => {
         const token = localStorage.getItem('auth_token');
-
-        if (!token) {
-            throw new Error('No authentication token found');
-        }
+        if (!token) throw new Error('No authentication token found');
 
         try {
-            const response = await fetch(`${BASE_URL}home/menu-items`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Accept': 'application/json',
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to fetch menu');
-            }
-
+            // Note: Use authFetch even for what seems like public routes if we want consistency or if it might be protected
+            const response = await authFetch(`${BASE_URL}home/menu-items`);
+            if (!response.ok) throw new Error('Failed to fetch menu');
             return await response.json();
         } catch (error) {
             console.error('Fetch menu error:', error);
-            throw error; // Re-throw to allow caller to handle
+            throw error;
         }
     };
 
     const getPost = async (id: string | number): Promise<any> => {
         const token = localStorage.getItem('auth_token');
-
-        if (!token) {
-            throw new Error('No authentication token found');
-        }
+        if (!token) throw new Error('No authentication token found');
 
         try {
-            const response = await fetch(`${BASE_URL}admin/posts/view/${id}`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Accept': 'application/json',
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to fetch post');
-            }
-
-            return await response.json(); // Optionally: `as PostType` if you define a type
+            const response = await authFetch(`${BASE_URL}admin/posts/view/${id}`);
+            if (!response.ok) throw new Error('Failed to fetch post');
+            return await response.json();
         } catch (error) {
             console.error('Fetch post error:', error);
             throw error;
         }
     };
+
+    // authFetch was definition moved to top of AuthProvider
 
 
     const value: AuthContextType = {
@@ -379,6 +364,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         saveMenu,
         fetchMenu,
         getPost,
+        authFetch,
     };
 
     return (

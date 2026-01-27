@@ -11,8 +11,9 @@ import {
 import Badge from "../ui/badge/Badge";
 import { BASE_URL } from "@/config/config";
 import UserEditModal from "./UserEditModal";
+import { useAuth } from "@/context/AuthContext";
 
-import {  Edit2, Trash2 } from 'lucide-react';
+import { Edit2, Trash2 } from 'lucide-react';
 
 
 interface User {
@@ -44,23 +45,20 @@ export default function UserTable() {
   const [error, setError] = useState<string | null>(null);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { authFetch } = useAuth();
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      
+
       const token = localStorage.getItem('auth_token');
-      
+
       if (!token) {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch(BASE_URL + 'admin/user', {
+      const response = await authFetch(BASE_URL + 'admin/user', {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
       });
 
       if (!response.ok) {
@@ -68,7 +66,7 @@ export default function UserTable() {
       }
 
       const data: ApiResponse = await response.json();
-      
+
       if (data.success) {
         setUsers(data.data.users);
       } else {
@@ -97,7 +95,7 @@ export default function UserTable() {
   };
 
   const handleUserSave = (updatedUser: User) => {
-    setUsers(prev => prev.map(user => 
+    setUsers(prev => prev.map(user =>
       user.id === updatedUser.id ? updatedUser : user
     ));
   };
@@ -157,8 +155,8 @@ export default function UserTable() {
       <div className="overflow-hidden rounded-xl border border-red-200 bg-red-50 dark:border-red-800/20 dark:bg-red-900/10">
         <div className="p-8 text-center">
           <p className="text-red-600 dark:text-red-400">Error: {error}</p>
-          <button 
-            onClick={() => window.location.reload()} 
+          <button
+            onClick={() => window.location.reload()}
             className="mt-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
           >
             Retry
@@ -259,13 +257,13 @@ export default function UserTable() {
                   <TableCell className="px-4 py-3 text-gray-500">
                     <div className="flex items-center gap-4">
 
-                    <button 
-                      onClick={() => handleEdit(user)}
-                      className="ml-2 text-green-500 hover:text-green-600"
-                    >
-                      <Edit2 size={16} />
-                    </button>
-                    <button className="text-red-500 hover:text-red-600"><Trash2 size={16} /></button>
+                      <button
+                        onClick={() => handleEdit(user)}
+                        className="ml-2 text-green-500 hover:text-green-600"
+                      >
+                        <Edit2 size={16} />
+                      </button>
+                      <button className="text-red-500 hover:text-red-600"><Trash2 size={16} /></button>
                     </div>
                   </TableCell>
                 </TableRow>

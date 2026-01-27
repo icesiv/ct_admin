@@ -8,6 +8,7 @@ import {
 import { useEffect, useState } from "react";
 import { BASE_URL } from "@/config/config";
 import Link from 'next/link';
+import { useAuth } from "@/context/AuthContext";
 
 interface TagsDetails {
   id: number;
@@ -19,15 +20,12 @@ interface TagsDetails {
 
 export default function TopTags() {
   const [tableData, setTableData] = useState<TagsDetails[]>([]);
+  const { authFetch } = useAuth();
 
   useEffect(() => {
     const fetchTopTags = async () => {
       try {
-        const response = await fetch(`${BASE_URL}tags/top`, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-          }
-        });
+        const response = await authFetch(`${BASE_URL}tags/top?days=7`);
         if (response.ok) {
           const result = await response.json();
           // API returns { data: [...] }

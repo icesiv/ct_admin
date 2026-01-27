@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { BASE_URL } from "@/config/config";
+import { useAuth } from "@/context/AuthContext";
 
 export default function HomeVideoFrom() {
     const [videoId, setVideoId] = useState('');
@@ -10,6 +11,7 @@ export default function HomeVideoFrom() {
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
+    const { authFetch } = useAuth();
 
     // Fetch current home video settings
     useEffect(() => {
@@ -17,11 +19,15 @@ export default function HomeVideoFrom() {
             try {
                 setIsLoading(true);
                 const url = `${BASE_URL}home/segment/home_video`;
+                // Use default fetch here as this might be public? 
+                // Wait, if it's admin settings, it should be authenticated, but the route is not /admin prefix.
+                // Assuming public fetch for viewing current settings might be okay, but safe to use authFetch if needed.
+                // The original code didn't use auth headers for this GET request.
                 const response = await fetch(url, {
                     method: 'GET',
                     headers: {
                         'Accept': 'application/json',
-                        'Content-Type': 'application/json',                      
+                        'Content-Type': 'application/json',
                     },
                 });
 
@@ -52,14 +58,12 @@ export default function HomeVideoFrom() {
         setSuccess(null);
 
         try {
-            const token = localStorage.getItem('auth_token');
             const url = `${BASE_URL}admin/video/home_video`;
-            const response = await fetch(url, {
+            const response = await authFetch(url, {
                 method: 'POST',
                 headers: {
                     'Accept': 'application/json',
                     'Content-Type': 'application/json',
-                     'Authorization': `Bearer ${token}`,
                 },
                 body: JSON.stringify({
                     home_video_id: videoId,

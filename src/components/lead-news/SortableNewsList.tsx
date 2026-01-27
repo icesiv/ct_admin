@@ -2,6 +2,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Trash2, Save, Check } from 'lucide-react';
 import { BASE_URL } from '@/config/config';
+import { useAuth } from '@/context/AuthContext';
 
 // Type definitions
 interface Category {
@@ -41,6 +42,7 @@ interface SortableNewsListProps {
 }
 
 const SortableNewsList: React.FC<SortableNewsListProps> = ({ leadPosts, fetchLeadNews, mode }) => {
+  const { authFetch } = useAuth();
   const [articles, setArticles] = useState<Article[]>([]);
   const [draggedItem, setDraggedItem] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
@@ -62,11 +64,9 @@ const SortableNewsList: React.FC<SortableNewsListProps> = ({ leadPosts, fetchLea
     const auth_token = localStorage.getItem('auth_token');
 
     try {
-      const response = await fetch(url, {
+      const response = await authFetch(url, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${auth_token}`,
-          'Accept': 'application/json',
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ news_id })
@@ -94,11 +94,9 @@ const SortableNewsList: React.FC<SortableNewsListProps> = ({ leadPosts, fetchLea
         position: index + 1
       }));
 
-      const response = await fetch(url, {
+      const response = await authFetch(url, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${auth_token}`,
-          'Accept': 'application/json',
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ order: orderData })

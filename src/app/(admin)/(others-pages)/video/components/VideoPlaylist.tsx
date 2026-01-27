@@ -7,6 +7,7 @@ import { BASE_URL } from '@/config/config';
 import { Trash2, GripVertical, Star } from 'lucide-react';
 import { useToast } from "@/components/ToastProvider";
 import { Identifier } from 'dnd-core';
+import { useAuth } from "@/context/AuthContext";
 
 interface Video {
     id: number;
@@ -145,6 +146,7 @@ export default function VideoPlaylist() {
     const [videos, setVideos] = useState<Video[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+    const { authFetch } = useAuth();
 
     // New Video Form State
     const [newVideoId, setNewVideoId] = useState('');
@@ -155,9 +157,9 @@ export default function VideoPlaylist() {
     const fetchVideos = async () => {
         try {
             setIsLoading(true);
-            const response = await fetch(`${BASE_URL}admin/videos`, {
+            setIsLoading(true);
+            const response = await authFetch(`${BASE_URL}admin/videos`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
                     'Accept': 'application/json',
                 },
             });
@@ -199,12 +201,10 @@ export default function VideoPlaylist() {
 
         setIsAdding(true);
         try {
-            const token = localStorage.getItem('auth_token');
-            const response = await fetch(`${BASE_URL}admin/videos`, {
+            const response = await authFetch(`${BASE_URL}admin/videos`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json',
                 },
                 body: JSON.stringify({
@@ -251,11 +251,9 @@ export default function VideoPlaylist() {
         if (!confirm('Are you sure you want to remove this video?')) return;
 
         try {
-            const token = localStorage.getItem('auth_token');
-            const response = await fetch(`${BASE_URL}admin/videos/${id}`, {
+            const response = await authFetch(`${BASE_URL}admin/videos/${id}`, {
                 method: 'DELETE',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json',
                 },
             });
@@ -290,12 +288,10 @@ export default function VideoPlaylist() {
                 is_featured: v.is_featured
             }));
 
-            const token = localStorage.getItem('auth_token');
-            const response = await fetch(`${BASE_URL}admin/videos/playlist`, {
+            const response = await authFetch(`${BASE_URL}admin/videos/playlist`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json',
                 },
                 body: JSON.stringify({ videos: payload }),

@@ -5,6 +5,7 @@ import React, { useEffect, useState } from "react";
 
 import SortableNewsList from "@/components/lead-news/SortableNewsList";
 import { BASE_URL } from "@/config/config";
+import { useAuth } from "@/context/AuthContext";
 
 
 // Type definitions
@@ -37,12 +38,13 @@ interface ApiResponse {
 
 
 
-export default function BreakingNews(){
+export default function BreakingNews() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [newsId, setNewsId] = useState<string>("");
   const [newsTitle, setNewsTitle] = useState<string>("");
   const [selectedOrder, setSelectedOrder] = useState<number>(1);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const { authFetch } = useAuth();
 
   const fetchLeadNews = async (): Promise<void> => {
     const token = localStorage.getItem('auth_token');
@@ -50,10 +52,9 @@ export default function BreakingNews(){
 
     try {
       const url = `${BASE_URL}admin/posts/breakingnews`;
-      const response = await fetch(url, {
+      const response = await authFetch(url, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
           'Content-Type': 'application/json',
         },
@@ -91,10 +92,9 @@ export default function BreakingNews(){
 
     try {
       const url = `${BASE_URL}posts/${newsId}`;
-      const response = await fetch(url, {
+      const response = await authFetch(url, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
           'Content-Type': 'application/json',
         },
@@ -137,10 +137,9 @@ export default function BreakingNews(){
     try {
 
       // Add your API call here to make the news lead with the selected position
-      await fetch(`${BASE_URL}admin/posts/breakingnews`, {
+      await authFetch(`${BASE_URL}admin/posts/breakingnews`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
           'Content-Type': 'application/json',
         },
@@ -183,11 +182,11 @@ export default function BreakingNews(){
       <PageBreadcrumb pageTitle="Breaking News Page" />
 
       {/* Sort Lead News */}
-        <SortableNewsList
-          fetchLeadNews={fetchLeadNews}
-          leadPosts={articles}
-          mode="breakingnews"
-        />
+      <SortableNewsList
+        fetchLeadNews={fetchLeadNews}
+        leadPosts={articles}
+        mode="breakingnews"
+      />
     </div>
   );
 }

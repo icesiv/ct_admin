@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, DragEvent, ChangeEvent, KeyboardEve
 import { X, Upload, Tag, AlertCircle, CheckCircle, FileImage, ChevronLeft, ChevronRight } from 'lucide-react';
 import { BASE_URL } from '@/config/config';
 import { ImagesSection } from './ImagesSection';
+import { useAuth } from '@/context/AuthContext';
 
 interface Thumbnail {
   name: string;
@@ -105,6 +106,7 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
   callback,
   OpenModal
 }) => {
+  const { authFetch } = useAuth();
   // Add mobile view state
   const [activeTab, setActiveTab] = useState<'upload' | 'gallery'>('upload');
   const [isMobile, setIsMobile] = useState<boolean>(false);
@@ -196,18 +198,15 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
     }
 
     try {
-      const token = localStorage.getItem('auth_token');
-
       // Build URL with query parameters
       let url = `${API_ENDPOINT}?page=${page}`;
       if (query.trim()) {
         url += `&query=${encodeURIComponent(query.trim())}`;
       }
 
-      const response = await fetch(url, {
+      const response = await authFetch(url, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
         }
       });
@@ -487,15 +486,11 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
       formData.append('tag[]', tag);
     });
 
-    // Get auth token from localStorage
-    const token = localStorage.getItem('auth_token');
-
     try {
-      const response = await fetch(API_ENDPOINT, {
+      const response = await authFetch(API_ENDPOINT, {
         method: 'POST',
         body: formData,
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
         }
       });

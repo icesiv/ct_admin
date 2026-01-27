@@ -14,6 +14,7 @@ import {
     Calendar
 } from "lucide-react";
 import Image from "next/image";
+import { useAuth } from "@/context/AuthContext";
 
 interface Album {
     id: number;
@@ -26,13 +27,11 @@ interface Album {
 export default function ManageGalleryPage() {
     const [albums, setAlbums] = useState<Album[]>([]);
     const [loading, setLoading] = useState(true);
+    const { authFetch } = useAuth();
 
     const fetchAlbums = async () => {
         try {
-            const token = localStorage.getItem("auth_token");
-            const res = await fetch(`${BASE_URL}admin/gallery/albums`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const res = await authFetch(`${BASE_URL}admin/gallery/albums`);
             if (res.ok) {
                 const data = await res.json();
                 setAlbums(data);
@@ -53,10 +52,8 @@ export default function ManageGalleryPage() {
         if (!confirm("Are you sure? This will delete all photos in this album.")) return;
 
         try {
-            const token = localStorage.getItem("auth_token");
-            const res = await fetch(`${BASE_URL}admin/gallery/albums/${id}`, {
+            const res = await authFetch(`${BASE_URL}admin/gallery/albums/${id}`, {
                 method: "DELETE",
-                headers: { Authorization: `Bearer ${token}` }
             });
 
             if (res.ok) {
@@ -72,10 +69,8 @@ export default function ManageGalleryPage() {
 
     const ActivateAlbum = async (id: number) => {
         try {
-            const token = localStorage.getItem("auth_token");
-            const res = await fetch(`${BASE_URL}admin/gallery/albums/${id}/activate`, {
+            const res = await authFetch(`${BASE_URL}admin/gallery/albums/${id}/activate`, {
                 method: "POST",
-                headers: { Authorization: `Bearer ${token}` }
             });
 
             if (res.ok) {

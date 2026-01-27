@@ -1,24 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { BASE_URL } from '@/config/config';
 import { Advertisement, AdvertisementInput } from '@/types/ads';
+import { useAuth } from '@/context/AuthContext';
 
 export const useAds = () => {
-    // We can't use useAuth here easily if it's not a component, but hooks can work.
-    // However, localStorage is accessible directly in client.
+    const { authFetch } = useAuth();
     const queryClient = useQueryClient();
 
-    const getHeaders = () => {
-        const token = localStorage.getItem('auth_token');
-        return {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/json',
-        };
-    };
-
     const fetchAds = async (): Promise<Advertisement[]> => {
-        const response = await fetch(`${BASE_URL}admin/ads`, {
-            headers: getHeaders(),
-        });
+        const response = await authFetch(`${BASE_URL}admin/ads`);
         if (!response.ok) throw new Error('Failed to fetch ads');
         const json = await response.json();
         return json.data;
@@ -34,12 +24,8 @@ export const useAds = () => {
         if (data.start_date) formData.append('start_date', data.start_date);
         if (data.end_date) formData.append('end_date', data.end_date);
 
-        const response = await fetch(`${BASE_URL}admin/ads`, {
+        const response = await authFetch(`${BASE_URL}admin/ads`, {
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-                'Accept': 'application/json',
-            },
             body: formData,
         });
 
@@ -64,12 +50,8 @@ export const useAds = () => {
         if (data.start_date) formData.append('start_date', data.start_date);
         if (data.end_date) formData.append('end_date', data.end_date);
 
-        const response = await fetch(`${BASE_URL}admin/ads/${id}`, {
+        const response = await authFetch(`${BASE_URL}admin/ads/${id}`, {
             method: 'POST', // Use POST for FormData with method spoofing
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-                'Accept': 'application/json',
-            },
             body: formData,
         });
 
@@ -81,9 +63,8 @@ export const useAds = () => {
     };
 
     const deleteAd = async (id: number) => {
-        const response = await fetch(`${BASE_URL}admin/ads/${id}`, {
+        const response = await authFetch(`${BASE_URL}admin/ads/${id}`, {
             method: 'DELETE',
-            headers: getHeaders(),
         });
         if (!response.ok) throw new Error('Failed to delete ad');
     };

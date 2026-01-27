@@ -7,6 +7,7 @@ import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import SortableNewsList from "@/components/lead-news/SortableNewsList";
 import { BASE_URL } from "@/config/config";
+import { useAuth } from "@/context/AuthContext";
 
 // Type definitions
 interface Article {
@@ -38,12 +39,13 @@ interface ApiResponse {
 
 
 
-export default function LeadNews(){
+export default function LeadNews() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [newsId, setNewsId] = useState<string>("");
   const [newsTitle, setNewsTitle] = useState<string>("");
   const [selectedOrder, setSelectedOrder] = useState<number>(1);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const { authFetch } = useAuth();
 
   const fetchLeadNews = async (): Promise<void> => {
     const token = localStorage.getItem('auth_token');
@@ -51,10 +53,9 @@ export default function LeadNews(){
 
     try {
       const url = `${BASE_URL}admin/posts/leadnews`;
-      const response = await fetch(url, {
+      const response = await authFetch(url, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
           'Content-Type': 'application/json',
         },
@@ -92,10 +93,9 @@ export default function LeadNews(){
 
     try {
       const url = `${BASE_URL}posts/${newsId}`;
-      const response = await fetch(url, {
+      const response = await authFetch(url, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
           'Content-Type': 'application/json',
         },
@@ -138,10 +138,9 @@ export default function LeadNews(){
     try {
 
       // Add your API call here to make the news lead with the selected position
-      await fetch(`${BASE_URL}admin/posts/leadnews`, {
+      await authFetch(`${BASE_URL}admin/posts/leadnews`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
           'Content-Type': 'application/json',
         },
@@ -184,11 +183,11 @@ export default function LeadNews(){
       <PageBreadcrumb pageTitle="LeadNews Page" />
 
       {/* Sort Lead News */}
-        <SortableNewsList
-          fetchLeadNews={fetchLeadNews}
-          leadPosts={articles}
-          mode="leadnews"
-        />
+      <SortableNewsList
+        fetchLeadNews={fetchLeadNews}
+        leadPosts={articles}
+        mode="leadnews"
+      />
     </div>
   );
 }

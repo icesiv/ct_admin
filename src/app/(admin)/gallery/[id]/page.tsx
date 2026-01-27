@@ -11,6 +11,7 @@ import {
     Save,
     Image as ImageIcon
 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 interface Photo {
     id: number;
@@ -29,6 +30,7 @@ export default function AlbumPhotosPage({ params }: { params: Promise<{ id: stri
     const router = useRouter();
     const [album, setAlbum] = useState<Album | null>(null);
     const [loading, setLoading] = useState(true);
+    const { authFetch } = useAuth();
 
     // New Photo Form State
     const [newPhotoUrl, setNewPhotoUrl] = useState("");
@@ -51,9 +53,9 @@ export default function AlbumPhotosPage({ params }: { params: Promise<{ id: stri
 
             console.log("Fetching album from:", `${baseUrl}admin/gallery/albums/${id}`);
 
-            const res = await fetch(`${baseUrl}admin/gallery/albums/${id}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            console.log("Fetching album from:", `${baseUrl}admin/gallery/albums/${id}`);
+
+            const res = await authFetch(`${baseUrl}admin/gallery/albums/${id}`);
             if (res.ok) {
                 const data = await res.json();
                 setAlbum(data);
@@ -84,9 +86,10 @@ export default function AlbumPhotosPage({ params }: { params: Promise<{ id: stri
 
             console.log(`Uploading to: ${uploadUrl}`);
 
-            const res = await fetch(uploadUrl, {
+            console.log(`Uploading to: ${uploadUrl}`);
+
+            const res = await authFetch(uploadUrl, {
                 method: "POST",
-                headers: { Authorization: `Bearer ${token}` }, // Content-Type header excluded to let browser set boundary
                 body: formData
             });
 
@@ -115,11 +118,10 @@ export default function AlbumPhotosPage({ params }: { params: Promise<{ id: stri
             const startUrl = BASE_URL || "";
             const baseUrl = startUrl.endsWith('/') ? startUrl : `${startUrl}/`;
 
-            const res = await fetch(`${baseUrl}admin/gallery/photos`, {
+            const res = await authFetch(`${baseUrl}admin/gallery/photos`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`
                 },
                 body: JSON.stringify({
                     album_id: id,
@@ -150,9 +152,8 @@ export default function AlbumPhotosPage({ params }: { params: Promise<{ id: stri
         try {
             const token = localStorage.getItem("auth_token");
             const baseUrl = BASE_URL!.endsWith('/') ? BASE_URL! : `${BASE_URL!}/`;
-            const res = await fetch(`${baseUrl}admin/gallery/photos/${photoId}`, {
+            const res = await authFetch(`${baseUrl}admin/gallery/photos/${photoId}`, {
                 method: "DELETE",
-                headers: { Authorization: `Bearer ${token}` }
             });
             if (res.ok) {
                 toast.success("Photo deleted");

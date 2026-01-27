@@ -44,7 +44,7 @@ interface TogglePayload {
 const CategoryCRUD: React.FC = () => {
     // Remove the type assertion and let TypeScript infer the type
     const authContext = useAuth();
-    const { news_categories, fetchCategories, router } = authContext;
+    const { news_categories, fetchCategories, router, authFetch } = authContext;
 
     const [categories, setCategories] = useState<Category[]>([]);
     const [showForm, setShowForm] = useState<boolean>(false);
@@ -149,11 +149,10 @@ const CategoryCRUD: React.FC = () => {
         };
 
         try {
-            await fetch(`${BASE_URL}admin/categories`, {
+            await authFetch(`${BASE_URL}admin/categories`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify(cat)
             });
@@ -187,11 +186,10 @@ const CategoryCRUD: React.FC = () => {
         };
 
         try {
-            await fetch(`${BASE_URL}admin/categories/toggle`, {
+            await authFetch(`${BASE_URL}admin/categories/toggle`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify(cates)
             });

@@ -44,7 +44,7 @@ interface AuthContextType {
 }
 
 const NewsListView: React.FC = () => {
-    const { user, loading, isAuthenticated, router } = useAuth() as AuthContextType;
+    const { user, loading, isAuthenticated, router, authFetch } = useAuth();
 
     // State for news data and loading
     const [newsData, setNewsData] = useState<NewsArticle[]>([]);
@@ -63,14 +63,7 @@ const NewsListView: React.FC = () => {
         try {
             const url = `${BASE_URL}admin/posts/allposts?per_page=24&page=${page}`;
 
-            const response = await fetch(url, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json',
-                },
-            });
+            const response = await authFetch(url);
 
             if (!response.ok) {
                 throw new Error('Failed to fetch news data');
@@ -196,10 +189,10 @@ const NewsListView: React.FC = () => {
                                 {newsData.map((news) => (
                                     <tr key={news.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200">
                                         <td className="px-6 text-sm text-gray-900 dark:text-gray-100">
-                                                {news.post_status === 1 ?
-                                                    <span className="text-green-500">{news.id}</span> :
-                                                    <span className="text-red-500">{news.id}</span>
-                                                }
+                                            {news.post_status === 1 ?
+                                                <span className="text-green-500">{news.id}</span> :
+                                                <span className="text-red-500">{news.id}</span>
+                                            }
                                         </td>
                                         <td className="px-6 py-2 text-left text-sm text-gray-900 dark:text-amber-100">
                                             {news.title}

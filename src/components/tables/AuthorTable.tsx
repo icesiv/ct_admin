@@ -19,6 +19,7 @@ import {
 import { PencilIcon, TrashIcon, UserPlus, X } from 'lucide-react';
 import { BASE_URL } from "@/config/config";
 import Input from "../form/input/InputField";
+import { useAuth } from "@/context/AuthContext";
 
 // Define Author type
 export type Author = {
@@ -31,6 +32,7 @@ export type Author = {
 };
 
 export default function AuthorTable() {
+  const { authFetch } = useAuth();
   const [authors, setAuthors] = useState<Author[]>([]);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [loading, setLoading] = useState(true);
@@ -100,11 +102,7 @@ export default function AuthorTable() {
     try {
       setLoading(true);
       const url = `${(BASE_URL || "").replace(/\/$/, "")}/admin/authors`;
-      const response = await fetch(url, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-        }
-      });
+      const response = await authFetch(url);
       if (!response.ok) throw new Error("Failed to fetch");
       const data = await response.json();
       setAuthors(data.data || []);
@@ -136,12 +134,8 @@ export default function AuthorTable() {
       formData.append('social_links', JSON.stringify(socialLinks));
 
 
-      const res = await fetch(url, {
+      const res = await authFetch(url, {
         method: 'POST', // Use POST with _method=PUT for file upload support in Laravel
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-          // No Content-Type for FormData
-        },
         body: formData
       });
 
@@ -161,11 +155,8 @@ export default function AuthorTable() {
     if (!confirm("Are you sure?")) return;
     try {
       const url = `${(BASE_URL || "").replace(/\/$/, "")}/admin/authors/${id}`;
-      await fetch(url, {
+      await authFetch(url, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-        }
       });
       fetchAuthors();
     } catch (err) {

@@ -9,30 +9,13 @@ import ViewCountChart from "@/components/dashboard/ViewCountChart";
 import TopTags from "@/components/dashboard/TopTags";
 
 export default function DashboardClient() {
-  const { user, loading, isAuthenticated, handleLogout, router } = useAuth();
+  const { user, loading, isAuthenticated, router } = useAuth();
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
       router.push('/signin');
     }
   }, [loading, isAuthenticated, router]);
-
-
-  const handleAllNews = () => {
-    router.push('/news/list');
-  };
-
-  const handleAddNews = () => {
-    router.push('/news/add');
-  };
-
-  const updateProfile = () => {
-    router.push('/profile/update');
-  };
-
-  const navigateCategories = () => {
-    router.push('/categories');
-  };
 
   if (loading) {
     return (
@@ -60,7 +43,4 @@ export default function DashboardClient() {
       </div>
     </div>
   );
-
-
 }
-

@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { useState, useEffect } from "react";
 import { Dropdown } from "../ui/dropdown/Dropdown";
+import { useAuth } from "@/context/AuthContext";
 
 // Dynamically import the ReactApexChart component
 const ReactApexChart = dynamic(() => import("react-apexcharts"), {
@@ -15,15 +16,12 @@ export default function ViewCountChart() {
     categories: [],
     data: [],
   });
+  const { authFetch } = useAuth();
 
   useEffect(() => {
     const fetchChartData = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}admin/dashboard/chart-stats`, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-          }
-        });
+        const response = await authFetch(`${process.env.NEXT_PUBLIC_API_URL}admin/dashboard/chart-stats`);
         if (response.ok) {
           const data = await response.json();
           setChartData(data);
