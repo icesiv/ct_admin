@@ -401,10 +401,10 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
         }, 2000);
       }
 
-    } catch (e) {
+    } catch (e: any) {
       console.log('error', e);
       addToast(
-        `Failed to ${isEditMode ? 'update' : 'save'} article. Please try again.`,
+        e.message || `Failed to ${isEditMode ? 'update' : 'save'} article. Please try again.`,
         'error'
       );
     } finally {

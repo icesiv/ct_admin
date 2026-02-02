@@ -284,7 +284,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 body: JSON.stringify(data)
             });
 
-            if (!response.ok) throw new Error('Failed to save post');
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to save post');
+            }
             return await response.json();
         } catch (error) {
             console.error('Save post error:', error);
