@@ -157,8 +157,11 @@ export default function UserTable() {
     }
   };
 
-  const handleDeactivate = async (userId: string | number) => {
-    if (!window.confirm('Are you sure you want to deactivate this user? They will be logged out immediately.')) {
+  const handleToggleStatus = async (user: User) => {
+    const newStatus = user.status?.toLowerCase() === 'active' ? 'inactive' : 'active';
+    const action = newStatus === 'inactive' ? 'deactivate' : 'activate';
+
+    if (!window.confirm(`Are you sure you want to ${action} this user?`)) {
       return;
     }
 
@@ -166,39 +169,38 @@ export default function UserTable() {
       const token = localStorage.getItem('auth_token');
       if (!token) throw new Error('No authentication token found');
 
-      // Assuming endpoint for deactivation, if not we might need to update status
-      const response = await authFetch(`${BASE_URL}admin/user/${userId}/deactivate`, {
-        method: 'POST', // Or PATCH/PUT depending on API
+      // Try specific endpoint first
+      const response = await authFetch(`${BASE_URL}admin/user/${user.id}/${action}`, {
+        method: 'POST',
       });
 
-      // Fallback if specific endpoint doesn't exist, try updating user status directly
-      // This is a guess based on common patterns, verified if the specific endpoint 404s
+      // Fallback: update user status directly
       if (response.status === 404) {
-        const updateResponse = await authFetch(`${BASE_URL}admin/user/${userId}`, {
+        const updateResponse = await authFetch(`${BASE_URL}admin/user/${user.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: 'inactive' }) // Try setting status to inactive
+          body: JSON.stringify({ status: newStatus })
         });
 
         if (updateResponse.ok) {
-          const updatedUser = await updateResponse.json();
-          setUsers(users.map(u => u.id === userId ? { ...u, ...updatedUser.data } : u)); // Update local state if return data structure matches
-          alert('User deactivated successfully');
+          // Update local state immediately
+          setUsers(users.map(u => u.id === user.id ? { ...u, status: newStatus } : u));
+          alert(`User ${action}d successfully`);
           return;
         }
       }
 
       if (response.ok) {
-        // Update local state to reflect change (optional, depends on if we filter them out or show status)
-        alert('User deactivated successfully');
-        fetchUsers(); // Refresh list to get updated status
+        // Update local state immediately instead of refetching
+        setUsers(users.map(u => u.id === user.id ? { ...u, status: newStatus } : u));
+        alert(`User ${action}d successfully`);
       } else {
         const data = await response.json();
-        throw new Error(data.message || 'Failed to deactivate user');
+        throw new Error(data.message || `Failed to ${action} user`);
       }
     } catch (err) {
-      console.error('Error deactivating user:', err);
-      alert('Failed to deactivate user. Please try again.');
+      console.error(`Error ${action}ing user:`, err);
+      alert(`Failed to ${action} user. Please try again.`);
     }
   };
 
@@ -329,9 +331,9 @@ export default function UserTable() {
                             <Edit2 size={18} />
                           </button>
                           <button
-                            onClick={() => handleDeactivate(user.id)}
-                            className="text-orange-500 hover:text-orange-600 p-1"
-                            title="Deactivate User"
+                            onClick={() => handleToggleStatus(user)}
+                            className={user.status?.toLowerCase() === 'active' ? 'text-orange-500 hover:text-orange-600 p-1' : 'text-green-500 hover:text-green-600 p-1'}
+                            title={user.status?.toLowerCase() === 'active' ? 'Deactivate User' : 'Activate User'}
                           >
                             <Ban size={18} />
                           </button>
