@@ -402,11 +402,64 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
       }
 
     } catch (e: any) {
-      console.log('error', e);
-      addToast(
-        e.message || `Failed to ${isEditMode ? 'update' : 'save'} article. Please try again.`,
-        'error'
-      );
+      console.error('Save post error:', e);
+
+      let errorMessage = `Failed to ${isEditMode ? 'update' : 'save'} article. `;
+
+      // Network error or timeout
+      if (e instanceof TypeError && e.message.includes('fetch')) {
+        errorMessage += 'Network Error: Unable to reach the server. Please check your internet connection.';
+      } else if (e.name === 'AbortError' || e.message?.includes('timeout')) {
+        errorMessage += 'Request Timeout: The server took too long to respond. Please try again.';
+      }
+      // HTTP error with status code
+      else if (e.status || e.response?.status) {
+        const status = e.status || e.response?.status;
+        errorMessage += `HTTP Error ${status}: `;
+
+        if (status === 401) {
+          errorMessage += 'Unauthorized. Please log in again.';
+        } else if (status === 403) {
+          errorMessage += 'Forbidden. You don\'t have permission to perform this action.';
+        } else if (status === 404) {
+          errorMessage += 'Not Found. The endpoint does not exist.';
+        } else if (status === 413) {
+          errorMessage += 'Payload Too Large. Please reduce the content size or image sizes.';
+        } else if (status === 422) {
+          errorMessage += 'Validation Error. Please check your input data.';
+        } else if (status === 500) {
+          errorMessage += 'Server Error. Please contact the administrator.';
+        } else if (status === 503) {
+          errorMessage += 'Service Unavailable. The server is temporarily down.';
+        } else {
+          errorMessage += 'An unexpected error occurred.';
+        }
+
+        // Add response data if available
+        if (e.data || e.response?.data) {
+          const data = e.data || e.response?.data;
+          if (data.message) {
+            errorMessage += ` Details: ${data.message}`;
+          }
+          if (data.errors) {
+            const errors = Object.values(data.errors).flat().join(', ');
+            errorMessage += ` Validation errors: ${errors}`;
+          }
+        }
+      }
+      // Custom error message from API
+      else if (e.message) {
+        errorMessage += `${e.message}`;
+
+        // Add additional details if available
+        if (e.details) {
+          errorMessage += ` | Details: ${JSON.stringify(e.details)}`;
+        }
+      } else {
+        errorMessage += 'An unknown error occurred. Please try again.';
+      }
+
+      addToast(errorMessage, 'error');
     } finally {
       setIsLoading(false);
     }
