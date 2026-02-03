@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import UserEditModal from "../tables/UserEditModal";
+import ChangePasswordModal from "./ChangePasswordModal";
 import { User } from '@/types/user';
 
 interface UserInfoCardProps {
@@ -10,6 +11,8 @@ interface UserInfoCardProps {
 export default function UserInfoCard({ user }: UserInfoCardProps) {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+
   const handleCloseModal = () => {
     setIsModalOpen(false);
   };
@@ -35,7 +38,7 @@ export default function UserInfoCard({ user }: UserInfoCardProps) {
         {user?.profile_image && (
           <div className="flex-shrink-0">
             <img
-              src={ user.profile_image}
+              src={user.profile_image}
               alt={user.name}
               className="w-20 h-20 rounded-full object-cover border-2 border-gray-200 dark:border-gray-700"
             />
@@ -107,6 +110,23 @@ export default function UserInfoCard({ user }: UserInfoCardProps) {
           </svg>
           Edit
         </button>
+
+        <button
+          onClick={() => setIsPasswordModalOpen(true)}
+          className="flex w-full items-center justify-center gap-2 rounded-full border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200 lg:inline-flex lg:w-auto"
+        >
+          <svg
+            className="fill-current"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+          Password
+        </button>
       </div>
 
       <UserEditModal
@@ -114,6 +134,12 @@ export default function UserInfoCard({ user }: UserInfoCardProps) {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         onSave={handleUserSave}
+      />
+
+      <ChangePasswordModal
+        user={normalizedUser}
+        isOpen={isPasswordModalOpen}
+        onClose={() => setIsPasswordModalOpen(false)}
       />
     </div>
   );

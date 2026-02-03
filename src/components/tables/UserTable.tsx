@@ -13,18 +13,11 @@ import { BASE_URL } from "@/config/config";
 import UserEditModal from "./UserEditModal";
 import { useAuth } from "@/context/AuthContext";
 
-import { Edit2, Trash2 } from 'lucide-react';
+import { Edit2, Trash2, Ban } from 'lucide-react';
+import { User } from '@/types/user';
 
 
-interface User {
-  id: string | number;
-  name: string;
-  email: string;
-  phone?: string;
-  user_role: string;
-  profile_image: string | null;
-  created_at: string;
-}
+
 
 interface ApiResponse {
   success: boolean;
@@ -45,7 +38,7 @@ export default function UserTable() {
   const [error, setError] = useState<string | null>(null);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { authFetch } = useAuth();
+  const { authFetch, user: currentUser } = useAuth();
 
   const fetchUsers = async () => {
     try {
@@ -100,17 +93,16 @@ export default function UserTable() {
     ));
   };
 
-  const getStatusFromRole = (role: string) => {
-    // Since API doesn't have status field, we'll derive it from role or set default
-    return role.toLowerCase() === 'admin' ? 'Active' : 'Active';
-  };
+
 
   const getStatusColor = (status: string) => {
+    if (!status) return 'success';
     switch (status.toLowerCase()) {
       case 'active':
         return 'success';
       case 'pending':
         return 'warning';
+      case 'inactive':
       case 'cancel':
         return 'error';
       default:
@@ -137,6 +129,77 @@ export default function UserTable() {
       month: 'short',
       day: 'numeric'
     });
+  };
+
+  const handleDelete = async (userId: string | number) => {
+    if (!window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) throw new Error('No authentication token found');
+
+      const response = await authFetch(`${BASE_URL}admin/user/${userId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        setUsers(users.filter(user => user.id !== userId));
+        // alert('User deleted successfully');
+      } else {
+        const data = await response.json();
+        throw new Error(data.message || 'Failed to delete user');
+      }
+    } catch (err) {
+      console.error('Error deleting user:', err);
+      alert('Error deleting user: ' + (err instanceof Error ? err.message : 'Unknown error'));
+    }
+  };
+
+  const handleDeactivate = async (userId: string | number) => {
+    if (!window.confirm('Are you sure you want to deactivate this user? They will be logged out immediately.')) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) throw new Error('No authentication token found');
+
+      // Assuming endpoint for deactivation, if not we might need to update status
+      const response = await authFetch(`${BASE_URL}admin/user/${userId}/deactivate`, {
+        method: 'POST', // Or PATCH/PUT depending on API
+      });
+
+      // Fallback if specific endpoint doesn't exist, try updating user status directly
+      // This is a guess based on common patterns, verified if the specific endpoint 404s
+      if (response.status === 404) {
+        const updateResponse = await authFetch(`${BASE_URL}admin/user/${userId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'inactive' }) // Try setting status to inactive
+        });
+
+        if (updateResponse.ok) {
+          const updatedUser = await updateResponse.json();
+          setUsers(users.map(u => u.id === userId ? { ...u, ...updatedUser.data } : u)); // Update local state if return data structure matches
+          alert('User deactivated successfully');
+          return;
+        }
+      }
+
+      if (response.ok) {
+        // Update local state to reflect change (optional, depends on if we filter them out or show status)
+        alert('User deactivated successfully');
+        fetchUsers(); // Refresh list to get updated status
+      } else {
+        const data = await response.json();
+        throw new Error(data.message || 'Failed to deactivate user');
+      }
+    } catch (err) {
+      console.error('Error deactivating user:', err);
+      alert('Failed to deactivate user. Please try again.');
+    }
   };
 
   if (loading) {
@@ -202,7 +265,7 @@ export default function UserTable() {
                   isHeader
                   className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                 >
-                  Joined
+                  Last Login
                 </TableCell>
                 <TableCell
                   isHeader
@@ -246,24 +309,43 @@ export default function UserTable() {
                   <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                     <Badge
                       size="sm"
-                      color={getStatusColor(getStatusFromRole(user.user_role))}
+                      color={getStatusColor(user.status || 'active')}
                     >
-                      {getStatusFromRole(user.user_role)}
+                      {user.status || 'Active'}
                     </Badge>
                   </TableCell>
                   <TableCell className="px-4 py-3 text-gray-500 text-start text-xs dark:text-gray-400">
-                    {formatDate(user.created_at)}
+                    {user.last_login_at ? formatDate(user.last_login_at) : '-'}
                   </TableCell>
                   <TableCell className="px-4 py-3 text-gray-500">
-                    <div className="flex items-center gap-4">
-
-                      <button
-                        onClick={() => handleEdit(user)}
-                        className="ml-2 text-green-500 hover:text-green-600"
-                      >
-                        <Edit2 size={16} />
-                      </button>
-                      <button className="text-red-500 hover:text-red-600"><Trash2 size={16} /></button>
+                    <div className="flex items-center gap-2">
+                      {currentUser && currentUser.id !== user.id ? (
+                        <>
+                          <button
+                            onClick={() => handleEdit(user)}
+                            className="text-green-500 hover:text-green-600 p-1"
+                            title="Edit User"
+                          >
+                            <Edit2 size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleDeactivate(user.id)}
+                            className="text-orange-500 hover:text-orange-600 p-1"
+                            title="Deactivate User"
+                          >
+                            <Ban size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(user.id)}
+                            className="text-red-500 hover:text-red-600 p-1"
+                            title="Delete User"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </>
+                      ) : (
+                        <span className="text-gray-400 text-xs italic">Current User</span>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>

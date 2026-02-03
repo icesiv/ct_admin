@@ -9,8 +9,6 @@ interface EditFormData {
   email: string;
   phone: string;
   user_role: string;
-  password: string;
-  password_confirmation: string;
   profile_image: string | null;
 }
 
@@ -24,8 +22,6 @@ interface UserEditModalProps {
 interface ValidationErrors {
   email?: string;
   phone?: string;
-  password?: string;
-  password_confirmation?: string;
 }
 
 
@@ -34,21 +30,18 @@ export default function UserEditModal({ user, isOpen, onClose, onSave }: UserEdi
     return null;
   }
 
-const [formData, setFormData] = useState<EditFormData>({
+  const [formData, setFormData] = useState<EditFormData>({
     name: user.name,
     email: user.email,
     phone: user.phone || '',
-    user_role: user.user_role, // Rely on user.user_role being a string
-    password: '',
-    password_confirmation: '',
+    user_role: user.user_role,
     profile_image: user.profile_image,
   });
-  
+
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [resettingPassword, setResettingPassword] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
 
   // Initialize form data when user changes
@@ -59,8 +52,6 @@ const [formData, setFormData] = useState<EditFormData>({
         email: user.email,
         phone: user.phone || '',
         user_role: user.user_role || 'user',
-        password: '',
-        password_confirmation: '',
         profile_image: user.profile_image
       });
       setImageFile(null);
@@ -106,37 +97,17 @@ const [formData, setFormData] = useState<EditFormData>({
     return null;
   };
 
-  // Password validation
-  const validatePassword = (password: string): string | null => {
-    if (password && password.length < 6) {
-      return 'Password must be at least 6 characters long';
-    }
-    return null;
-  };
-
-  // Password confirmation validation
-  const validatePasswordConfirmation = (password: string, confirmation: string): string | null => {
-    if (password && password !== confirmation) {
-      return 'Passwords do not match';
-    }
-    return null;
-  };
-
   const handleClose = () => {
     setFormData({
       name: '',
       email: '',
       phone: '',
       user_role: '',
-      password: '',
-      password_confirmation: '',
       profile_image: null
     });
     setImageFile(null);
     setImagePreview(null);
     setValidationErrors({});
-    setShowPassword(false);
-    setShowConfirmPassword(false);
     onClose();
   };
 
@@ -165,29 +136,6 @@ const [formData, setFormData] = useState<EditFormData>({
           newErrors.phone = phoneError;
         } else {
           delete newErrors.phone;
-        }
-        break;
-      case 'password':
-        const passwordError = validatePassword(value);
-        if (passwordError) {
-          newErrors.password = passwordError;
-        } else {
-          delete newErrors.password;
-        }
-        // Also validate password confirmation when password changes
-        const confirmationError = validatePasswordConfirmation(value, formData.password_confirmation);
-        if (confirmationError) {
-          newErrors.password_confirmation = confirmationError;
-        } else {
-          delete newErrors.password_confirmation;
-        }
-        break;
-      case 'password_confirmation':
-        const confirmError = validatePasswordConfirmation(formData.password, value);
-        if (confirmError) {
-          newErrors.password_confirmation = confirmError;
-        } else {
-          delete newErrors.password_confirmation;
         }
         break;
     }
@@ -246,15 +194,6 @@ const [formData, setFormData] = useState<EditFormData>({
     const phoneError = validatePhone(formData.phone);
     if (phoneError) errors.phone = phoneError;
 
-    // Validate password (if provided)
-    if (formData.password) {
-      const passwordError = validatePassword(formData.password);
-      if (passwordError) errors.password = passwordError;
-
-      const confirmationError = validatePasswordConfirmation(formData.password, formData.password_confirmation);
-      if (confirmationError) errors.password_confirmation = confirmationError;
-    }
-
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -303,14 +242,12 @@ const [formData, setFormData] = useState<EditFormData>({
         }
       }
 
-      // Prepare data for API - only include password if it's provided
+      // Prepare data for API
       const updateData = {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
         user_role: formData.user_role,
-        ...(formData.password && { password: formData.password }),
-        ...(formData.password_confirmation && { password_confirmation: formData.password_confirmation }),
         ...(profileImagePath !== undefined && { profile_image: profileImagePath })
       };
 
@@ -352,6 +289,42 @@ const [formData, setFormData] = useState<EditFormData>({
       alert('Error updating user: ' + (err instanceof Error ? err.message : 'Unknown error'));
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!user) return;
+
+    if (!window.confirm(`Are you sure you want to reset the password for ${user.name}? The new password will be 'password'.`)) {
+      return;
+    }
+
+    try {
+      setResettingPassword(true);
+      const token = localStorage.getItem('auth_token');
+      if (!token) throw new Error('No authentication token found');
+
+      const response = await fetch(`${BASE_URL}admin/user/${user.id}/reset-password`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        }
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        alert(data.message);
+      } else {
+        throw new Error(data.message || 'Failed to reset password');
+      }
+
+    } catch (err) {
+      console.error('Error resetting password:', err);
+      alert('Error resetting password: ' + (err instanceof Error ? err.message : 'Unknown error'));
+    } finally {
+      setResettingPassword(false);
     }
   };
 
@@ -500,92 +473,29 @@ const [formData, setFormData] = useState<EditFormData>({
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
               >
+                <option value="user">User</option>
                 <option value="admin">Admin</option>
                 <option value="editor">Editor</option>
                 <option value="manager">Manager</option>
               </select>
             </div>
 
-            {/* Password Field */}
-            <div>
+            {/* Reset Password Button Section */}
+            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                New Password (optional)
+                Security
               </label>
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  placeholder="Leave blank to keep current password"
-                  className={`w-full px-3 py-2 pr-10 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white ${validationErrors.password
-                    ? 'border-red-500 dark:border-red-500'
-                    : 'border-gray-300 dark:border-gray-600'
-                    }`}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                >
-                  {showPassword ? (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
-                    </svg>
-                  ) : (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                  )}
-                </button>
-              </div>
-              {validationErrors.password && (
-                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                  {validationErrors.password}
-                </p>
-              )}
-            </div>
-
-            {/* Confirm Password Field */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Confirm Password
-              </label>
-              <div className="relative">
-                <input
-                  type={showConfirmPassword ? "text" : "password"}
-                  name="password_confirmation"
-                  value={formData.password_confirmation}
-                  onChange={handleInputChange}
-                  placeholder="Confirm new password"
-                  className={`w-full px-3 py-2 pr-10 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white ${validationErrors.password_confirmation
-                    ? 'border-red-500 dark:border-red-500'
-                    : 'border-gray-300 dark:border-gray-600'
-                    }`}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                >
-                  {showConfirmPassword ? (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
-                    </svg>
-                  ) : (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                  )}
-                </button>
-              </div>
-              {validationErrors.password_confirmation && (
-                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                  {validationErrors.password_confirmation}
-                </p>
-              )}
+              <button
+                type="button"
+                onClick={handleResetPassword}
+                disabled={resettingPassword}
+                className="w-full px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 disabled:opacity-50"
+              >
+                {resettingPassword ? 'Resetting...' : 'Reset Password'}
+              </button>
+              <p className="text-xs text-center text-gray-500 mt-2 dark:text-gray-400">
+                This will set the password to default: 'password'
+              </p>
             </div>
           </div>
 
