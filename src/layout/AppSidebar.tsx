@@ -4,8 +4,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext"; // Adjust path if needed
+
 import {
-  Settings,
   Users,
   Logs,
   ChartBarStacked,
@@ -20,7 +20,6 @@ import {
   ChevronDown,
   Ellipsis,
   Megaphone,
-  Type,
   MapPin,
 } from 'lucide-react';
 
@@ -49,12 +48,6 @@ const navItems: NavItem[] = [
       { name: "Create Post", path: "/posts/create", roles: ['admin', 'editor'] },
       { name: "Manage Posts", path: "/posts", roles: ['admin', 'editor', 'basic'] },
     ],
-  },
-  {
-    name: "Text Converter",
-    icon: <Type />,
-    path: "/text-converter",
-    roles: ['admin', 'editor'],
   },
   {
     name: "Lead News",
