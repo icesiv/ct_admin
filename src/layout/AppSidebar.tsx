@@ -101,7 +101,13 @@ const othersItems: NavItem[] = [
     name: "Advertisement",
     icon: <Megaphone />,
     path: "/ads",
-    roles: ['admin', 'editor'],
+    roles: ['admin'],
+  },
+  {
+    name: "Poll",
+    icon: <Megaphone />,
+    path: "/polls",
+    roles: ['admin'],
   },
   {
     name: "Users",

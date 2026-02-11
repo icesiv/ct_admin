@@ -90,7 +90,7 @@ export default function ChangePasswordModal({ user, isOpen, onClose }: ChangePas
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+        <div className="fixed inset-0 z-9999 flex items-center justify-center bg-black/70">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4 p-6">
                 <div className="flex justify-between items-center mb-6">
                     <h3 className="text-xl font-semibold text-gray-900 dark:text-white">

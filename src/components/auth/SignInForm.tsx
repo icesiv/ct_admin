@@ -94,13 +94,13 @@ export default function SignInForm() {
     return (
         <div className="flex flex-col  flex-1 lg:w-1/2 w-full">
             <div className="flex flex-col  justify-center flex-1 w-full max-w-md mx-auto">
-            <img
-                width={160}
-                height={48}
-                src="/images/logo/logo.svg"
-                alt="Logo"
-                className="mb-8 mt-12 md:hidden text-center mx-auto"
-            />
+                <img
+                    width={160}
+                    height={48}
+                    src="/images/logo/logo.svg"
+                    alt="Logo"
+                    className="mb-8 mt-12 md:hidden text-center mx-auto"
+                />
                 <div className="mb-5 sm:mb-8">
                     <h1 className="mb-2 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md">
                         Sign In
@@ -175,7 +175,7 @@ export default function SignInForm() {
                             )}
                             <div>
                                 <Button
-                                    // type="submit"
+                                    type="submit"
                                     className="w-full"
                                     size="sm"
                                     disabled={isSubmitting}
