@@ -21,6 +21,7 @@ import {
   Ellipsis,
   Megaphone,
   MapPin,
+  LayoutList,
 } from 'lucide-react';
 
 type UserRole = 'admin' | 'editor' | 'basic';
@@ -105,7 +106,7 @@ const othersItems: NavItem[] = [
   },
   {
     name: "Poll",
-    icon: <Megaphone />,
+    icon: <LayoutList />,
     path: "/polls",
     roles: ['admin'],
   },

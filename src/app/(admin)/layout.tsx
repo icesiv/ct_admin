@@ -34,8 +34,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   return (
     <div className="min-h-screen xl:flex">
-      {/* Pass userRole to AppSidebar */}
-      <AppSidebar userRole={userRole} /> 
+      <AppSidebar userRole={userRole} />
 
       {/* <AppSidebar userRole="basic" />  */}
       {/* <AppSidebar userRole="editor" />  */}

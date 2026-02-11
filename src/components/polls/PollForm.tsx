@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Button from "@/components/ui/button/Button";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { BASE_URL } from "@/config/config";
+import { FeatureImageUploader } from "@/components/editor/FeatureUploader";
+import ImageUploaderModal, { ImageData } from "@/app/(admin)/(others-pages)/posts/create/component/Gallery/ImageUploaderModal";
 
 // Simple Label Component
 const Label = ({ children, htmlFor, className = "" }: any) => (
@@ -25,12 +27,20 @@ const Input = (props: any) => (
 export default function PollForm({ poll, onSuccess, onCancel }: any) {
     const { authFetch } = useAuth();
     const [loading, setLoading] = useState(false);
+    const [isOpen, setIsOpen] = useState(false);
     const [formData, setFormData] = useState({
         question: poll?.question || "",
         image: poll?.image || "",
         is_active: poll?.is_active ?? true,
         options: poll?.options?.map((o: any) => o.option_text) || ["", ""], // Default 2 empty options
     });
+
+    const handleImageSelect = (image: ImageData) => {
+        setFormData({ ...formData, image: image.url });
+        setIsOpen(false);
+    };
+
+    const OpenModal = (flag: boolean) => setIsOpen(flag);
 
     const handleOptionChange = (index: number, value: string) => {
         const newOptions = [...formData.options];
@@ -108,12 +118,10 @@ export default function PollForm({ poll, onSuccess, onCancel }: any) {
             </div>
 
             <div>
-                <Label htmlFor="image">Image URL (Optional)</Label>
-                <Input
-                    id="image"
-                    value={formData.image}
-                    onChange={(e: any) => setFormData({ ...formData, image: e.target.value })}
-                    placeholder="https://example.com/image.jpg"
+                <FeatureImageUploader
+                    featured_image={formData.image}
+                    title="Poll Image (Optional)"
+                    OpenModal={OpenModal}
                 />
             </div>
 
@@ -167,6 +175,15 @@ export default function PollForm({ poll, onSuccess, onCancel }: any) {
                     {poll ? "Update Poll" : "Create Poll"}
                 </Button>
             </div>
-        </form>
+
+
+            <ImageUploaderModal
+                isOpen={isOpen}
+                OpenModal={OpenModal}
+                callback={handleImageSelect}
+                uploadEndpoint="admin/polls/upload-image"
+                fetchEndpoint="admin/images/upload-image/gallery" // Use existing gallery for fetching
+            />
+        </form >
     );
 }

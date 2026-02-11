@@ -80,6 +80,8 @@ interface ImageUploaderModalProps {
   callback?: (imageData: ImageData) => void;
 
   OpenModal: (flag: boolean, isFeature: boolean) => void;
+  uploadEndpoint?: string;
+  fetchEndpoint?: string;
 }
 
 interface UploadResponse {
@@ -104,7 +106,9 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
   onImagesChange,
   isOpen = false,
   callback,
-  OpenModal
+  OpenModal,
+  uploadEndpoint = 'admin/images/upload-image/gallery',
+  fetchEndpoint = 'admin/images/upload-image/gallery'
 }) => {
   const { authFetch } = useAuth();
   // Add mobile view state
@@ -170,8 +174,10 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
     }
   };
 
+
+
   // API endpoint configuration
-  const API_ENDPOINT = BASE_URL + 'admin/images/upload-image/gallery';
+  // const API_ENDPOINT = BASE_URL + 'admin/images/upload-image/gallery';
 
   // Transform API data to local ImageData format
   const transformApiDataToImageData = (apiData: ApiImageData[]): ImageData[] => {
@@ -199,7 +205,7 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
 
     try {
       // Build URL with query parameters
-      let url = `${API_ENDPOINT}?page=${page}`;
+      let url = `${BASE_URL}${fetchEndpoint}?page=${page}`;
       if (query.trim()) {
         url += `&query=${encodeURIComponent(query.trim())}`;
       }
@@ -487,7 +493,7 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
     });
 
     try {
-      const response = await authFetch(API_ENDPOINT, {
+      const response = await authFetch(`${BASE_URL}${uploadEndpoint}`, {
         method: 'POST',
         body: formData,
         headers: {
