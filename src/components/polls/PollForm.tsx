@@ -165,15 +165,17 @@ export default function PollForm({ poll, onSuccess, onCancel }: any) {
 
                             <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
                                 <Label htmlFor="is_active" className="!mb-0 cursor-pointer">Active Poll</Label>
-                                <div className="relative inline-flex items-center cursor-pointer">
+                                <div className="relative inline-flex items-center cursor-pointer" onClick={() => setFormData({ ...formData, is_active: !formData.is_active })}>
                                     <input
                                         type="checkbox"
                                         id="is_active"
                                         checked={formData.is_active}
                                         onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                                        className="sr-only peer"
+                                        className="sr-only"
                                     />
-                                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-brand-300 dark:peer-focus:ring-brand-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-brand-600"></div>
+                                    <div className={`w-11 h-6 rounded-full transition-colors ${formData.is_active ? 'bg-brand-600' : 'bg-gray-200 dark:bg-gray-700'}`}>
+                                        <div className={`absolute top-[2px] left-[2px] bg-white border border-gray-300 dark:border-gray-600 rounded-full h-5 w-5 transition-transform ${formData.is_active ? 'translate-x-full' : 'translate-x-0'}`}></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
