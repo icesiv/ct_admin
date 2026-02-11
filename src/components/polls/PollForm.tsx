@@ -150,7 +150,7 @@ export default function PollForm({ poll, onSuccess, onCancel }: any) {
                     ))}
                 </div>
                 {formData.options.length < 6 && (
-                    <Button type="button" variant="ghost" onClick={addOption} className="mt-2 text-sm text-blue-600 dark:text-blue-400">
+                    <Button type="button" variant="outline" onClick={addOption} className="mt-2 text-sm text-blue-600 dark:text-blue-400">
                         + Add Option
                     </Button>
                 )}
