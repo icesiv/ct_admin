@@ -159,7 +159,7 @@ export default function PollsPage() {
                 </Table>
             </div>
 
-            <Modal isOpen={openDialog} onClose={() => setOpenDialog(false)} className="max-w-lg p-6">
+            <Modal isOpen={openDialog} onClose={() => setOpenDialog(false)} className="max-w-4xl p-6">
                 <div className="mb-6">
                     <h2 className="text-xl font-bold text-gray-900 dark:text-white">
                         {selectedPoll ? "Edit Poll" : "Create New Poll"}
