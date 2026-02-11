@@ -296,9 +296,9 @@ const SortableNewsList: React.FC<SortableNewsListProps> = ({ leadPosts, fetchLea
 
                 <div className="flex-grow">
                   <div className="flex justify-between items-start">
-                    <h3 className="line-clamp-2 text-sm md:text-base text-gray-800 dark:text-gray-100">
+                    <h3 className="line-clamp-4 text-sm md:text-base text-gray-800 dark:text-gray-100">
                       {article.title}
-                      <span className="text-blue-400 hidden md:inline dark:text-blue-400 text-xs ml-1">
+                      <span className="text-blue-400 block dark:text-blue-400 text-xs">
                         {article.created_at_ago}
                       </span>
                     </h3>

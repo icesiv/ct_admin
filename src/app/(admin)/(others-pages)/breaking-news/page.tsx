@@ -23,20 +23,11 @@ interface Category {
   name: string;
 }
 
-interface SmallButtonProps {
-  text: string;
-  onClick?: () => void;
-  disabled?: boolean;
-  className?: string;
-}
-
 interface ApiResponse {
   success: boolean;
   posts: Article[];
   message?: string;
 }
-
-
 
 export default function BreakingNews() {
   const [articles, setArticles] = useState<Article[]>([]);
@@ -160,23 +151,6 @@ export default function BreakingNews() {
     console.log('Submitting:', { newsId, newsTitle, selectedOrder });
   };
 
-  const SmallButton: React.FC<SmallButtonProps> = ({
-    text,
-    onClick,
-    disabled = false,
-    className = ""
-  }) => {
-    return (
-      <button
-        type="button"
-        onClick={onClick}
-        disabled={disabled || isLoading}
-        className={`h-11 border border-gray-300 dark:border-gray-700 px-4 py-2.5 text-sm transition rounded-lg shadow-theme-xs hover:bg-brand-600 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
-      >
-        {text}
-      </button>
-    );
-  };
   return (
     <div>
       <PageBreadcrumb pageTitle="Breaking News Page" />
