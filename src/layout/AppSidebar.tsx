@@ -22,6 +22,7 @@ import {
   Megaphone,
   MapPin,
   LayoutList,
+  Vote,
 } from 'lucide-react';
 
 type UserRole = 'admin' | 'editor' | 'basic';
@@ -89,10 +90,16 @@ const navItems: NavItem[] = [
     path: "/video",
   },
   {
-    name: "Topics",
+    name: "Manage Topics",
     icon: <Hash />,
-    path: "/topics",
-    roles: ['admin'],
+    path: "#",
+    roles: ['admin', 'editor'],
+    subItems: [
+      { name: "All Topics", path: "/topics" },
+      { name: "New Topics", path: "/topics/new" },
+      { name: "Bulk Assign", path: "/topics/assign" },
+      { name: "Tranding", path: "/topics/tranding" }
+    ]
   },
 ];
 
@@ -102,6 +109,12 @@ const othersItems: NavItem[] = [
     name: "Advertisement",
     icon: <Megaphone />,
     path: "/ads",
+    roles: ['admin'],
+  },
+  {
+    name: "Election Results",
+    icon: <Vote />,
+    path: "/election",
     roles: ['admin'],
   },
   {

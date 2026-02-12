@@ -1,22 +1,17 @@
-import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import TagTable from "@/components/tables/TagTable";
+import TagList from "@/components/tags/TagList";
 
-import { Metadata } from "next";
-import React from "react";
-
-export const metadata: Metadata = {
-  title: "Topics | CT Admin",
-  description: "Topics Page CT Admin Dashboard",
+export const metadata = {
+  title: "Manage Topics | Campus Times Admin",
+  description: "Manage topics and tags",
 };
 
-export default function Topics() {
-
-
+export default function TopicsPage() {
   return (
-    <div>
-      <PageBreadcrumb pageTitle="Topics" />
-
-      <TagTable />
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-gray-800 dark:text-white">All Topics</h1>
+      </div>
+      <TagList />
     </div>
   );
 }
