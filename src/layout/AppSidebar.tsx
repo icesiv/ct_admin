@@ -101,6 +101,12 @@ const navItems: NavItem[] = [
       { name: "Tranding", path: "/topics/tranding" }
     ]
   },
+  {
+    name: "Election Results",
+    icon: <Vote />,
+    path: "/election",
+    roles: ['admin', 'editor'],
+  },
 ];
 
 const othersItems: NavItem[] = [
@@ -109,12 +115,6 @@ const othersItems: NavItem[] = [
     name: "Advertisement",
     icon: <Megaphone />,
     path: "/ads",
-    roles: ['admin'],
-  },
-  {
-    name: "Election Results",
-    icon: <Vote />,
-    path: "/election",
     roles: ['admin'],
   },
   {
