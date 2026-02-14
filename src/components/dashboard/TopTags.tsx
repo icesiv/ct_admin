@@ -13,7 +13,6 @@ interface TagsDetails {
   tag: string;
   view: number;
   news: number;
-  slug: string;
 }
 
 export default function TopTags() {
@@ -27,26 +26,20 @@ export default function TopTags() {
       const baseUrl = apiUrl.endsWith('/') ? apiUrl : `${apiUrl}/`;
 
       try {
-        // Fetch Top Tags (last 30 days)
-        const topTagsUrl = `${baseUrl}tags/top?days=30`;
-        const topTagsResponse = await authFetch(topTagsUrl);
-        const topTagsResult = await topTagsResponse.json();
-        const topTags: TagsDetails[] = topTagsResponse.ok ? (topTagsResult.data || []) : [];
-
-        // Fetch Trending Tags (to filter)
+        // Fetch Trending Tags directly
         const trendingUrl = `${baseUrl}admin/trending-tags`;
         const trendingResponse = await authFetch(trendingUrl);
         const trendingResult = await trendingResponse.json();
-        // trendingResult.data is array of { id, tag_id, title, ... }
-        // We need to map trending tags to their ID for easy lookup
-        const trendingTagIds = new Set((trendingResult.data || []).map((t: any) => t.tag_id));
 
-        // Filter top tags to only include those in trending list
-        const filteredTags = topTags.filter(tag => trendingTagIds.has(tag.id));
+        if (trendingResult.success && Array.isArray(trendingResult.data)) {
+          setTableData(trendingResult.data);
+        } else {
+          console.error("Invalid trending tags data format", trendingResult);
+          setTableData([]);
+        }
 
-        setTableData(filteredTags);
       } catch (error: any) {
-        console.error("Failed to fetch top tags", error);
+        console.error("Failed to fetch trending tags", error);
         setErrorMsg(`Fetch failed: ${error.message || "Unknown error"}`);
         setTableData([]);
       }
@@ -79,12 +72,6 @@ export default function TopTags() {
                 isHeader
                 className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
               >
-                Slug
-              </TableCell>
-              <TableCell
-                isHeader
-                className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-              >
                 Views
               </TableCell>
               <TableCell
@@ -104,9 +91,6 @@ export default function TopTags() {
                 <TableRow key={tags.id} className="">
                   <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
                     {tags.tag}
-                  </TableCell>
-                  <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                    {tags.slug}
                   </TableCell>
                   <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
                     {tags.view}
