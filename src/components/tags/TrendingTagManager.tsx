@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Trash2, Save, GripVertical, Plus, Search, Edit3 } from "lucide-react";
+import { Trash2, Save, GripVertical, Plus, Search, Edit3, X } from "lucide-react";
 import { BASE_URL } from "@/config/config";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/components/ToastProvider";
@@ -34,6 +34,7 @@ export default function TrendingTagManager() {
 
     // Search State
     const [searchTerm, setSearchTerm] = useState<string>("");
+    const [showDropdown, setShowDropdown] = useState<boolean>(false);
 
     // Drag & Drop State
     const [draggedItem, setDraggedItem] = useState<number | null>(null);
@@ -93,7 +94,7 @@ export default function TrendingTagManager() {
 
             await fetchTrendingTags();
             setSelectedTagId("");
-            setSearchTerm(""); // Reset search after adding
+            setSearchTerm("");
             addToast("Tag added to trending list", "success");
         } catch (err: any) {
             addToast(err.message, "error");
@@ -189,8 +190,11 @@ export default function TrendingTagManager() {
 
     // Filter tags for search
     const filteredTags = allTags.filter((tag) =>
-        tag.name.toLowerCase().includes(searchTerm.toLowerCase())
+        tag.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+        !trendingTags.some(tt => tt.tag_id === tag.id)
     );
+
+    const selectedTagName = allTags.find(t => t.id.toString() === selectedTagId)?.name;
 
     return (
         <div className="space-y-8">
@@ -198,42 +202,63 @@ export default function TrendingTagManager() {
             <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
                 <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Add Trending Topic</h2>
 
-                {/* Search Input */}
-                <div className="mb-4">
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                        <input
-                            type="text"
-                            placeholder="Search topics to add..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                        />
-                    </div>
-                </div>
+                <div className="flex flex-col md:flex-row gap-4 items-end">
+                    <div className="flex-1 w-full relative">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Select Topic</label>
 
-                <div className="flex gap-4">
-                    <div className="flex-1">
-                        <select
-                            value={selectedTagId}
-                            onChange={(e) => setSelectedTagId(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                        >
-                            <option value="">Select a topic...</option>
-                            {filteredTags.map((tag) => (
-                                <option
-                                    key={tag.id}
-                                    value={tag.id}
-                                    disabled={trendingTags.some(tt => tt.tag_id === tag.id)}
+                        {selectedTagId ? (
+                            <div className="flex items-center justify-between w-full px-4 py-2 border border-blue-200 bg-blue-100 dark:bg-blue-900/30 dark:border-blue-800 rounded-lg text-blue-800 dark:text-blue-300">
+                                <span className="truncate">{selectedTagName}</span>
+                                <button
+                                    onClick={() => setSelectedTagId("")}
+                                    className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
                                 >
-                                    {tag.name} {trendingTags.some(tt => tt.tag_id === tag.id) ? '(Already Added)' : ''}
-                                </option>
-                            ))}
-                        </select>
-                        {searchTerm && filteredTags.length === 0 && (
-                            <p className="text-sm text-red-500 mt-1">No topics found matching "{searchTerm}"</p>
+                                    <X size={16} />
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                                <input
+                                    type="text"
+                                    placeholder="Search topics to add..."
+                                    value={searchTerm}
+                                    onChange={(e) => {
+                                        setSearchTerm(e.target.value);
+                                        setShowDropdown(true);
+                                    }}
+                                    onFocus={() => setShowDropdown(true)}
+                                    onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+                                    className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                                />
+
+                                {showDropdown && searchTerm && (
+                                    <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                                        {filteredTags.length > 0 ? (
+                                            filteredTags.map((tag) => (
+                                                <button
+                                                    key={tag.id}
+                                                    onClick={() => {
+                                                        setSelectedTagId(tag.id.toString());
+                                                        setSearchTerm("");
+                                                        setShowDropdown(false);
+                                                    }}
+                                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-700"
+                                                >
+                                                    {tag.name}
+                                                </button>
+                                            ))
+                                        ) : (
+                                            <div className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">
+                                                No topics found
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
                         )}
                     </div>
+
                     <button
                         onClick={handleAddTag}
                         disabled={!selectedTagId || adding}
@@ -247,7 +272,9 @@ export default function TrendingTagManager() {
             {/* Trending List */}
             <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
                 <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-lg font-semibold text-gray-800 dark:text-white">Trending Order</h2>
+                    <h2 className="text-lg font-semibold text-gray-800 dark:text-white">Trending Order <span className="ml-2 text-xs text-normal text-gray-600 dark:text-gray-400">
+                        Drag and drop topics to reorder them on the trending section.
+                    </span></h2>
                     {hasChanges && (
                         <button
                             onClick={saveOrder}

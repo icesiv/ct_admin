@@ -5,52 +5,54 @@ import TagForm from "@/components/tags/TagForm";
 import { BASE_URL } from "@/config/config";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/components/ToastProvider";
-import { Loader2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function EditTopicPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
     const { authFetch } = useAuth();
     const { addToast } = useToast();
+    const router = useRouter();
+    const [isDeleting, setIsDeleting] = useState(false);
 
-    const [tag, setTag] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const handleDelete = async () => {
+        if (!window.confirm("Are you sure you want to delete this topic? This action cannot be undone.")) return;
 
-    useEffect(() => {
-        const fetchTag = async () => {
-            try {
-                setLoading(true);
-                // We don't have a direct "get single tag" endpoint in the original code (TagController uses API Resource potentially, or we need to check routes)
-                // TagController::resource usually provides show. Let's check api.php
-                // api.php has: Route::put('/{tag}', ...), Route::delete...
-                // It DOES NOT have Route::get('/{tag}').
-                // Wait, looking at api.php:
-                /*
-                    Route::prefix('tags')->group(function () {
-                        Route::get('/', [TagController::class, 'index'])->name('api.tags.index');
-                        Route::get('/top', [TagController::class, 'getTopTags'])->name('api.tags.top');
-                        Route::post('/', [TagController::class, 'store'])->name('api.tags.store');
-                        Route::post('/assign', [TagController::class, 'bulkAssign'])->name('api.tags.assign');
-                        Route::put('/{tag}', [TagController::class, 'update'])->name('api.tags.update');
-                        Route::delete('/{tag}', [TagController::class, 'destroy'])->name('api.tags.destroy');
-                    });
-                */
-                // There is NO `show` route for tags!
-                // I need to add one in the backend to make editing work by ID.
-                // OR I can use the list and filter, but that's inefficient.
-                // I should add `Route::get('/{tag}', [TagController::class, 'show']);`
-            } catch (error) {
-                console.error(error);
+        try {
+            setIsDeleting(true);
+            const response = await authFetch(`${BASE_URL}tags/${id}`, {
+                method: "DELETE",
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || "Failed to delete topic");
             }
-        };
-    }, [id]);
+
+            addToast("Topic deleted successfully", "success");
+            router.push("/topics");
+        } catch (error: any) {
+            console.error(error);
+            addToast(error.message || "Failed to delete topic", "error");
+            setIsDeleting(false);
+        }
+    };
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
                 <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Edit Topic</h1>
+                <button
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                    className="flex items-center gap-2 px-4 py-2 text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30 rounded-lg transition-colors disabled:opacity-50"
+                >
+                    {isDeleting ? <Loader2 className="animate-spin h-5 w-5" /> : <Trash2 size={20} />}
+                    <span>Delete Topic</span>
+                </button>
             </div>
             {/* Fallback while I fix backend */}
-            <TagFormWrapper id={id} />
+            {!isDeleting && <TagFormWrapper id={id} />}
         </div>
     );
 }

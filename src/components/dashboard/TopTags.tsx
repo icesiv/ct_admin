@@ -25,19 +25,29 @@ export default function TopTags() {
     const fetchTopTags = async () => {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ct-api.au/api/';
       const baseUrl = apiUrl.endsWith('/') ? apiUrl : `${apiUrl}/`;
-      const url = `${baseUrl}tags/top?days=7`;
 
       try {
-        const response = await authFetch(url);
-        if (response.ok) {
-          const result = await response.json();
-          setTableData(result.data || []);
-        } else {
-          setErrorMsg(`Error ${response.status} at ${url}: ${response.statusText}`);
-        }
+        // Fetch Top Tags (last 30 days)
+        const topTagsUrl = `${baseUrl}tags/top?days=30`;
+        const topTagsResponse = await authFetch(topTagsUrl);
+        const topTagsResult = await topTagsResponse.json();
+        const topTags: TagsDetails[] = topTagsResponse.ok ? (topTagsResult.data || []) : [];
+
+        // Fetch Trending Tags (to filter)
+        const trendingUrl = `${baseUrl}admin/trending-tags`;
+        const trendingResponse = await authFetch(trendingUrl);
+        const trendingResult = await trendingResponse.json();
+        // trendingResult.data is array of { id, tag_id, title, ... }
+        // We need to map trending tags to their ID for easy lookup
+        const trendingTagIds = new Set((trendingResult.data || []).map((t: any) => t.tag_id));
+
+        // Filter top tags to only include those in trending list
+        const filteredTags = topTags.filter(tag => trendingTagIds.has(tag.id));
+
+        setTableData(filteredTags);
       } catch (error: any) {
         console.error("Failed to fetch top tags", error);
-        setErrorMsg(`Fetch failed at ${url}: ${error.message || "Unknown error"}`);
+        setErrorMsg(`Fetch failed: ${error.message || "Unknown error"}`);
         setTableData([]);
       }
     };
@@ -50,7 +60,7 @@ export default function TopTags() {
       <div className="flex flex-col gap-2 mb-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-            Top Topics
+            Trending Topics
           </h3>
         </div>
       </div>
