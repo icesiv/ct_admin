@@ -1,6 +1,7 @@
 "use client";
+
 import React, { useState, useEffect } from 'react';
-import { Edit, Filter } from 'lucide-react';
+import { Edit, Filter, Search } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { BASE_URL } from '@/config/config';
 import Pagination from '../tables/Pagination';
@@ -56,12 +57,21 @@ const NewsListView: React.FC = () => {
     const [totalPages, setTotalPages] = useState<number>(1);
     const [totalNews, setTotalNews] = useState<number>(0);
 
+    // State for filtering
+    const [searchQuery, setSearchQuery] = useState<string>('');
+    const [searchBy, setSearchBy] = useState<'title' | 'id'>('title');
+    const [dateFilter, setDateFilter] = useState<number>(30);
+
     // Fetch news data
     const fetchNews = async (page: number = 1): Promise<void> => {
         const token = localStorage.getItem('auth_token');
         setIsLoadingNews(true);
         try {
-            const url = `${BASE_URL}admin/posts/allposts?per_page=24&page=${page}`;
+            let url = `${BASE_URL}admin/posts/allposts?per_page=24&page=${page}&days=${dateFilter}`;
+
+            if (searchQuery) {
+                url += `&search=${encodeURIComponent(searchQuery)}&search_by=${searchBy}`;
+            }
 
             const response = await authFetch(url);
 
@@ -95,6 +105,13 @@ const NewsListView: React.FC = () => {
         }
     }, [isAuthenticated]);
 
+    // Refetch when date filter changes
+    useEffect(() => {
+        if (isAuthenticated) {
+            fetchNews(1);
+        }
+    }, [dateFilter]);
+
     // Handle page change
     const handlePageChange = (page: number): void => {
         setCurrentPage(page);
@@ -127,6 +144,70 @@ const NewsListView: React.FC = () => {
 
     return (
         <div>
+            {/* Search and Filter UI */}
+            <div className="bg-white dark:bg-gray-800 mb-6 ">
+                <div className="flex flex-col md:flex-row gap-4 items-end md:items-center justify-between">
+                    {/* Search Input */}
+                    <div className="w-full">
+                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Search Query</label>
+                        <div className="relative">
+                            <input
+                                type="text"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                placeholder={searchBy === 'id' ? "Enter Post ID..." : "Search by title..."}
+                                onKeyDown={(e) => e.key === 'Enter' && fetchNews(1)}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white sm:text-sm"
+                            />
+                        </div>
+                    </div>
+                    <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+
+                        {/* Search By Dropdown */}
+                        <div className="w-full md:w-40">
+                            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Search By</label>
+                            <select
+                                value={searchBy}
+                                onChange={(e) => setSearchBy(e.target.value as 'title' | 'id')}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white sm:text-sm"
+                            >
+                                <option value="title">Title</option>
+                                <option value="id">Post ID</option>
+                            </select>
+                        </div>
+
+
+
+                        {/* Date Filter */}
+                        <div className="w-full md:w-40">
+                            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Time Period</label>
+                            <select
+                                value={dateFilter}
+                                onChange={(e) => {
+                                    setDateFilter(Number(e.target.value));
+                                }}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white sm:text-sm"
+                            >
+                                <option value={30}>Last 30 Days</option>
+                                <option value={90}>Last 90 Days</option>
+                                <option value={180}>Last 180 Days</option>
+                                <option value={365}>Last 1 Year</option>
+                                <option value={0}>All Time</option>
+                            </select>
+                        </div>
+
+                        {/* Search Button */}
+                        <button
+                            onClick={() => fetchNews(1)}
+                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors flex items-center justify-center gap-2"
+                        >
+                            <Search size={16} />
+                            Search
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             {/* Error Message */}
             {error && (
                 <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-6">

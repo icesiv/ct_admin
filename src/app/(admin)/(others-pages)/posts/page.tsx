@@ -13,10 +13,8 @@ export default function AllPosts() {
   return (
     <div>
       <PageBreadcrumb pageTitle="Manage Posts" />
-      <div className="mt-6 rounded-2xl md:border border-gray-200 md:bg-white md:px-5 py-7 dark:border-gray-800 md:dark:bg-white/[0.03] xl:px-10 xl:py-12">
-        <div className="mx-auto w-full text-center">
-          <NewsListView />
-        </div>
+      <div className="mt-4 rounded-2xl md:border border-gray-200 md:bg-white md:px-5 py-5 dark:border-gray-800 md:dark:bg-white/[0.03]">
+        <NewsListView />
       </div>
     </div>
   );

@@ -123,7 +123,7 @@ const CategoryCRUD: React.FC = () => {
                 {categorizedList.map((rootCategory: CategoryWithChildren) => (
                     <div key={rootCategory.id}>
                         {/* Root Category */}
-                        <div className=" flex  justify-between p-4 gap-y-4 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg">
+                        <div className=" flex  justify-between p-4 gap-y-4 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg">
                             <div className="space-y-2">
                                 <h4 className="font-medium text-gray-700 dark:text-gray-300">{rootCategory.name}</h4>
                                 <p className="text-xs text-gray-500 dark:text-gray-400">
