@@ -17,6 +17,9 @@ interface NewsArticle {
     category_slug?: string;
     created_at_ago: string;
     post_status: number;
+    is_lead?: boolean;
+    is_breaking?: boolean;
+    districts?: { id: number; name: string }[];
 }
 
 interface PaginationData {
@@ -269,14 +272,30 @@ const NewsListView: React.FC = () => {
                             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                 {newsData.map((news) => (
                                     <tr key={news.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200">
-                                        <td className="px-6 text-sm text-gray-900 dark:text-gray-100">
+                                        <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100 flex flex-col gap-1 items-start justify-center h-full">
                                             {news.post_status === 1 ?
-                                                <span className="text-green-500">{news.id}</span> :
-                                                <span className="text-red-500">{news.id}</span>
+                                                <span className="text-green-500 font-semibold">{news.id}</span> :
+                                                <span className="text-red-500 font-semibold">{news.id}</span>
                                             }
+                                            {news.is_lead && (
+                                                <span className="px-2 py-0.5 mt-1 text-[10px] font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300 rounded-full">
+                                                    Lead
+                                                </span>
+                                            )}
+                                            {news.is_breaking && (
+                                                <span className="px-2 py-0.5 mt-1 text-[10px] font-medium bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300 rounded-full whitespace-nowrap">
+                                                    Breaking
+                                                </span>
+                                            )}
                                         </td>
                                         <td className="px-6 py-2 text-left text-sm text-gray-900 dark:text-amber-100">
-                                            {news.title}
+                                            <div className="font-medium mb-1">{news.title}</div>
+                                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                                                {news.districts && news.districts.length > 0
+                                                    ? news.districts.map(d => d.name).join(', ')
+                                                    : <span className="italic text-gray-400 text-[11px]">কোন স্থান যোগ করা হয়নি (No Location)</span>
+                                                }
+                                            </div>
                                         </td>
                                         <td className="px-6 hidden md:block py-2 text-left whitespace-nowrap text-sm text-gray-500">
                                             {news.category_slug}

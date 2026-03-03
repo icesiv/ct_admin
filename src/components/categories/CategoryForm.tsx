@@ -14,6 +14,8 @@ interface Category {
     id: number;
     name: string;
     slug: string;
+    custom_title?: string;
+    description?: string;
     parent_id: number;
     position: number;
     active: boolean;
@@ -36,6 +38,8 @@ export default function CategoryForm({ initialData, onSuccess }: CategoryFormPro
     const [loading, setLoading] = useState(false);
     const [name, setName] = useState(initialData?.name || "");
     const [slug, setSlug] = useState(initialData?.slug || "");
+    const [customTitle, setCustomTitle] = useState(initialData?.custom_title || "");
+    const [description, setDescription] = useState(initialData?.description || "");
     const [parentId, setParentId] = useState<number>(initialData?.parent_id || 0);
     const [position, setPosition] = useState<number>(initialData?.position || 1);
     const [active, setActive] = useState<boolean>(initialData?.active ?? true);
@@ -52,6 +56,8 @@ export default function CategoryForm({ initialData, onSuccess }: CategoryFormPro
         if (initialData) {
             setName(initialData.name);
             setSlug(initialData.slug);
+            setCustomTitle(initialData.custom_title || "");
+            setDescription(initialData.description || "");
             setParentId(initialData.parent_id || 0);
             setPosition(initialData.position || 1);
             setActive(initialData.active ?? true);
@@ -128,6 +134,8 @@ export default function CategoryForm({ initialData, onSuccess }: CategoryFormPro
             const payload: any = {
                 name: name.trim(),
                 slug: slug.trim() || undefined,
+                custom_title: customTitle.trim() || undefined,
+                description: description.trim() || undefined,
                 parent_id: parentId,
                 position: position,
                 active: active,
@@ -177,6 +185,8 @@ export default function CategoryForm({ initialData, onSuccess }: CategoryFormPro
                     if (!initialData) {
                         setName("");
                         setSlug("");
+                        setCustomTitle("");
+                        setDescription("");
                         setParentId(0);
                         setPosition(1);
                         setActive(true);
@@ -225,6 +235,31 @@ export default function CategoryForm({ initialData, onSuccess }: CategoryFormPro
                                 disabled={loading}
                                 minLength={1}
                                 maxLength={255}
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Custom Title</label>
+                            <input
+                                type="text"
+                                value={customTitle}
+                                onChange={(e) => setCustomTitle(e.target.value)}
+                                placeholder="Custom Title (optional)"
+                                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                disabled={loading}
+                                maxLength={255}
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+                            <textarea
+                                value={description}
+                                onChange={(e) => setDescription(e.target.value)}
+                                placeholder="Description (optional)"
+                                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                rows={3}
+                                disabled={loading}
                             />
                         </div>
 

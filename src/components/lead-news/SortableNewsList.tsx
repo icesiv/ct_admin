@@ -17,6 +17,7 @@ interface Article {
   image: string;
   category: Category;
   created_at_ago: string;
+  order?: number;
 }
 
 interface SortOrder {
@@ -55,9 +56,40 @@ const SortableNewsList: React.FC<SortableNewsListProps> = ({ leadPosts, fetchLea
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setArticles(leadPosts);
-    setHasChanges(false); // Reset changes when new data is loaded
-  }, [leadPosts]);
+    let processedPosts = [...leadPosts];
+    const limit = mode === 'leadnews' ? 15 : 10;
+
+    if (mode === 'breakingnews' || mode === 'leadnews') {
+      // Limit items
+      if (processedPosts.length > limit) {
+        const toRemove = processedPosts.slice(limit);
+        processedPosts = processedPosts.slice(0, limit);
+
+        // Automatically unmark them
+        toRemove.forEach(item => {
+          const deleteUrl = `${BASE_URL}admin/posts/${mode}/remove`;
+          const auth_token = localStorage.getItem('auth_token');
+          fetch(deleteUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${auth_token}`
+            },
+            body: JSON.stringify({ news_id: item.id })
+          }).catch(console.error);
+        });
+
+        // Flag that order has changed due to auto-adjustment
+        setHasChanges(true);
+      } else {
+        setHasChanges(false);
+      }
+    } else {
+      setHasChanges(false); // Reset changes when new data is loaded
+    }
+
+    setArticles(processedPosts);
+  }, [leadPosts, mode]);
 
   const deleteLeadNews = async (news_id: string): Promise<void> => {
     const url = `${BASE_URL}admin/posts/${mode}/remove`;
@@ -213,7 +245,7 @@ const SortableNewsList: React.FC<SortableNewsListProps> = ({ leadPosts, fetchLea
     <div className="max-w-5xl mx-auto">
       {/* Success Toast */}
       {saveSuccess && (
-        <div className="fixed bottom-6 right-6 z-50">
+        <div className="fixed bottom-6 right-6 z-999">
           <div className="bg-green-600 dark:bg-green-700 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2">
             <Check className="w-4 h-4" />
             <span>ক্রম সফলভাবে সংরক্ষণ হয়েছে</span>
@@ -311,7 +343,7 @@ const SortableNewsList: React.FC<SortableNewsListProps> = ({ leadPosts, fetchLea
                         className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 
                                  dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/50 
                                  rounded transition-colors"
-                        title="মুছে ফেলুন"
+                        title="তালিকা থেকে সরান"
                       >
                         <Trash2 className="w-6 h-6" />
                       </button>
@@ -325,7 +357,7 @@ const SortableNewsList: React.FC<SortableNewsListProps> = ({ leadPosts, fetchLea
 
         {/* Delete Confirmation Modal */}
         {deleteConfirm && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-999">
             <div className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg shadow-xl p-6 max-w-md mx-4">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-14 h-14 bg-red-100 dark:bg-red-900/50 rounded-full flex items-center justify-center">
@@ -334,7 +366,7 @@ const SortableNewsList: React.FC<SortableNewsListProps> = ({ leadPosts, fetchLea
                 <div>
                   <h3 className="text-lg font-semibold">নিশ্চিত করুন</h3>
                   <p className="text-sm text-gray-600 dark:text-gray-300">
-                    এই সংবাদটি মুছে ফেলতে চান?
+                    এই সংবাদটি তালিকা থেকে সরাতে চান?
                   </p>
                 </div>
               </div>
@@ -358,7 +390,7 @@ const SortableNewsList: React.FC<SortableNewsListProps> = ({ leadPosts, fetchLea
                   onClick={() => handleDeleteConfirm(deleteConfirm)}
                   className="px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
                 >
-                  মুছে ফেলুন
+                  সরিয়ে ফেলুন
                 </button>
               </div>
             </div>

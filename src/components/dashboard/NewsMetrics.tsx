@@ -41,7 +41,7 @@ export const NewsMetrics = () => {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {[1, 2].map((i) => (
           <div key={i} className="animate-pulse rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-800 h-32"></div>
         ))}
@@ -53,7 +53,7 @@ export const NewsMetrics = () => {
   const articlesTrendIsPositive = (stats?.articles_trend || 0) >= 0;
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       {/* Metric Item */}
       <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white p-4 transition-all hover:border-indigo-200 dark:border-slate-700 dark:bg-slate-800/50">
         <div className="flex items-start justify-between">
