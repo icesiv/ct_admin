@@ -272,6 +272,7 @@ export default function TagForm({ initialData, onSuccess }: TagFormProps) {
                                 featured_image={ogImage}
                                 title="OG Image (Optional)"
                                 OpenModal={OpenModal}
+                                onClear={() => setOgImage("")}
                             />
                         </div>
 

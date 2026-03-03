@@ -338,6 +338,7 @@ export default function CategoryForm({ initialData, onSuccess }: CategoryFormPro
                                 featured_image={ogImage}
                                 title="OG Image (Optional)"
                                 OpenModal={OpenModal}
+                                onClear={() => setOgImage("")}
                             />
                         </div>
                     </div>

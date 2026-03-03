@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Upload, X} from 'lucide-react';
+import { Upload, X } from 'lucide-react';
 
 type UploadStatus = 'idle' | 'uploading' | 'success' | 'error';
 
@@ -8,22 +8,24 @@ export interface FeatureImageUploaderProps {
   featured_image?: string | null;
   title?: string;
   OpenModal: (flag: boolean | false, isFeature: boolean) => void;
+  onClear?: () => void;
 }
 
-export const FeatureImageUploader = ({  
-  featured_image, 
+export const FeatureImageUploader = ({
+  featured_image,
   title = 'Featured Image *',
-  OpenModal, 
+  OpenModal,
+  onClear,
 }: FeatureImageUploaderProps) => {
 
   const [imagePreview, setImagePreview] = useState<string | null>(featured_image || null);
   const [uploadStatus, setUploadStatus] = useState<UploadStatus>('idle');
-  
+
 
   useEffect(() => {
-    if (featured_image !== null && featured_image !== '' && featured_image !== undefined) {
+    if (featured_image !== undefined) {
       if (featured_image !== imagePreview) {
-        setImagePreview(featured_image);
+        setImagePreview(featured_image || null);
       }
     }
   }, [featured_image, imagePreview]);
@@ -50,14 +52,27 @@ export const FeatureImageUploader = ({
 
 
       {imagePreview && (
-        <div className="mt-4 flex">
+        <div className="mt-4 relative inline-block">
           <img
             src={imagePreview}
             alt="Preview"
-            className="w-80 h-48 rounded-lg border border-gray-200"
+            className="w-80 h-48 rounded-lg border border-gray-200 object-cover"
           />
+          {onClear && (
+            <button
+              type="button"
+              onClick={() => {
+                setImagePreview(null);
+                onClear();
+              }}
+              className="absolute -top-3 -right-3 bg-red-100 hover:bg-red-200 text-red-600 rounded-full p-1.5 shadow-sm transition-colors border border-red-200"
+              title="Remove image"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
-      )}     
+      )}
     </div>
   );
 };
