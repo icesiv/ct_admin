@@ -57,7 +57,7 @@ const SortableNewsList: React.FC<SortableNewsListProps> = ({ leadPosts, fetchLea
 
   useEffect(() => {
     let processedPosts = [...leadPosts];
-    const limit = mode === 'leadnews' ? 15 : 10;
+    const limit = mode === 'leadnews' ? 20 : 10;
 
     if (mode === 'breakingnews' || mode === 'leadnews') {
       // Limit items

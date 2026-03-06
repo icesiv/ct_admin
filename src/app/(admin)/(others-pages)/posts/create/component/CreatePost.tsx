@@ -55,8 +55,10 @@ interface FormData {
   districts: number[]; // Added districts
   post_status?: number | 0 | 1; // 0 for draft, 1 for published
   tags: string[];
-  lead_news: boolean,
-  breaking_news: boolean,
+  lead_news: boolean;
+  breaking_news: boolean;
+  lead_news_order?: number | string | null;
+  breaking_news_order?: number | string | null;
 }
 
 export default function CreatePost({ postId: postId }: { postId: string | null | undefined }) {
@@ -89,6 +91,8 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
     tags: [],
     lead_news: false,
     breaking_news: false,
+    lead_news_order: '',
+    breaking_news_order: '',
 
   });
 
@@ -163,6 +167,8 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
           tags: post.tags?.map?.((tag: Tag) => tag.name) || [],
           breaking_news: response.breaking_news,
           lead_news: response.lead_news,
+          breaking_news_order: response.breaking_news_order || '',
+          lead_news_order: response.lead_news_order || '',
           writer_id: post.writer_id || null // Load writer_id
         });
 
@@ -348,7 +354,9 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
         post_status: formData.post_status,
         tags: formData.tags,
         lead_news: formData.lead_news,
-        breaking_news: formData.breaking_news
+        breaking_news: formData.breaking_news,
+        lead_news_order: formData.lead_news_order,
+        breaking_news_order: formData.breaking_news_order
       };
 
       if (isEditMode) {
@@ -385,6 +393,8 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
             tags: [],
             lead_news: false,
             breaking_news: false,
+            lead_news_order: '',
+            breaking_news_order: '',
           });
           setTagInput('');
           setContent(''); // Clear editor content state if used
@@ -774,31 +784,65 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
           />
 
           {/* Publish, Latest Post, Breaking News Switches */}
-          <div className="mt-6 px-24 md:px-4 py-3 gap-y-4 flex flex-col md:flex-row justify-between items-end border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400">
+          <div className="mt-6 px-24 md:px-4 py-3 gap-y-4 flex flex-col md:flex-row justify-between items-start border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400">
             {/* Publish Btn */}
-            <Switch
-              label="Publish"
-              defaultChecked={formData.post_status === 1}
-              onChange={handleSwitchChange}
-            />
+            <div className="flex flex-col md:items-center justify-start gap-2">
+              <Switch
+                label="Publish"
+                defaultChecked={formData.post_status === 1}
+                onChange={handleSwitchChange}
+              />
+            </div>
 
             {/* Latest Post Btn */}
-            <Switch
-              label="Latest Post"
-              defaultChecked={formData.lead_news}
-              onChange={(flag: boolean) => {
-                setFormData({ ...formData, lead_news: flag });
-              }}
-            />
+            <div className="flex flex-col md:items-center justify-start gap-2">
+              <Switch
+                label="Latest Post"
+                defaultChecked={formData.lead_news}
+                onChange={(flag: boolean) => {
+                  setFormData(prev => ({
+                    ...prev,
+                    lead_news: flag,
+                    lead_news_order: flag ? (prev.lead_news_order || 15) : ''
+                  }));
+                }}
+              />
+              {formData.lead_news && (
+                <input
+                  type="number"
+                  name="lead_news_order"
+                  value={formData.lead_news_order || ''}
+                  onChange={handleInputChange}
+                  placeholder="Order"
+                  className="w-20 px-2 py-1 text-sm text-center border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                />
+              )}
+            </div>
 
             {/* Breaking News Btn */}
-            <Switch
-              label="Breaking News "
-              defaultChecked={formData.breaking_news}
-              onChange={(flag: boolean) => {
-                setFormData({ ...formData, breaking_news: flag });
-              }}
-            />
+            <div className="flex flex-col md:items-center justify-start gap-2">
+              <Switch
+                label="Breaking News "
+                defaultChecked={formData.breaking_news}
+                onChange={(flag: boolean) => {
+                  setFormData(prev => ({
+                    ...prev,
+                    breaking_news: flag,
+                    breaking_news_order: flag ? (prev.breaking_news_order || 1) : ''
+                  }));
+                }}
+              />
+              {formData.breaking_news && (
+                <input
+                  type="number"
+                  name="breaking_news_order"
+                  value={formData.breaking_news_order || ''}
+                  onChange={handleInputChange}
+                  placeholder="Order"
+                  className="w-20 px-2 py-1 text-sm text-center border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                />
+              )}
+            </div>
           </div>
         </div>
 
