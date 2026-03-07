@@ -784,18 +784,16 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
           />
 
           {/* Publish, Latest Post, Breaking News Switches */}
-          <div className="mt-6 px-24 md:px-4 py-3 gap-y-4 flex flex-col md:flex-row justify-between items-start border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400">
+          <div className="mt-6 px-4 py-3 gap-y-4 flex flex-col xl:flex-row justify-between items-start border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400">
             {/* Publish Btn */}
-            <div className="flex flex-col md:items-center justify-start gap-2">
-              <Switch
-                label="Publish"
-                defaultChecked={formData.post_status === 1}
-                onChange={handleSwitchChange}
-              />
-            </div>
+            <Switch
+              label="Publish"
+              defaultChecked={formData.post_status === 1}
+              onChange={handleSwitchChange}
+            />
 
             {/* Latest Post Btn */}
-            <div className="flex flex-col md:items-center justify-start gap-2">
+            <div className="flex flex-row md:items-center justify-start gap-2">
               <Switch
                 label="Latest Post"
                 defaultChecked={formData.lead_news}
@@ -809,18 +807,18 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
               />
               {formData.lead_news && (
                 <input
-                  type="number"
+                  disabled={true}
                   name="lead_news_order"
                   value={formData.lead_news_order || ''}
                   onChange={handleInputChange}
                   placeholder="Order"
-                  className="w-20 px-2 py-1 text-sm text-center border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  className="w-10 px-2 py-1 text-sm text-center border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 />
               )}
             </div>
 
             {/* Breaking News Btn */}
-            <div className="flex flex-col md:items-center justify-start gap-2">
+            <div className="flex flex-row md:items-center justify-start gap-2">
               <Switch
                 label="Breaking News "
                 defaultChecked={formData.breaking_news}
@@ -834,12 +832,12 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
               />
               {formData.breaking_news && (
                 <input
-                  type="number"
+                  disabled={true}
                   name="breaking_news_order"
                   value={formData.breaking_news_order || ''}
                   onChange={handleInputChange}
                   placeholder="Order"
-                  className="w-20 px-2 py-1 text-sm text-center border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  className="w-10 px-2 py-1 text-center text-sm border border-gray-300 dark:border-gray-600 rounded-md  bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 />
               )}
             </div>
