@@ -23,6 +23,7 @@ import {
   MapPin,
   LayoutList,
   Vote,
+  Sparkles,
 } from 'lucide-react';
 
 type UserRole = 'admin' | 'editor' | 'basic';
@@ -104,7 +105,12 @@ const navItems: NavItem[] = [
 ];
 
 const othersItems: NavItem[] = [
-
+  {
+    name: "Spacial",
+    icon: <Sparkles />,
+    path: "/spacial",
+    roles: ['admin', 'editor'],
+  },
   {
     name: "Advertisement",
     icon: <Megaphone />,

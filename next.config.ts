@@ -38,6 +38,12 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'ct-api.au',
+        port: '',
+        pathname: '/**',
+      },
     ],
 
     dangerouslyAllowSVG: true,
