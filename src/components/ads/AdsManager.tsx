@@ -5,7 +5,7 @@ import { useAds } from '@/hooks/useAds';
 import { Advertisement, AdvertisementInput } from '@/types/ads';
 import AdForm from './AdForm';
 import { Modal } from '@/components/ui/modal';
-import { Pencil, Trash2, Plus, BarChart2 } from 'lucide-react';
+import { Pencil, Trash2, Plus } from 'lucide-react';
 
 export default function AdsManager() {
     const { ads, isLoading, isError, createAd, updateAd, deleteAd } = useAds();
@@ -69,7 +69,6 @@ export default function AdsManager() {
                             <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase dark:text-gray-400">Preview</th>
                             <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase dark:text-gray-400">Name / Position</th>
                             <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase dark:text-gray-400">Status</th>
-                            <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase dark:text-gray-400">Stats</th>
                             <th className="px-6 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase dark:text-gray-400">Actions</th>
                         </tr>
                     </thead>
@@ -92,12 +91,6 @@ export default function AdsManager() {
                                         }`}>
                                         {ad.is_active ? 'Active' : 'Inactive'}
                                     </span>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                    <div className="flex flex-col">
-                                        <span className="flex items-center gap-1"><BarChart2 size={12} />{ad.impressions} Impr.</span>
-                                        <span className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400">🖱 {ad.clicks} Clicks</span>
-                                    </div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <button onClick={() => handleEdit(ad)} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-4">

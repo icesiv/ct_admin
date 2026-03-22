@@ -19,10 +19,12 @@ export const useAds = () => {
         formData.append('name', data.name);
         formData.append('position', data.position);
         if (data.image) formData.append('image', data.image);
+        if (data.mobile_image) formData.append('mobile_image', data.mobile_image);
         if (data.link_url) formData.append('link_url', data.link_url);
         formData.append('is_active', data.is_active ? '1' : '0');
         if (data.start_date) formData.append('start_date', data.start_date);
         if (data.end_date) formData.append('end_date', data.end_date);
+        if (data.config) formData.append('config', JSON.stringify(data.config));
 
         const response = await authFetch(`${BASE_URL}admin/ads`, {
             method: 'POST',
@@ -38,17 +40,17 @@ export const useAds = () => {
 
     const updateAd = async ({ id, data }: { id: number; data: Partial<AdvertisementInput> }) => {
         const formData = new FormData();
-        // For update with file upload in Laravel, usually we need POST with _method=PUT depending on server config,
-        // but Laravel supports PUT with form-data if using _method field.
         formData.append('_method', 'PUT');
 
         if (data.name) formData.append('name', data.name);
         if (data.position) formData.append('position', data.position);
         if (data.image) formData.append('image', data.image);
+        if (data.mobile_image) formData.append('mobile_image', data.mobile_image);
         if (data.link_url) formData.append('link_url', data.link_url);
         if (data.is_active !== undefined) formData.append('is_active', data.is_active ? '1' : '0');
         if (data.start_date) formData.append('start_date', data.start_date);
         if (data.end_date) formData.append('end_date', data.end_date);
+        if (data.config) formData.append('config', JSON.stringify(data.config));
 
         const response = await authFetch(`${BASE_URL}admin/ads/${id}`, {
             method: 'POST', // Use POST for FormData with method spoofing
