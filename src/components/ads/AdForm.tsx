@@ -159,7 +159,13 @@ export default function AdForm({ initialData, onSubmit, onCancel, isLoading }: A
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Desktop Ad Media (Required)</label>
                         <input type="file" accept="image/*,video/mp4" onChange={handleFileChange} required={!initialData} className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 dark:file:bg-gray-700 dark:file:text-gray-300" />
                         {preview && (
-                            <div className="mt-4"><img src={preview} alt="Desktop Preview" className="h-20 w-auto object-cover rounded border border-gray-200" /></div>
+                            <div className="mt-4">
+                                {formData.config?.type === 'video' ? (
+                                    <video src={preview} autoPlay loop muted playsInline className="h-20 w-auto object-cover rounded border border-gray-200" />
+                                ) : (
+                                    <img src={preview} alt="Desktop Preview" className="h-20 w-auto object-cover rounded border border-gray-200" />
+                                )}
+                            </div>
                         )}
                     </div>
 
@@ -167,7 +173,13 @@ export default function AdForm({ initialData, onSubmit, onCancel, isLoading }: A
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Mobile Ad Media (Optional)</label>
                         <input type="file" accept="image/*,video/mp4" onChange={handleMobileFileChange} className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 dark:file:bg-gray-700 dark:file:text-gray-300" />
                         {mobilePreview && (
-                            <div className="mt-4"><img src={mobilePreview} alt="Mobile Preview" className="h-20 w-auto object-cover rounded border border-gray-200" /></div>
+                            <div className="mt-4">
+                                {formData.config?.type === 'video' ? (
+                                    <video src={mobilePreview} autoPlay loop muted playsInline className="h-20 w-auto object-cover rounded border border-gray-200" />
+                                ) : (
+                                    <img src={mobilePreview} alt="Mobile Preview" className="h-20 w-auto object-cover rounded border border-gray-200" />
+                                )}
+                            </div>
                         )}
                     </div>
                 </div>

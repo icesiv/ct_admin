@@ -77,8 +77,12 @@ export default function AdsManager() {
                             <tr key={ad.id} className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50">
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <div className="flex items-center">
-                                        <div className="h-16 w-24 flex-shrink-0">
-                                            <img className="h-16 w-24 object-cover rounded-md" src={ad.image_url} alt={ad.name} />
+                                        <div className="h-16 w-24 flex-shrink-0 bg-gray-100 dark:bg-gray-800 rounded-md overflow-hidden flex items-center justify-center">
+                                            {ad.config?.type === 'video' || ad.image_url?.match(/\.(mp4|webm)$/i) ? (
+                                                <video className="h-full w-full object-cover" src={ad.image_url} autoPlay loop muted playsInline />
+                                            ) : (
+                                                <img className="h-full w-full object-cover" src={ad.image_url} alt={ad.name} />
+                                            )}
                                         </div>
                                     </div>
                                 </td>
