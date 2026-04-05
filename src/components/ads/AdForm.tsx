@@ -125,9 +125,7 @@ export default function AdForm({ initialData, onSubmit, onCancel, isLoading }: A
                             <option value="ad-details-1">Details Ad 1 (ad-details-1)</option>
                             <option value="ad-details-2">Details Ad 2 (ad-details-2)</option>
                             <option value="ad-details-3">Details Ad 3 (ad-details-3)</option>
-                            <option value="home_banner">Home Banner</option>
-                            <option value="sidebar_rectangle">Sidebar Rectangle</option>
-                            <option value="article_bottom">Article Bottom</option>
+                            <option value="ad-home-top">Home Top Banner</option>
                         </select>
                     </div>
 
@@ -135,7 +133,7 @@ export default function AdForm({ initialData, onSubmit, onCancel, isLoading }: A
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Link URL</label>
                         <input type="url" name="link_url" value={formData.link_url} onChange={handleChange} placeholder="https://example.com" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 p-2 border" />
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Type</label>
@@ -186,29 +184,29 @@ export default function AdForm({ initialData, onSubmit, onCancel, isLoading }: A
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 mt-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
-                 <div>
+                <div>
                     <label className="block text-xs font-medium text-gray-700 dark:text-white">Breakpoint</label>
                     <input type="text" name="breakpoint" value={formData.config?.breakpoint} onChange={handleConfigChange} placeholder="e.g. lg, sm" className="mt-1 block w-full text-sm p-2 border rounded-md dark:bg-gray-800 dark:text-white" />
-                 </div>
-                 <div>
+                </div>
+                <div>
                     <label className="block text-xs font-medium text-gray-700 dark:text-white">Default Width</label>
                     <input type="text" name="defaultWidth" value={formData.config?.defaultWidth} onChange={handleConfigChange} placeholder="e.g. full, 96" className="mt-1 block w-full text-sm p-2 border rounded-md dark:bg-gray-800 dark:text-white" />
-                 </div>
-                 <div>
+                </div>
+                <div>
                     <label className="block text-xs font-medium text-gray-700 dark:text-white">Default Height</label>
                     <input type="text" name="defaultHeight" value={formData.config?.defaultHeight} onChange={handleConfigChange} placeholder="e.g. auto, 152" className="mt-1 block w-full text-sm p-2 border rounded-md dark:bg-gray-800 dark:text-white" />
-                 </div>
-                 <div>
+                </div>
+                <div>
                     <label className="block text-xs font-medium text-gray-700 dark:text-white">Container Class</label>
                     <input type="text" name="containerClass" value={formData.config?.containerClass} onChange={handleConfigChange} placeholder="e.g. bg-gray-100" className="mt-1 block w-full text-sm p-2 border rounded-md dark:bg-gray-800 dark:text-white" />
-                 </div>
+                </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-                 <div className="flex items-center">
-                        <input type="checkbox" name="is_active" id="is_active" checked={formData.is_active} onChange={handleChange} className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
-                        <label htmlFor="is_active" className="ml-2 block text-sm text-gray-900 dark:text-gray-300">Active Status</label>
-                 </div>
+                <div className="flex items-center">
+                    <input type="checkbox" name="is_active" id="is_active" checked={formData.is_active} onChange={handleChange} className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                    <label htmlFor="is_active" className="ml-2 block text-sm text-gray-900 dark:text-gray-300">Active Status</label>
+                </div>
             </div>
 
             <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
