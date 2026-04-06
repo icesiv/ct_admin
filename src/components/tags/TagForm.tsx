@@ -34,6 +34,7 @@ export default function TagForm({ initialData, onSuccess }: TagFormProps) {
     const [loading, setLoading] = useState(false);
     const [name, setName] = useState(initialData?.name || "");
     const [slug, setSlug] = useState(initialData?.slug || "");
+    const [slugError, setSlugError] = useState<string | null>(null);
     const [customTitle, setCustomTitle] = useState(initialData?.custom_title || "");
     const [description, setDescription] = useState(initialData?.description || "");
     const [metaTitle, setMetaTitle] = useState(initialData?.meta_title || "");
@@ -117,6 +118,7 @@ export default function TagForm({ initialData, onSuccess }: TagFormProps) {
         e.preventDefault();
         if (!name.trim()) return;
 
+        setSlugError(null);
         setLoading(true);
         try {
             const url = initialData
@@ -144,7 +146,32 @@ export default function TagForm({ initialData, onSuccess }: TagFormProps) {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.message || "Failed to save tag");
+
+                // Handle Laravel-style validation errors: { errors: { slug: ["..."] } }
+                if (errorData.errors?.slug) {
+                    const msg = Array.isArray(errorData.errors.slug)
+                        ? errorData.errors.slug[0]
+                        : errorData.errors.slug;
+                    setSlugError(msg);
+                    addToast(msg, "error");
+                    return;
+                }
+
+                // Generic duplicate / unique constraint messages
+                const message: string = errorData.message || "Failed to save tag";
+                if (
+                    message.toLowerCase().includes("slug") &&
+                    (message.toLowerCase().includes("taken") ||
+                        message.toLowerCase().includes("exist") ||
+                        message.toLowerCase().includes("duplicate") ||
+                        message.toLowerCase().includes("unique"))
+                ) {
+                    setSlugError("This slug is already taken. Please choose a different one.");
+                    addToast("Slug already exists.", "error");
+                    return;
+                }
+
+                throw new Error(message);
             }
 
             addToast(initialData ? "Topic updated successfully!" : "Topic created successfully!", "success");
@@ -258,13 +285,25 @@ export default function TagForm({ initialData, onSuccess }: TagFormProps) {
                             <input
                                 type="text"
                                 value={slug}
-                                onChange={(e) => setSlug(e.target.value)}
+                                onChange={(e) => {
+                                    setSlug(e.target.value);
+                                    if (slugError) setSlugError(null);
+                                }}
                                 placeholder="Enter slug (optional)"
-                                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:outline-none dark:bg-gray-700 dark:text-white ${
+                                    slugError
+                                        ? "border-red-500 focus:ring-red-400 dark:border-red-500"
+                                        : "border-gray-300 dark:border-gray-600 focus:ring-blue-500 focus:border-blue-500"
+                                }`}
                                 disabled={loading}
                                 minLength={1}
                                 maxLength={255}
                             />
+                            {slugError && (
+                                <p className="mt-1.5 text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
+                                    <span>⚠</span> {slugError}
+                                </p>
+                            )}
                         </div>
 
                         <div>

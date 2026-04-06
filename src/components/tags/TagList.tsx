@@ -51,6 +51,27 @@ export default function TagList() {
         tag.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    const slugCounts = new Map<string, number>();
+    tags.forEach((tag) => {
+        if (tag.slug) {
+            slugCounts.set(tag.slug, (slugCounts.get(tag.slug) || 0) + 1);
+        }
+    });
+
+    const displayTags = [...filteredTags].sort((a, b) => {
+        const aIsDuplicate = (slugCounts.get(a.slug) || 0) > 1;
+        const bIsDuplicate = (slugCounts.get(b.slug) || 0) > 1;
+        
+        if (aIsDuplicate && !bIsDuplicate) return -1;
+        if (!aIsDuplicate && bIsDuplicate) return 1;
+        
+        if (aIsDuplicate && bIsDuplicate) {
+            return a.slug.localeCompare(b.slug);
+        }
+        
+        return 0;
+    });
+
     return (
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden p-6">
 
@@ -71,19 +92,32 @@ export default function TagList() {
                 </div>
             ) : error ? (
                 <div className="p-6 text-center text-red-500 text-sm">{error}</div>
-            ) : filteredTags.length === 0 ? (
+            ) : displayTags.length === 0 ? (
                 <div className="p-6 text-center text-gray-500">No topics found</div>
             ) : (
                 <div className="flex flex-wrap gap-2">
-                    {filteredTags.map((tag) => (
-                        <button
-                            key={tag.id}
-                            onClick={() => handleTagClick(tag.id)}
-                            className="px-3 py-1.5 bg-gray-100 hover:bg-blue-50 text-gray-700 hover:text-blue-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 rounded-full text-sm font-medium transition-colors border border-gray-200 dark:border-gray-600"
-                        >
-                            {tag.name}
-                        </button>
-                    ))}
+                    {displayTags.map((tag) => {
+                        const isDuplicate = (slugCounts.get(tag.slug) || 0) > 1;
+                        return (
+                            <button
+                                key={tag.id}
+                                onClick={() => handleTagClick(tag.id)}
+                                title={isDuplicate ? `Fix duplicate: Same slug "${tag.slug}"` : `Slug: ${tag.slug}`}
+                                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors border ${
+                                    isDuplicate
+                                        ? "bg-red-50 hover:bg-red-100 text-red-700 border-red-300 dark:bg-red-900/30 dark:hover:bg-red-900/50 dark:text-red-400 dark:border-red-700/50"
+                                        : "bg-gray-100 hover:bg-blue-50 text-gray-700 hover:text-blue-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 border-gray-200 dark:border-gray-600"
+                                }`}
+                            >
+                                {tag.name}
+                                {isDuplicate && (
+                                    <span className="ml-1.5 text-xs bg-red-200 dark:bg-red-800 text-red-800 dark:text-red-200 px-1.5 py-0.5 rounded-full">
+                                        Fix
+                                    </span>
+                                )}
+                            </button>
+                        );
+                    })}
                 </div>
             )}
         </div>
