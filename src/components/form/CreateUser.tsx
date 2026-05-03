@@ -8,11 +8,12 @@ import React, { useState, ChangeEvent, FormEvent } from "react";
 
 interface FormData {
     name: string;
-    user_role: string;
+    is_super_admin: boolean;
     email: string;
     phone: string;
     password: string;
     confirm_password: string;
+    assigned_menus: string[];
 }
 
 interface Message {
@@ -29,7 +30,7 @@ export default function CreateUserForm() {
     const [message, setMessage] = useState<Message>({ type: '', text: '' });
     const [formData, setFormData] = useState<FormData>({
         name: '',
-        user_role: 'author',
+        is_super_admin: false,
         email: '',
         phone: '',
         password: '',
@@ -37,10 +38,11 @@ export default function CreateUserForm() {
     });
 
     const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        const { name, value } = e.target;
+        const { name, value, type } = e.target;
+        const checked = (e.target as HTMLInputElement).checked;
         setFormData(prev => ({
             ...prev,
-            [name]: value
+            [name]: type === 'checkbox' ? checked : value
         }));
     }
 
@@ -150,7 +152,7 @@ export default function CreateUserForm() {
 
             // Add text fields
             submitData.append('name', formData.name);
-            submitData.append('user_role', formData.user_role);
+            submitData.append('is_super_admin', formData.is_super_admin ? '1' : '0');
             submitData.append('email', formData.email);
             submitData.append('phone', formData.phone);
             submitData.append('password', formData.password);
@@ -186,7 +188,7 @@ export default function CreateUserForm() {
             // Reset form after successful creation
             setFormData({
                 name: '',
-                user_role: 'author',
+                is_super_admin: false,
                 email: '',
                 phone: '',
                 password: '',
@@ -288,23 +290,19 @@ export default function CreateUserForm() {
                         />
                     </div>
 
-                    {/* User Role */}
-                    <div className="sm:col-span-1">
-                        <Label>
-                            User Role
-                        </Label>
-                        <select
-                            id="user_role"
-                            name="user_role"
-                            defaultValue={formData.user_role}
+                    {/* Super Admin */}
+                    <div className="sm:col-span-1 flex items-center mt-8">
+                        <input
+                            type="checkbox"
+                            id="is_super_admin"
+                            name="is_super_admin"
+                            checked={formData.is_super_admin}
                             onChange={handleInputChange}
-                            className="h-11 w-full text-center rounded-lg border py-2.5 shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 0 dark:placeholder:text-white/30 bg-transparent text-gray-800 border-gray-300 focus:border-brand-300 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-brand-800"
-                        >
-                            <option value="user">Author</option>
-                            <option value="admin">Editor</option>
-                            <option value="admin">Manager</option>
-                            <option value="admin">Admin</option>
-                        </select>
+                            className="mr-2 rounded text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 dark:bg-gray-700 h-4 w-4"
+                        />
+                        <Label>
+                            Is Super Admin
+                        </Label>
                     </div>
 
                     {/* Email */}

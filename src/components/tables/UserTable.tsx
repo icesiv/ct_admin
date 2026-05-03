@@ -255,7 +255,7 @@ export default function UserTable() {
                   isHeader
                   className="px-5 py-3 font-medium text-gray-500 text-center text-theme-xs dark:text-gray-400"
                 >
-                  Role
+                  Super Admin
                 </TableCell>
                 <TableCell
                   isHeader
@@ -306,7 +306,7 @@ export default function UserTable() {
                     {user.email}
                   </TableCell>
                   <TableCell className="px-4 py-3 text-gray-500 text-center text-theme-sm dark:text-gray-400">
-                    {user.user_role}
+                    {user.is_super_admin ? 'Yes' : 'No'}
                   </TableCell>
                   <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                     <Badge

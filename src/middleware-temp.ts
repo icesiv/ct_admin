@@ -23,11 +23,9 @@ function getUserRoleFromToken(request: NextRequest): 'admin' | 'editor' | 'basic
     if (!token) return null;
 
     const decodedToken: any = jwtDecode(token);
-    const role = decodedToken?.user_role;
+    const is_super_admin = decodedToken?.is_super_admin;
 
-    if (role && ['admin', 'editor', 'basic'].includes(role)) {
-       return role as 'admin' | 'editor' | 'basic';
-    }
+    return is_super_admin ? 'admin' : 'basic';
     return null;
   } catch (error) {
     console.error("Error getting user role from token:", error);

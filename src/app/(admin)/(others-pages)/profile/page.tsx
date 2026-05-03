@@ -12,7 +12,7 @@ interface AuthUser {
   name: string;
   email: string;
   phone?: string;
-  user_role?: string;
+  is_super_admin?: boolean;
   profile_image?: string | null;
   created_at: string | Date;
 }
@@ -30,7 +30,7 @@ export default function Profile() {
     name: user.name,
     email: user.email,
     phone: user.phone,
-    user_role: user.user_role ?? 'user', // Default to 'user'
+    is_super_admin: user.is_super_admin ?? false,
     profile_image: user.profile_image ?? null,
     created_at: typeof user.created_at === 'string' ? user.created_at : user.created_at.toISOString(),
   };

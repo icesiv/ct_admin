@@ -3,13 +3,15 @@
 import { User } from '@/types/user';
 import React, { useState, useEffect } from "react";
 import { BASE_URL } from "@/config/config";
+import { allNavItems } from "@/layout/AppSidebar";
 
 interface EditFormData {
   name: string;
   email: string;
   phone: string;
-  user_role: string;
+  is_super_admin: boolean;
   profile_image: string | null;
+  assigned_menus: string[];
 }
 
 interface UserEditModalProps {
@@ -34,8 +36,9 @@ export default function UserEditModal({ user, isOpen, onClose, onSave }: UserEdi
     name: user.name,
     email: user.email,
     phone: user.phone || '',
-    user_role: user.user_role,
+    is_super_admin: user.is_super_admin,
     profile_image: user.profile_image,
+    assigned_menus: user.assigned_menus || [],
   });
 
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -51,8 +54,9 @@ export default function UserEditModal({ user, isOpen, onClose, onSave }: UserEdi
         name: user.name,
         email: user.email,
         phone: user.phone || '',
-        user_role: user.user_role || 'user',
-        profile_image: user.profile_image
+        is_super_admin: user.is_super_admin || false,
+        profile_image: user.profile_image,
+        assigned_menus: user.assigned_menus || []
       });
       setImageFile(null);
       setValidationErrors({});
@@ -102,8 +106,9 @@ export default function UserEditModal({ user, isOpen, onClose, onSave }: UserEdi
       name: '',
       email: '',
       phone: '',
-      user_role: '',
-      profile_image: null
+      is_super_admin: false,
+      profile_image: null,
+      assigned_menus: []
     });
     setImageFile(null);
     setImagePreview(null);
@@ -112,10 +117,11 @@ export default function UserEditModal({ user, isOpen, onClose, onSave }: UserEdi
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: type === 'checkbox' ? checked : value
     }));
 
     // Real-time validation
@@ -141,6 +147,17 @@ export default function UserEditModal({ user, isOpen, onClose, onSave }: UserEdi
     }
 
     setValidationErrors(newErrors);
+  };
+
+  const handleMenuCheckboxChange = (menuName: string) => {
+    setFormData(prev => {
+      const currentMenus = prev.assigned_menus || [];
+      if (currentMenus.includes(menuName)) {
+        return { ...prev, assigned_menus: currentMenus.filter(m => m !== menuName) };
+      } else {
+        return { ...prev, assigned_menus: [...currentMenus, menuName] };
+      }
+    });
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -247,7 +264,8 @@ export default function UserEditModal({ user, isOpen, onClose, onSave }: UserEdi
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
-        user_role: formData.user_role,
+        is_super_admin: formData.is_super_admin,
+        assigned_menus: formData.assigned_menus,
         ...(profileImagePath !== undefined && { profile_image: profileImagePath })
       };
 
@@ -274,7 +292,8 @@ export default function UserEditModal({ user, isOpen, onClose, onSave }: UserEdi
           name: formData.name,
           email: formData.email,
           phone: formData.phone,
-          user_role: formData.user_role,
+          is_super_admin: formData.is_super_admin,
+          assigned_menus: formData.assigned_menus,
           profile_image: profileImagePath
         };
 
@@ -462,23 +481,43 @@ export default function UserEditModal({ user, isOpen, onClose, onSave }: UserEdi
               )}
             </div>
 
-            {/* Role Field */}
+            {/* Super Admin Checkbox */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Role
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  name="is_super_admin"
+                  checked={formData.is_super_admin}
+                  onChange={handleInputChange}
+                  className="rounded text-blue-600 focus:ring-blue-500 border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600"
+                />
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Is Super Admin
+                </span>
               </label>
-              <select
-                name="user_role"
-                value={formData.user_role}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              >
-                <option value="user">User</option>
-                <option value="admin">Admin</option>
-                <option value="editor">Editor</option>
-                <option value="manager">Manager</option>
-              </select>
             </div>
+
+            {/* Assigned Menus (Only for non-super-admin users) */}
+            {!formData.is_super_admin && (
+              <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Assigned Menus
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {allNavItems.map((item) => (
+                    <label key={item.name} className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        checked={(formData.assigned_menus || []).includes(item.name)}
+                        onChange={() => handleMenuCheckboxChange(item.name)}
+                        className="rounded text-blue-600 focus:ring-blue-500 border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600"
+                      />
+                      <span className="text-sm text-gray-700 dark:text-gray-300">{item.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Reset Password Button Section */}
             <div className="pt-4 border-t border-gray-200 dark:border-gray-700">

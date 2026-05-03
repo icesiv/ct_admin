@@ -24,9 +24,10 @@ interface Tag {
 interface TagFormProps {
     initialData?: Tag | null;
     onSuccess?: () => void;
+    onCancel?: () => void;
 }
 
-export default function TagForm({ initialData, onSuccess }: TagFormProps) {
+export default function TagForm({ initialData, onSuccess, onCancel }: TagFormProps) {
     const { authFetch } = useAuth();
     const { addToast } = useToast();
     const router = useRouter();
@@ -377,7 +378,7 @@ export default function TagForm({ initialData, onSuccess }: TagFormProps) {
                 <div className="flex gap-2 justify-end">
                     <button
                         type="button"
-                        onClick={() => router.back()}
+                        onClick={() => onCancel ? onCancel() : router.back()}
                         className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 rounded-lg transition-colors flex items-center gap-2"
                         disabled={loading}
                     >

@@ -1,6 +1,6 @@
 "use client";
 import React, { useCallback, useRef, useState, useEffect } from 'react';
-import { Save, X, Plus, Image as ImageIcon } from 'lucide-react';
+import { Save, X, Plus, Image as ImageIcon, Tag as TagIcon } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { FeatureImageUploader } from '@/components/editor/FeatureUploader';
 import MultiselectDropdown from '@/components/ui/dropdown/MultiselectDropdown';
@@ -15,6 +15,7 @@ import { WysiwygEditorRef } from '@/components/editor';
 import Switch from "@/components/form/switch/Switch";
 
 import { useToast } from "@/components/ToastProvider";
+import TagSelectModal from '@/components/tags/TagSelectModal';
 
 // Type definitions
 interface Category {
@@ -65,6 +66,7 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
   const isEditMode = !!postId;
   const [isFeature, setIsFeature] = useState<boolean>(true);
   const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [isTagModalOpen, setIsTagModalOpen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isLoadingPost, setIsLoadingPost] = useState<boolean>(isEditMode);
   const [editorContent, setContent] = useState('');
@@ -96,8 +98,7 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
 
   });
 
-  // Tag-related state
-  const [tagInput, setTagInput] = useState<string>('');
+  // Tag-related state (modal-based selection only)
 
   const { news_categories, savePost, getPost, router, authFetch } = useAuth();
 
@@ -223,15 +224,6 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
   };
 
   // Tag handling functions
-  const handleTagAdd = (tagName: string): void => {
-    if (tagName.trim() && !formData.tags.includes(tagName.trim())) {
-      setFormData((prev: FormData) => ({
-        ...prev,
-        tags: [...prev.tags, tagName.trim()]
-      }));
-    }
-  };
-
   const handleTagRemove = (tagToRemove: string): void => {
     setFormData((prev: FormData) => ({
       ...prev,
@@ -239,26 +231,13 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
     }));
   };
 
+  const handleTagsConfirm = (tags: string[]): void => {
+    setFormData((prev: FormData) => ({ ...prev, tags }));
+  };
+
   const OpenModal = (flag: boolean, isFeature: boolean): void => {
     setIsOpen(flag);
     setIsFeature(isFeature);
-  };
-
-  const handleTagInputKeyPress = (e: React.KeyboardEvent<HTMLInputElement>): void => {
-    if (e.key === 'Enter' || e.key === ',') {
-      e.preventDefault();
-      if (tagInput.trim()) {
-        handleTagAdd(tagInput);
-        setTagInput('');
-      }
-    }
-  };
-
-  const handleTagInputSubmit = (): void => {
-    if (tagInput.trim()) {
-      handleTagAdd(tagInput);
-      setTagInput('');
-    }
   };
 
   const handleSwitchChange = (checked: boolean): void => {
@@ -396,7 +375,6 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
             lead_news_order: '',
             breaking_news_order: '',
           });
-          setTagInput('');
           setContent(''); // Clear editor content state if used
           // Note: editorRef might need specific clearing depending on implementation, 
           // but normally updating key or remounting works. 
@@ -681,51 +659,52 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
 
           {/* Tags Section */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-              Tags
-            </label>
-
-            {/* Tag input */}
-            <div className="flex gap-2 mb-4">
-              <input
-                type="text"
-                value={tagInput}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTagInput(e.target.value)}
-                onKeyPress={handleTagInputKeyPress}
-                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-                placeholder="Type a tag and press Enter or comma..."
-              />
+            <div className="flex items-center justify-between mb-3">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Tags
+                {formData.tags.length > 0 && (
+                  <span className="ml-2 text-xs text-gray-500 dark:text-gray-400 font-normal">
+                    ({formData.tags.length}/10)
+                  </span>
+                )}
+              </label>
               <button
                 type="button"
-                onClick={handleTagInputSubmit}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                onClick={() => setIsTagModalOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-400 border border-blue-300 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
               >
-                <Plus className="w-4 h-4" />
+                <TagIcon className="w-3.5 h-3.5" />
+                Manage Tags
               </button>
             </div>
 
             {/* Selected Tags */}
-            {formData.tags.length > 0 && (
-              <div className="flex gap-2">
-                <div className="flex flex-wrap gap-2">
-                  {formData.tags.map((tag: string, index: number) => (
-                    <span
-                      key={index}
-                      className="inline-flex items-center px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium border border-blue-200 dark:border-blue-700"
+            {formData.tags.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {formData.tags.map((tag: string, index: number) => (
+                  <span
+                    key={index}
+                    className="inline-flex items-center px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium border border-blue-200 dark:border-blue-700"
+                  >
+                    #{tag}
+                    <button
+                      type="button"
+                      onClick={() => handleTagRemove(tag)}
+                      className="ml-2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 focus:outline-none"
                     >
-                      #{tag}
-                      <button
-                        type="button"
-                        onClick={() => handleTagRemove(tag)}
-                        className="ml-2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 focus:outline-none"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </span>
-                  ))}
-                </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">({formData.tags.length}/10)</p>
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
               </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setIsTagModalOpen(true)}
+                className="w-full py-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-400 dark:text-gray-500 hover:border-blue-400 hover:text-blue-500 dark:hover:border-blue-600 dark:hover:text-blue-400 transition-colors"
+              >
+                Click to add tags…
+              </button>
             )}
           </div>
         </div>
@@ -858,6 +837,13 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
             }
         }
         OpenModal={OpenModal}
+      />
+
+      <TagSelectModal
+        isOpen={isTagModalOpen}
+        onClose={() => setIsTagModalOpen(false)}
+        selectedTags={formData.tags}
+        onConfirm={handleTagsConfirm}
       />
 
       {/* Header with title and action buttons */}

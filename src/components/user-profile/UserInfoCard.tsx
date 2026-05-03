@@ -27,7 +27,7 @@ export default function UserInfoCard({ user }: UserInfoCardProps) {
 
   const normalizedUser = {
     ...user,
-    user_role: user.user_role ?? 'user', // Provide default role
+    is_super_admin: user.is_super_admin ?? false,
   };
 
   return (
@@ -79,10 +79,10 @@ export default function UserInfoCard({ user }: UserInfoCardProps) {
 
             <div>
               <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
-                Role
+                Super Admin
               </p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90 capitalize">
-                {user?.user_role}
+                {user?.is_super_admin ? 'Yes' : 'No'}
               </p>
             </div>
           </div>

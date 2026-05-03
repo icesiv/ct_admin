@@ -2,6 +2,7 @@
 import React, { useEffect, useState, DragEvent } from 'react';
 import { ChevronDown, ChevronRight, Plus, Edit2, Trash2, Save, X, RefreshCcw } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { revalidateFrontend } from '@/actions/revalidate';
 
 // --- TYPES --------------------------------------------------------------
 interface MenuItem {
@@ -589,7 +590,10 @@ const MenuBuilder: React.FC = () => {
     <div className="space-y-4 max-w-4xl mx-auto">
       <MenuHeader
         onReload={reload}
-        onSave={() => saveMenu({ name: 'main_navigation', menu: JSON.stringify(cleanMenuData(menuItems)) })}
+        onSave={async () => {
+          await saveMenu({ name: 'main_navigation', menu: JSON.stringify(cleanMenuData(menuItems)) });
+          await revalidateFrontend('nav_menu');
+        }}
         onAdd={() => openAddModal()}
       />
 
@@ -606,7 +610,10 @@ const MenuBuilder: React.FC = () => {
 
       <MenuHeader
         onReload={reload}
-        onSave={() => saveMenu({ name: 'main_navigation', menu: JSON.stringify(cleanMenuData(menuItems)) })}
+        onSave={async () => {
+          await saveMenu({ name: 'main_navigation', menu: JSON.stringify(cleanMenuData(menuItems)) });
+          await revalidateFrontend('nav_menu');
+        }}
         onAdd={() => openAddModal()}
       />
 

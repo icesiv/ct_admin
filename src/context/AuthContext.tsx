@@ -1,11 +1,16 @@
 "use client"
-import { createContext, useContext, useEffect, useReducer, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useReducer, useRef, ReactNode, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import { BASE_URL } from '@/config/config';
 import { rootReducer } from '@/reducers';
+import { User } from '@/types/user';
 
-import { User } from '@/types/user'; // Assuming you have a utility function for auth checks
+// Inactivity timeout: 4 hours in milliseconds
+const INACTIVITY_TIMEOUT_MS = 4 * 60 * 60 * 1000;
+// How often to check for inactivity (every 60 seconds)
+const INACTIVITY_CHECK_INTERVAL_MS = 60 * 1000;
+const LAST_ACTIVITY_KEY = 'last_activity';
 
 interface AuthState {
     user: User | null;
@@ -87,6 +92,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         categories: { data: [] }
     } as RootState);
 
+    const inactivityTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
     const { user, loading, isAuthenticated, error, showLogin } = state.auth;
     const { data } = state.categories;
 
@@ -122,6 +129,48 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
     };
 
+    // ── Inactivity tracking ──────────────────────────────────────────────────
+
+    /** Record the current timestamp as the last user activity. */
+    const updateLastActivity = useCallback(() => {
+        localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
+    }, []);
+
+    /** Start listening to user-activity events and schedule periodic checks. */
+    const startInactivityWatcher = useCallback(() => {
+        // Stamp the activity immediately when watcher starts
+        updateLastActivity();
+
+        const activityEvents: string[] = ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
+        activityEvents.forEach(event => window.addEventListener(event, updateLastActivity, { passive: true }));
+
+        // Periodic check every minute
+        inactivityTimerRef.current = setInterval(() => {
+            const lastActivity = parseInt(localStorage.getItem(LAST_ACTIVITY_KEY) || '0', 10);
+            const idleMs = Date.now() - lastActivity;
+
+            if (idleMs >= INACTIVITY_TIMEOUT_MS) {
+                handleLogout();
+            }
+        }, INACTIVITY_CHECK_INTERVAL_MS);
+
+        return () => {
+            activityEvents.forEach(event => window.removeEventListener(event, updateLastActivity));
+            if (inactivityTimerRef.current) clearInterval(inactivityTimerRef.current);
+        };
+    }, [updateLastActivity]);
+
+    /** Stop the inactivity watcher and clean up. */
+    const stopInactivityWatcher = useCallback(() => {
+        if (inactivityTimerRef.current) {
+            clearInterval(inactivityTimerRef.current);
+            inactivityTimerRef.current = null;
+        }
+        localStorage.removeItem(LAST_ACTIVITY_KEY);
+    }, []);
+
+    // ────────────────────────────────────────────────────────────────────────────
+
     // Check authentication on mount
     useEffect(() => {
         checkAuth();
@@ -134,6 +183,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             fetchUser();
         }
     }, [isAuthenticated, user]);
+
+    // Start / stop inactivity watcher based on authentication state
+    useEffect(() => {
+        if (isAuthenticated) {
+            const cleanup = startInactivityWatcher();
+            return cleanup;
+        } else {
+            stopInactivityWatcher();
+        }
+    }, [isAuthenticated]);
 
     const checkAuth = async (): Promise<void> => {
         const token = localStorage.getItem('auth_token');
@@ -195,6 +254,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             if (response.ok) {
                 // Store token
                 localStorage.setItem('auth_token', data.token);
+                // Stamp the initial activity time on login
+                localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
 
                 // Set user data
                 dispatch({ type: 'SET_USER', payload: data.user });
@@ -232,6 +293,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             // Clear local storage and state
             localStorage.removeItem('auth_token');
             localStorage.removeItem('user');
+            localStorage.removeItem(LAST_ACTIVITY_KEY);
+            stopInactivityWatcher();
             dispatch({ type: 'LOGOUT' });
             router.push('/signin');
         }
