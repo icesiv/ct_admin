@@ -34,7 +34,8 @@ export default function CreateUserForm() {
         email: '',
         phone: '',
         password: '',
-        confirm_password: ''
+        confirm_password: '',
+        assigned_menus: []
     });
 
     const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -192,7 +193,8 @@ export default function CreateUserForm() {
                 email: '',
                 phone: '',
                 password: '',
-                confirm_password: ''
+                confirm_password: '',
+                assigned_menus: []
             });
 
             // Clear image
