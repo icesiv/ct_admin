@@ -15,7 +15,7 @@ import { WysiwygEditorRef } from '@/components/editor';
 import Switch from "@/components/form/switch/Switch";
 
 import { useToast } from "@/components/ToastProvider";
-import TagSelectModal from '@/components/tags/TagSelectModal';
+import TagInput from '@/components/tags/TagInput';
 
 // Type definitions
 interface Category {
@@ -66,7 +66,6 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
   const isEditMode = !!postId;
   const [isFeature, setIsFeature] = useState<boolean>(true);
   const [isOpen, setIsOpen] = useState<boolean>(false);
-  const [isTagModalOpen, setIsTagModalOpen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isLoadingPost, setIsLoadingPost] = useState<boolean>(isEditMode);
   const [editorContent, setContent] = useState('');
@@ -658,54 +657,12 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
           </div>
 
           {/* Tags Section */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Tags
-                {formData.tags.length > 0 && (
-                  <span className="ml-2 text-xs text-gray-500 dark:text-gray-400 font-normal">
-                    ({formData.tags.length}/10)
-                  </span>
-                )}
-              </label>
-              <button
-                type="button"
-                onClick={() => setIsTagModalOpen(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-400 border border-blue-300 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-              >
-                <TagIcon className="w-3.5 h-3.5" />
-                Manage Tags
-              </button>
-            </div>
-
-            {/* Selected Tags */}
-            {formData.tags.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {formData.tags.map((tag: string, index: number) => (
-                  <span
-                    key={index}
-                    className="inline-flex items-center px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium border border-blue-200 dark:border-blue-700"
-                  >
-                    #{tag}
-                    <button
-                      type="button"
-                      onClick={() => handleTagRemove(tag)}
-                      className="ml-2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 focus:outline-none"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setIsTagModalOpen(true)}
-                className="w-full py-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-400 dark:text-gray-500 hover:border-blue-400 hover:text-blue-500 dark:hover:border-blue-600 dark:hover:text-blue-400 transition-colors"
-              >
-                Click to add tags…
-              </button>
-            )}
+          <div className="mb-6">
+            <TagInput
+              selectedTags={formData.tags}
+              onTagsChange={handleTagsConfirm}
+              maxTags={10}
+            />
           </div>
         </div>
 
@@ -837,13 +794,6 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
             }
         }
         OpenModal={OpenModal}
-      />
-
-      <TagSelectModal
-        isOpen={isTagModalOpen}
-        onClose={() => setIsTagModalOpen(false)}
-        selectedTags={formData.tags}
-        onConfirm={handleTagsConfirm}
       />
 
       {/* Header with title and action buttons */}

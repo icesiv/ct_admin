@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { Newspaper, Users, Settings } from "lucide-react";
+import { FilePlus, Library, Star, Zap } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Welcome | CT Admin",
@@ -23,14 +23,36 @@ export default function Home() {
         />
       </div>
 
-      {/* Welcome Message */}
-      <div className="text-center max-w-2xl mx-auto space-y-4 mb-12">
-        <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-gray-900 dark:text-white">
-          Welcome to <span className="text-brand-500">Dashboard</span>
-        </h1>
-        <p className="text-lg text-gray-500 dark:text-gray-400">
-          Manage your content, users, and platform settings from this centralized dashboard..
-        </p>
+      {/* Quick Actions */}
+      <div className="grid grid-cols-2 md:flex md:flex-row gap-3 md:gap-4 w-full max-w-sm md:max-w-none justify-center mx-auto">
+        <Link
+          href="/posts/create"
+          className="flex items-center justify-center space-x-2 px-3 py-3 md:px-5 md:py-2.5 text-sm md:text-base font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors shadow-sm"
+        >
+          <FilePlus className="w-4 h-4 md:w-5 md:h-5" />
+          <span className="whitespace-nowrap">New Post</span>
+        </Link>
+        <Link
+          href="/posts"
+          className="flex items-center justify-center space-x-2 px-3 py-3 md:px-5 md:py-2.5 text-sm md:text-base font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors shadow-sm"
+        >
+          <Library className="w-4 h-4 md:w-5 md:h-5" />
+          <span className="whitespace-nowrap">All Posts</span>
+        </Link>
+        <Link
+          href="/posts"
+          className="flex items-center justify-center space-x-2 px-3 py-3 md:px-5 md:py-2.5 text-sm md:text-base font-medium text-white bg-amber-500 rounded-lg hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors shadow-sm"
+        >
+          <Star className="w-4 h-4 md:w-5 md:h-5" />
+          <span className="whitespace-nowrap">Lead News</span>
+        </Link>
+        <Link
+          href="/posts"
+          className="flex items-center justify-center space-x-2 px-3 py-3 md:px-5 md:py-2.5 text-sm md:text-base font-medium text-white bg-rose-600 rounded-lg hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500 transition-colors shadow-sm"
+        >
+          <Zap className="w-4 h-4 md:w-5 md:h-5" />
+          <span className="whitespace-nowrap">Breaking News</span>
+        </Link>
       </div>
     </div>
   );

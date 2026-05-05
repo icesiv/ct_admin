@@ -4,7 +4,7 @@ import { useAuth } from "@/context/AuthContext"; // Make sure this path is corre
 import AppHeader from "@/layout/AppHeader";
 import AppSidebar from "@/layout/AppSidebar";
 import Backdrop from "@/layout/Backdrop";
-import React from "react";
+import React, { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { allNavItems } from "@/layout/AppSidebar";
 
@@ -17,8 +17,26 @@ type UserRole = 'admin' | 'editor' | 'basic';
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const { isExpanded, isHovered, isMobileOpen } = useSidebar();
 
-  const { user, loading } = useAuth();
+  const { user, loading, isAuthenticated, router } = useAuth();
   const pathname = usePathname();
+
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      router.push('/signin');
+    }
+  }, [loading, isAuthenticated, router]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500"></div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   let isSuperAdmin: boolean = false; // Default value
 
