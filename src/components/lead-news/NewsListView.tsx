@@ -37,16 +37,6 @@ interface User {
     name: string;
 }
 
-interface AuthContextType {
-    user: User | null;
-    loading: boolean;
-    isAuthenticated: boolean;
-    handleLogout: () => void;
-    router: {
-        push: (path: string) => void;
-    };
-}
-
 const NewsListView: React.FC = () => {
     const { user, loading, isAuthenticated, router, authFetch } = useAuth();
 
@@ -272,19 +262,19 @@ const NewsListView: React.FC = () => {
                             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                 {newsData.map((news) => (
                                     <tr key={news.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200">
-                                        <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100 flex flex-col gap-1 items-start justify-center h-full">
+                                        <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100 flex flex-row gap-1 items-center h-full">
                                             {news.post_status === 1 ?
                                                 <span className="text-green-500 font-semibold">{news.id}</span> :
                                                 <span className="text-red-500 font-semibold">{news.id}</span>
                                             }
                                             {news.is_lead && (
-                                                <span className="px-2 py-0.5 mt-1 text-[10px] font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300 rounded-full">
-                                                    Lead
+                                                <span className="shadow-sm w-6 h-6 center text-[9px] bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300 rounded-full inline-flex items-center justify-center">
+                                                    L
                                                 </span>
                                             )}
                                             {news.is_breaking && (
-                                                <span className="px-2 py-0.5 mt-1 text-[10px] font-medium bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300 rounded-full whitespace-nowrap">
-                                                    Breaking
+                                                <span className="shadow-sm w-6 h-6 center text-[9px] bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300 rounded-full inline-flex items-center justify-center">
+                                                    B
                                                 </span>
                                             )}
                                         </td>
