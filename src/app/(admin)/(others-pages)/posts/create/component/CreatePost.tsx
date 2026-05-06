@@ -296,8 +296,8 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
       errors.push('Please Add Feature Image');
     }
 
-    if (formData.tags.length > 10) {
-      errors.push('Please select maximum 10 tags');
+    if (formData.tags.length > 20) {
+      errors.push('Please select maximum 20 tags');
     }
 
     return errors;
@@ -661,7 +661,7 @@ export default function CreatePost({ postId: postId }: { postId: string | null |
             <TagInput
               selectedTags={formData.tags}
               onTagsChange={handleTagsConfirm}
-              maxTags={10}
+              maxTags={20}
             />
           </div>
         </div>
