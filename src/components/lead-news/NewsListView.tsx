@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Edit, Filter, Search } from 'lucide-react';
+import { Edit, Filter, Search, Eye } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { BASE_URL } from '@/config/config';
 import Pagination from '../tables/Pagination';
@@ -20,6 +20,7 @@ interface NewsArticle {
     is_lead?: boolean;
     is_breaking?: boolean;
     districts?: { id: number; name: string }[];
+    view_count?: number;
 }
 
 interface PaginationData {
@@ -280,11 +281,9 @@ const NewsListView: React.FC = () => {
                                         </td>
                                         <td className="px-6 py-2 text-left text-sm text-gray-900 dark:text-amber-100">
                                             <div className="font-medium mb-1">{news.title}</div>
-                                            <div className="text-xs text-gray-500 dark:text-gray-400">
-                                                {news.districts && news.districts.length > 0
-                                                    ? news.districts.map(d => d.name).join(', ')
-                                                    : <span className="italic text-gray-400 text-[11px]">কোন স্থান যোগ করা হয়নি (No Location)</span>
-                                                }
+                                            <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                                                <Eye className="w-3.5 h-3.5" />
+                                                <span>{news.view_count || 0} views</span>
                                             </div>
                                         </td>
                                         <td className="px-6 hidden md:block py-2 text-left whitespace-nowrap text-sm text-gray-500">
