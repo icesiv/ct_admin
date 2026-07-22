@@ -60,17 +60,25 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(({
   const { selectedText, savedRange, setSavedRange, handleTextSelection } = useSelection();
   const { uploading, uploadProgress, uploadImage } = useImageUpload(baseUrl);
 
-  // Initialize content - FIXED
+  // Initialize content - FIXED for async postContent loading
   useEffect(() => {
-    if (editorRef.current && !isInitialized) {
-      // Use postContent or empty string if null/undefined
+    if (editorRef.current) {
       const initialContent = postContent || '';
       const fixedContent = fixImageUrls(initialContent);
-      editorRef.current.innerHTML = fixedContent;
-      setContent(fixedContent);
-      setIsInitialized(true);
+      
+      if (!isInitialized) {
+        editorRef.current.innerHTML = fixedContent;
+        setContent(fixedContent);
+        if (postContent !== null && postContent !== undefined) {
+          setIsInitialized(true);
+        }
+      } else if (postContent && !content) {
+        // Handle postContent arriving after initial empty render
+        editorRef.current.innerHTML = fixedContent;
+        setContent(fixedContent);
+      }
     }
-  }, [postContent, isInitialized]);
+  }, [postContent, isInitialized, content]);
 
   // Update parent component - IMPROVED
   useEffect(() => {

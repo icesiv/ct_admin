@@ -25,6 +25,7 @@ import {
   ChartBarStacked,
   CircleUserRound,
   ChevronDown,
+  GraduationCap,
 } from "lucide-react";
 
 type NavItem = {
@@ -107,6 +108,11 @@ export const allNavItems: NavItem[] = [
     name: "Poll",
     icon: <LayoutList />,
     path: "/polls",
+  },
+  {
+    name: "Scholarships",
+    icon: <GraduationCap />,
+    path: "/scholarships",
   },
   {
     name: "Users",
