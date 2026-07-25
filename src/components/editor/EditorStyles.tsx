@@ -20,9 +20,26 @@ export const EditorStyles = () => (
       margin: 0.75rem 0;
     }
     
-    [contenteditable] ul, [contenteditable] ol {
+    [contenteditable] ul {
+      list-style-type: disc;
       padding-left: 2rem;
       margin: 1rem 0;
+    }
+    
+    [contenteditable] ol {
+      list-style-type: decimal;
+      padding-left: 2rem;
+      margin: 1rem 0;
+    }
+    
+    [contenteditable] ul ul {
+      list-style-type: circle;
+      margin: 0.25rem 0;
+    }
+    
+    [contenteditable] ol ol {
+      list-style-type: lower-alpha;
+      margin: 0.25rem 0;
     }
     
     [contenteditable] li {
