@@ -30,6 +30,8 @@ interface ToolbarProps {
   isSourceView?: boolean;
   onToggleSourceView?: () => void;
   onCleanFormatting?: () => void;
+  currentHeading?: string;
+  currentFontSize?: string;
 }
 
 export const Toolbar = memo<ToolbarProps>(({
@@ -42,7 +44,9 @@ export const Toolbar = memo<ToolbarProps>(({
   onEmbedCodeClick,
   isSourceView = false,
   onToggleSourceView,
-  onCleanFormatting
+  onCleanFormatting,
+  currentHeading = 'p',
+  currentFontSize = '18px'
 }) => {
   const toolbarButtons: ToolbarItem[] = [
     { icon: Bold, command: 'bold', title: 'Bold (Ctrl+B)' },
@@ -63,11 +67,15 @@ export const Toolbar = memo<ToolbarProps>(({
     { icon: FileCode, action: onEmbedCodeClick, title: 'Embed code (HTML)' },
   ];
 
+  // Ensure currentFontSize is included in font size options if it's a custom size
+  const hasCustomSize = currentFontSize && !fontSizeOptions.some(opt => opt.value === currentFontSize);
+
   return (
     <div className="bg-gray-50 dark:bg-gray-700 border-b border-gray-300 dark:border-gray-600 p-3">
       <div className="flex items-center gap-2 flex-wrap">
         <select
           disabled={isSourceView}
+          value={currentHeading}
           className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
           onChange={(e: ChangeEvent<HTMLSelectElement>) => {
             const option = headingOptions.find(opt => opt.value === e.target.value);
@@ -81,16 +89,17 @@ export const Toolbar = memo<ToolbarProps>(({
 
         <select
           disabled={isSourceView}
+          value={currentFontSize}
           className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[70px] bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
           onChange={(e: ChangeEvent<HTMLSelectElement>) => {
             if (e.target.value) {
               handleFontSize(e.target.value);
-              e.target.value = '';
             }
           }}
-          defaultValue=""
         >
-          <option value="" disabled>Size</option>
+          {hasCustomSize && (
+            <option value={currentFontSize}>{currentFontSize}</option>
+          )}
           {fontSizeOptions.map((option, index) => (
             <option key={index} value={option.value}>{option.label}</option>
           ))}

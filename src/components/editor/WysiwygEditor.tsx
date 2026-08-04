@@ -26,7 +26,7 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(({
   updatePostContent,
   postContent = null,
   baseUrl = 'https://campustimes.press',
-  maxImageSize = 10 * 1024 * 1024, // 10MB
+  maxImageSize = 3 * 1024 * 1024, // 10MB
   placeholder = 'Start writing your content here...',
   className = '',
   OpenModal,
@@ -54,12 +54,70 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(({
   const [dragOver, setDragOver] = useState<boolean>(false);
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
   const [isSourceView, setIsSourceView] = useState<boolean>(false);
+  const [currentHeading, setCurrentHeading] = useState<string>('p');
+  const [currentFontSize, setCurrentFontSize] = useState<string>('18px');
 
   const editorRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { selectedText, savedRange, setSavedRange, handleTextSelection } = useSelection();
   const { uploading, uploadProgress, uploadImage } = useImageUpload(baseUrl);
+
+  // Detect current selection formatting (heading style & font size)
+  const updateSelectionFormatting = useCallback(() => {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0 || !editorRef.current) return;
+
+    try {
+      const range = selection.getRangeAt(0);
+      if (!editorRef.current.contains(range.commonAncestorContainer)) return;
+
+      let node: Node | null = range.commonAncestorContainer;
+      if (node.nodeType === Node.TEXT_NODE) {
+        node = node.parentNode;
+      }
+
+      if (node instanceof HTMLElement) {
+        // 1. Detect Font Size
+        const computedSize = window.getComputedStyle(node).fontSize;
+        if (computedSize) {
+          const roundedSize = `${Math.round(parseFloat(computedSize))}px`;
+          setCurrentFontSize(roundedSize);
+        }
+
+        // 2. Detect Block Format / Heading
+        let blockNode: Node | null = node;
+        let foundHeading = 'p';
+        while (blockNode && blockNode !== editorRef.current) {
+          if (blockNode instanceof HTMLElement) {
+            const tag = blockNode.tagName.toLowerCase();
+            if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'div'].includes(tag)) {
+              foundHeading = tag === 'div' ? 'p' : tag;
+              break;
+            }
+          }
+          blockNode = blockNode.parentNode;
+        }
+        setCurrentHeading(foundHeading);
+      }
+    } catch (err) {
+      console.error('Error updating selection formatting:', err);
+    }
+  }, []);
+
+  // Listen to selection changes inside editor
+  useEffect(() => {
+    const handleSelectionChange = () => {
+      const selection = window.getSelection();
+      if (selection && selection.rangeCount > 0 && editorRef.current?.contains(selection.getRangeAt(0).commonAncestorContainer)) {
+        updateSelectionFormatting();
+      }
+    };
+    document.addEventListener('selectionchange', handleSelectionChange);
+    return () => {
+      document.removeEventListener('selectionchange', handleSelectionChange);
+    };
+  }, [updateSelectionFormatting]);
 
   // Toggle between visual editor and source code view
   const handleToggleSourceView = useCallback(() => {
@@ -82,14 +140,15 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(({
     if (editorRef.current && !isSourceView) {
       editorRef.current.innerHTML = cleaned;
     }
-  }, [content, isSourceView]);
+    setTimeout(updateSelectionFormatting, 20);
+  }, [content, isSourceView, updateSelectionFormatting]);
 
   // Initialize content - FIXED for async postContent loading
   useEffect(() => {
     if (editorRef.current && !isSourceView) {
       const initialContent = postContent || '';
       const fixedContent = fixImageUrls(initialContent);
-      
+
       if (!isInitialized) {
         editorRef.current.innerHTML = fixedContent;
         setContent(fixedContent);
@@ -121,9 +180,14 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(({
 
   // Command execution
   const execCommand = useCallback((command: string, value?: string) => {
-    document.execCommand(command, false, value ?? "");
+    let finalValue = value ?? "";
+    if (command === 'formatBlock' && finalValue && !finalValue.startsWith('<')) {
+      finalValue = `<${finalValue}>`;
+    }
+    document.execCommand(command, false, finalValue);
     editorRef.current?.focus();
-  }, []);
+    setTimeout(updateSelectionFormatting, 20);
+  }, [updateSelectionFormatting]);
 
   // Font handling
   const handleFontFamily = useCallback((fontFamily: string) => {
@@ -176,7 +240,9 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(({
         execCommand('fontSize', '3');
       }
     }
-  }, [execCommand]);
+    setCurrentFontSize(size);
+    setTimeout(updateSelectionFormatting, 20);
+  }, [execCommand, updateSelectionFormatting]);
 
   // Image handling - This is the method that will be exposed
   const insertImageIntoEditor = useCallback((imageData: ImageData) => {
@@ -650,6 +716,8 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(({
           isSourceView={isSourceView}
           onToggleSourceView={handleToggleSourceView}
           onCleanFormatting={handleCleanFormatting}
+          currentHeading={currentHeading}
+          currentFontSize={currentFontSize}
         />
 
         <div className="relative">
@@ -677,8 +745,7 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(({
                 max-h-[calc(50vh-200px)] overflow-y-auto
                 
                 
-                p-4 focus:outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 leading-relaxed ${ 
-                dragOver ? 'bg-blue-50 dark:bg-blue-900/20 border-2 border-dashed border-blue-300 dark:border-blue-500' : ''
+                p-4 focus:outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 leading-relaxed ${dragOver ? 'bg-blue-50 dark:bg-blue-900/20 border-2 border-dashed border-blue-300 dark:border-blue-500' : ''
                 }`}
               style={{
                 fontSize: '18px',
@@ -691,7 +758,7 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(({
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onKeyDown={handleKeyDown}
-              // onPaste={handlePaste}
+            // onPaste={handlePaste}
             />
           )}
 

@@ -122,18 +122,20 @@ export const cleanHtmlFormatting = (htmlContent: string | null | undefined): str
             const prop = trimmed.slice(0, colonIndex).trim().toLowerCase();
             const val = trimmed.slice(colonIndex + 1).trim();
 
-            // Filter out Word junk CSS properties
+            // Filter out Word junk CSS properties and inline overrides on cleanup
             if (
               prop.startsWith('mso-') ||
               prop.startsWith('-mso-') ||
               prop === 'font-family' ||
               prop === 'font-size' ||
+              prop === 'font-weight' ||
+              prop === 'color' ||
+              prop === 'margin' ||
+              prop.startsWith('margin-') ||
               prop === 'line-height' ||
-              prop === 'margin-bottom' ||
-              prop === 'margin-top' ||
-              prop === 'margin-left' ||
-              prop === 'margin-right' ||
-              prop === 'tab-stops'
+              prop === 'tab-stops' ||
+              prop.startsWith('break-') ||
+              prop.startsWith('page-break-')
             ) {
               return;
             }
@@ -149,17 +151,14 @@ export const cleanHtmlFormatting = (htmlContent: string | null | undefined): str
         }
       });
 
-      // 4. Unwrap or remove empty/redundant spans
+      // 4. Unwrap spans without attributes (preserving all inner text nodes and spaces)
       const spans = doc.body.querySelectorAll('span');
       spans.forEach(span => {
         if (span.attributes.length === 0) {
-          if (!span.textContent || span.textContent.trim() === '') {
+          if (span.childNodes.length === 0) {
             span.remove();
-          } else if (span.parentNode) {
-            while (span.firstChild) {
-              span.parentNode.insertBefore(span.firstChild, span);
-            }
-            span.remove();
+          } else {
+            span.replaceWith(...Array.from(span.childNodes));
           }
         }
       });
@@ -177,5 +176,10 @@ export const cleanHtmlFormatting = (htmlContent: string | null | undefined): str
     .replace(/\s*style="[^"]*mso-[^"]*"/gi, '')
     .replace(/\s*style="[^"]*font-family:[^"]*"/gi, '')
     .replace(/\s*style="[^"]*font-size:[^"]*"/gi, '')
+    .replace(/\s*style="[^"]*font-weight:[^"]*"/gi, '')
+    .replace(/\s*style="[^"]*color:[^"]*"/gi, '')
+    .replace(/\s*style="[^"]*margin[^:]*:[^"]*"/gi, '')
+    .replace(/\s*style="[^"]*break-[^:]*:[^"]*"/gi, '')
+    .replace(/\s*style="[^"]*page-break-[^:]*:[^"]*"/gi, '')
     .replace(/\s*style="[^"]*line-height:[^"]*"/gi, '');
 };

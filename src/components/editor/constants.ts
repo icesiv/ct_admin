@@ -1,7 +1,7 @@
 import { SelectOption } from './types';
 
 export const headingOptions: SelectOption[] = [
-  { label: 'Normal', command: 'formatBlock', value: 'div' },
+  { label: 'Normal', command: 'formatBlock', value: 'p' },
   { label: 'Heading 1', command: 'formatBlock', value: 'h1' },
   { label: 'Heading 2', command: 'formatBlock', value: 'h2' },
   { label: 'Heading 3', command: 'formatBlock', value: 'h3' },
