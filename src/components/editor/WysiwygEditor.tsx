@@ -16,7 +16,7 @@ import React, {
 
 import { WysiwygEditorProps, WysiwygEditorRef, ImageData } from './types';
 import { useSelection, useImageUpload } from './hooks';
-import { extractYouTubeVideoId, createYouTubeEmbed, fixImageUrls } from './utils';
+import { extractYouTubeVideoId, createYouTubeEmbed, fixImageUrls, cleanHtmlFormatting } from './utils';
 // import { createPasteHandler } from './pasteFilter';
 import { Toolbar } from './Toolbar';
 import { LinkModal, VideoModal, ImageModal, IframeModal, EmbedCodeModal } from './Modals';
@@ -53,6 +53,7 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(({
   const [embedCode, setEmbedCode] = useState<string>('');
   const [dragOver, setDragOver] = useState<boolean>(false);
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
+  const [isSourceView, setIsSourceView] = useState<boolean>(false);
 
   const editorRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -60,9 +61,32 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(({
   const { selectedText, savedRange, setSavedRange, handleTextSelection } = useSelection();
   const { uploading, uploadProgress, uploadImage } = useImageUpload(baseUrl);
 
+  // Toggle between visual editor and source code view
+  const handleToggleSourceView = useCallback(() => {
+    setIsSourceView(prev => {
+      if (!prev && editorRef.current) {
+        setContent(editorRef.current.innerHTML);
+      }
+      return !prev;
+    });
+  }, []);
+
+  // Clean HTML formatting (remove MS Word junk, classes, styles & lang attributes)
+  const handleCleanFormatting = useCallback(() => {
+    let currentHtml = content;
+    if (editorRef.current && !isSourceView) {
+      currentHtml = editorRef.current.innerHTML;
+    }
+    const cleaned = cleanHtmlFormatting(currentHtml);
+    setContent(cleaned);
+    if (editorRef.current && !isSourceView) {
+      editorRef.current.innerHTML = cleaned;
+    }
+  }, [content, isSourceView]);
+
   // Initialize content - FIXED for async postContent loading
   useEffect(() => {
-    if (editorRef.current) {
+    if (editorRef.current && !isSourceView) {
       const initialContent = postContent || '';
       const fixedContent = fixImageUrls(initialContent);
       
@@ -78,7 +102,14 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(({
         setContent(fixedContent);
       }
     }
-  }, [postContent, isInitialized, content]);
+  }, [postContent, isInitialized, content, isSourceView]);
+
+  // Keep editor content in sync when switching back from source view or updating content
+  useEffect(() => {
+    if (!isSourceView && editorRef.current && editorRef.current.innerHTML !== content) {
+      editorRef.current.innerHTML = content;
+    }
+  }, [isSourceView, content]);
 
   // Update parent component - IMPROVED
   useEffect(() => {
@@ -616,41 +647,61 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(({
           onVideoClick={handleVideoClick}
           onIframeClick={handleIframeClick}
           onEmbedCodeClick={handleEmbedCodeClick}
+          isSourceView={isSourceView}
+          onToggleSourceView={handleToggleSourceView}
+          onCleanFormatting={handleCleanFormatting}
         />
 
         <div className="relative">
-          <div
-            ref={editorRef}
-            contentEditable
-            suppressContentEditableWarning={true}
-            className={`min-h-96 
-              max-h-[calc(50vh-200px)] overflow-y-auto
-              
-              
-              p-4 focus:outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 leading-relaxed ${ 
-              dragOver ? 'bg-blue-50 dark:bg-blue-900/20 border-2 border-dashed border-blue-300 dark:border-blue-500' : ''
-              }`}
-            style={{
-              fontSize: '18px',
-              lineHeight: '1.6',
-            }}
-            onInput={handleContentChange}
-            onMouseUp={handleTextSelection}
-            onKeyUp={handleTextSelection}
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onKeyDown={handleKeyDown}
-            // onPaste={handlePaste}
-          />
+          {isSourceView ? (
+            <textarea
+              value={content}
+              onChange={(e) => {
+                const newContent = e.target.value;
+                setContent(newContent);
+              }}
+              placeholder="Enter HTML content with markup tags..."
+              className="w-full min-h-96 max-h-[calc(50vh-200px)] p-4 font-mono text-sm border-0 focus:outline-none bg-gray-900 text-emerald-400 dark:bg-gray-950 dark:text-emerald-400 placeholder-gray-500 leading-relaxed resize-y"
+              style={{
+                fontSize: '14px',
+                lineHeight: '1.6',
+                fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace'
+              }}
+            />
+          ) : (
+            <div
+              ref={editorRef}
+              contentEditable
+              suppressContentEditableWarning={true}
+              className={`min-h-96 
+                max-h-[calc(50vh-200px)] overflow-y-auto
+                
+                
+                p-4 focus:outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 leading-relaxed ${ 
+                dragOver ? 'bg-blue-50 dark:bg-blue-900/20 border-2 border-dashed border-blue-300 dark:border-blue-500' : ''
+                }`}
+              style={{
+                fontSize: '18px',
+                lineHeight: '1.6',
+              }}
+              onInput={handleContentChange}
+              onMouseUp={handleTextSelection}
+              onKeyUp={handleTextSelection}
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onKeyDown={handleKeyDown}
+              // onPaste={handlePaste}
+            />
+          )}
 
-          {!content && (
+          {!content && !isSourceView && (
             <div className="absolute top-4 left-4 text-gray-400 dark:text-gray-500 pointer-events-none">
               {placeholder}
             </div>
           )}
 
-          {dragOver && (
+          {dragOver && !isSourceView && (
             <div className="absolute inset-0 flex items-center justify-center bg-blue-50 dark:bg-blue-900/20 bg-opacity-90 pointer-events-none">
               <div className="text-blue-600 dark:text-blue-400 text-lg font-medium">
                 Drop your image here
@@ -659,9 +710,17 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(({
           )}
         </div>
 
-        <div className="bg-gray-50 dark:bg-gray-700 border-t border-gray-300 dark:border-gray-600 px-4 py-2 text-sm text-gray-600 dark:text-gray-400">
-          Words: {content.replace(/<[^>]*>/g, '').split(/\s+/).filter(word => word.length > 0).length} |
-          Characters: {content.replace(/<[^>]*>/g, '').length}
+        <div className="bg-gray-50 dark:bg-gray-700 border-t border-gray-300 dark:border-gray-600 px-4 py-2 text-sm text-gray-600 dark:text-gray-400 flex items-center justify-between">
+          <div>
+            Words: {content.replace(/<[^>]*>/g, '').split(/\s+/).filter(word => word.length > 0).length} |
+            Characters: {content.replace(/<[^>]*>/g, '').length}
+            {isSourceView && ` | HTML Length: ${content.length}`}
+          </div>
+          {isSourceView && (
+            <span className="text-xs bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 px-2 py-0.5 rounded font-mono font-medium">
+              HTML Markup Mode
+            </span>
+          )}
         </div>
       </div>
 
