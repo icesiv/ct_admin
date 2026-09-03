@@ -125,6 +125,7 @@ export default function AdForm({ initialData, onSubmit, onCancel, isLoading }: A
                             <option value="ad-details-1">Details Ad 1 (ad-details-1)</option>
                             <option value="ad-details-2">Details Ad 2 (ad-details-2)</option>
                             <option value="ad-details-3">Details Ad 3 (ad-details-3)</option>
+                            <option value="ad-details-4">Details Ad 4 (ad-details-4)</option>
                             <option value="ad-home-top">Home Top Banner</option>
                         </select>
                     </div>

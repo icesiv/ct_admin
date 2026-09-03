@@ -5,10 +5,10 @@ import { useAds } from '@/hooks/useAds';
 import { Advertisement, AdvertisementInput } from '@/types/ads';
 import AdForm from './AdForm';
 import { Modal } from '@/components/ui/modal';
-import { Pencil, Trash2, Plus } from 'lucide-react';
+import { Pencil, Plus } from 'lucide-react';
 
 export default function AdsManager() {
-    const { ads, isLoading, isError, createAd, updateAd, deleteAd } = useAds();
+    const { ads, isLoading, isError, createAd, updateAd } = useAds();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingAd, setEditingAd] = useState<Advertisement | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -21,12 +21,6 @@ export default function AdsManager() {
     const handleEdit = (ad: Advertisement) => {
         setEditingAd(ad);
         setIsModalOpen(true);
-    };
-
-    const handleDelete = async (id: number) => {
-        if (confirm('Are you sure you want to delete this ad?')) {
-            await deleteAd(id);
-        }
     };
 
     const handleSubmit = async (data: AdvertisementInput) => {
@@ -97,11 +91,8 @@ export default function AdsManager() {
                                     </span>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <button onClick={() => handleEdit(ad)} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-4">
+                                    <button onClick={() => handleEdit(ad)} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">
                                         <Pencil size={18} />
-                                    </button>
-                                    <button onClick={() => handleDelete(ad.id)} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">
-                                        <Trash2 size={18} />
                                     </button>
                                 </td>
                             </tr>
@@ -109,7 +100,7 @@ export default function AdsManager() {
                         {ads.length === 0 && (
                             <tr>
                                 <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
-                                    No advertisements found. Create one to get started.
+                                    No advertisements found.
                                 </td>
                             </tr>
                         )}
