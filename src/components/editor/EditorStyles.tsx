@@ -2,6 +2,10 @@ import React from 'react';
 
 export const EditorStyles = () => (
   <style jsx global>{`
+    [contenteditable] p {
+      margin-bottom: 16px;
+    }
+
     [contenteditable] h1 {
       font-size: 2rem;
       font-weight: bold;
