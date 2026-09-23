@@ -4,12 +4,14 @@ import React, { useState } from 'react';
 import { useAds } from '@/hooks/useAds';
 import { Advertisement, AdvertisementInput } from '@/types/ads';
 import AdForm from './AdForm';
+import AdPositionsModal from './AdPositionsModal';
 import { Modal } from '@/components/ui/modal';
-import { Pencil, Plus } from 'lucide-react';
+import { Pencil, Plus, Layers } from 'lucide-react';
 
 export default function AdsManager() {
     const { ads, isLoading, isError, createAd, updateAd } = useAds();
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isPositionsModalOpen, setIsPositionsModalOpen] = useState(false);
     const [editingAd, setEditingAd] = useState<Advertisement | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -47,13 +49,22 @@ export default function AdsManager() {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold dark:text-white">Ad Management</h1>
-                <button
-                    onClick={handleCreate}
-                    className="flex items-center gap-2 px-4 py-2 text-white bg-indigo-600 rounded-lg hover:bg-indigo-700"
-                >
-                    <Plus size={20} />
-                    <span>New Ad</span>
-                </button>
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => setIsPositionsModalOpen(true)}
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700 transition shadow-sm"
+                    >
+                        <Layers size={18} />
+                        <span>Manage Positions</span>
+                    </button>
+                    <button
+                        onClick={handleCreate}
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition shadow-sm"
+                    >
+                        <Plus size={18} />
+                        <span>New Ad</span>
+                    </button>
+                </div>
             </div>
 
             <div className="overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
@@ -114,6 +125,14 @@ export default function AdsManager() {
                     onSubmit={handleSubmit}
                     onCancel={() => setIsModalOpen(false)}
                     isLoading={isSubmitting}
+                />
+            </Modal>
+
+            <Modal isOpen={isPositionsModalOpen} onClose={() => setIsPositionsModalOpen(false)} className="max-w-3xl">
+                <AdPositionsModal
+                    isOpen={isPositionsModalOpen}
+                    onClose={() => setIsPositionsModalOpen(false)}
+                    existingAds={ads}
                 />
             </Modal>
         </div>

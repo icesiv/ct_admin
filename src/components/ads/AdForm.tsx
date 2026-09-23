@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { AdvertisementInput, Advertisement } from '@/types/ads';
+import { useAdPositions } from '@/hooks/useAdPositions';
 
 interface AdFormProps {
     initialData?: Advertisement | null;
@@ -11,9 +12,11 @@ interface AdFormProps {
 }
 
 export default function AdForm({ initialData, onSubmit, onCancel, isLoading }: AdFormProps) {
+    const { positions } = useAdPositions();
+
     const [formData, setFormData] = useState<AdvertisementInput>({
         name: '',
-        position: 'ad-home-1', // default
+        position: initialData?.position || positions[0]?.key || 'ad-home-1',
         link_url: '',
         is_active: false,
         start_date: '',
@@ -55,8 +58,10 @@ export default function AdForm({ initialData, onSubmit, onCancel, isLoading }: A
             // Try config srcDesktop first, then fallback to DB base image_url
             setPreview(initialData.config?.srcDesktop || initialData.image_url || null);
             setMobilePreview(initialData.config?.srcMobile || null);
+        } else if (positions.length > 0 && !formData.position) {
+            setFormData(prev => ({ ...prev, position: positions[0].key }));
         }
-    }, [initialData]);
+    }, [initialData, positions]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -119,14 +124,23 @@ export default function AdForm({ initialData, onSubmit, onCancel, isLoading }: A
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Position</label>
-                        <select name="position" value={formData.position} onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 p-2 border">
-                            <option value="ad-home-1">Home Ad 1 (ad-home-1)</option>
-                            <option value="ad-home-2">Home Ad 2 (ad-home-2)</option>
-                            <option value="ad-details-1">Details Ad 1 (ad-details-1)</option>
-                            <option value="ad-details-2">Details Ad 2 (ad-details-2)</option>
-                            <option value="ad-details-3">Details Ad 3 (ad-details-3)</option>
-                            <option value="ad-details-4">Details Ad 4 (ad-details-4)</option>
-                            <option value="ad-home-top">Home Top Banner</option>
+                        <select
+                            name="position"
+                            value={formData.position}
+                            onChange={handleChange}
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 p-2 border"
+                        >
+                            {positions.map((pos) => (
+                                <option key={pos.key} value={pos.key}>
+                                    {pos.label} ({pos.key})
+                                </option>
+                            ))}
+                            {/* Fallback for custom positions not yet registered in standard list */}
+                            {formData.position && !positions.some(p => p.key === formData.position) && (
+                                <option value={formData.position}>
+                                    {formData.position} (Custom)
+                                </option>
+                            )}
                         </select>
                     </div>
 

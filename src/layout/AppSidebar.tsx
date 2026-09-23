@@ -26,6 +26,7 @@ import {
   CircleUserRound,
   ChevronDown,
   GraduationCap,
+  FileBarChart,
 } from "lucide-react";
 
 type NavItem = {
@@ -114,6 +115,16 @@ export const allNavItems: NavItem[] = [
     icon: <GraduationCap />,
     path: "/scholarships",
   },
+  // {
+  //   name: "Report",
+  //   icon: <FileBarChart />,
+  //   path: "#",
+  //   subItems: [
+  //     { name: "Overview", path: "/report" },
+  //     { name: "Post by User", path: "/report/post-by-user" },
+  //     { name: "Top Post", path: "/report/top-post" },
+  //   ],
+  // },
   {
     name: "Users",
     icon: <Users />,
@@ -174,6 +185,18 @@ const AppSidebar: React.FC<AppSidebarProps> = () => {
   const filteredNavItems = filterMenuItems(allNavItems);
 
   const isActive = useCallback((path: string | undefined) => path === pathname, [pathname]);
+
+  // Automatically expand active submenu matching the current route
+  React.useEffect(() => {
+    filteredNavItems.forEach((nav, index) => {
+      if (nav.subItems) {
+        const isMatched = nav.subItems.some((subItem) => subItem.path === pathname || (subItem.path !== '/' && subItem.path !== '#' && pathname.startsWith(subItem.path)));
+        if (isMatched) {
+          setOpenSubmenu({ index });
+        }
+      }
+    });
+  }, [pathname]);
 
   const handleSubmenuToggle = (index: number) => {
     setOpenSubmenu((prev) => {
