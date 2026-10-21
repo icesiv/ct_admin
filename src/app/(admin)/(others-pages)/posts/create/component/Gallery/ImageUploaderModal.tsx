@@ -110,7 +110,7 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
   uploadEndpoint = 'admin/images/upload-image/gallery',
   fetchEndpoint = 'admin/images/upload-image/gallery'
 }) => {
-  const { authFetch } = useAuth();
+  const { authFetch, user } = useAuth();
   // Add mobile view state
   const [activeTab, setActiveTab] = useState<'upload' | 'gallery'>('upload');
   const [isMobile, setIsMobile] = useState<boolean>(false);
@@ -615,10 +615,37 @@ const ImageUploaderModal: React.FC<ImageUploaderModalProps> = ({
     clearValidationError('tags');
   };
 
-  const deleteImage = (imageId: number): void => {
-    const updatedImages = images.filter(img => img.id !== imageId);
-    setImages(updatedImages);
-    onImagesChange?.(updatedImages);
+  const deleteImage = async (imageId: number): Promise<void> => {
+    if (!user?.is_super_admin) {
+      alert("Only super admins can delete images from library.");
+      return;
+    }
+
+    const confirmed = window.confirm("Are you sure you want to delete this image from the library? This cannot be undone.");
+    if (!confirmed) return;
+
+    try {
+      const response = await authFetch(`${BASE_URL}admin/images/${imageId}`, {
+        method: 'DELETE',
+      });
+      const data = await response.json().catch(() => null);
+
+      if (response.ok && data?.success !== false) {
+        const updatedImages = images.filter(img => img.id !== imageId);
+        setImages(updatedImages);
+        setTotalImages(prev => Math.max(0, prev - 1));
+        onImagesChange?.(updatedImages);
+        setUploadStatus({
+          type: 'success',
+          message: data?.message || 'Image deleted successfully'
+        });
+      } else {
+        alert(data?.message || 'Failed to delete image');
+      }
+    } catch (err) {
+      console.error('Error deleting image:', err);
+      alert('Failed to delete image. Please try again.');
+    }
   };
 
   const removePendingFile = (indexToRemove: number): void => {

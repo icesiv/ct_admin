@@ -14,6 +14,7 @@ const nextConfig: NextConfig = {
   },
 
   images: {
+    unoptimized: true,
     // For Next.js 12.2.0 and newer (recommended)
     remotePatterns: [
       {

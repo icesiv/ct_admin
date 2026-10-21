@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Edit, Filter, Search, Eye } from 'lucide-react';
+import { Edit, Filter, Search, Eye, Trash2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { BASE_URL } from '@/config/config';
 import Pagination from '../tables/Pagination';
@@ -115,6 +115,38 @@ const NewsListView: React.FC = () => {
     // Handle edit button click
     const handleEdit = (newsId: number): void => {
         router.push(`/posts/edit/${newsId}`);
+    };
+
+    const [deletingId, setDeletingId] = useState<number | null>(null);
+
+    const handleDelete = async (newsId: number, title: string): Promise<void> => {
+        if (!user?.is_super_admin) {
+            alert('Only super admins can delete posts.');
+            return;
+        }
+
+        const confirmed = window.confirm(`Are you sure you want to delete post #${newsId}: "${title}"?`);
+        if (!confirmed) return;
+
+        try {
+            setDeletingId(newsId);
+            const response = await authFetch(`${BASE_URL}admin/posts/${newsId}`, {
+                method: 'DELETE',
+            });
+            const data = await response.json().catch(() => null);
+
+            if (response.ok && data?.success !== false) {
+                setNewsData(prev => prev.filter(item => item.id !== newsId));
+                setTotalNews(prev => Math.max(0, prev - 1));
+            } else {
+                alert(data?.message || 'Failed to delete post');
+            }
+        } catch (err) {
+            console.error('Error deleting post:', err);
+            alert('Failed to delete post. Please try again.');
+        } finally {
+            setDeletingId(null);
+        }
     };
 
     // Authentication check
@@ -296,11 +328,21 @@ const NewsListView: React.FC = () => {
                                         <td className="px-6 py-2 text-right whitespace-nowrap text-sm font-medium">
                                             <button
                                                 onClick={() => handleEdit(news.id)}
-                                                className="bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-700 p-2 mr-2 rounded-full shadow-md transition-all duration-200 hover:shadow-lg"
+                                                className="bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-700 p-2 mr-2 rounded-full shadow-md transition-all duration-200 hover:shadow-lg dark:bg-gray-700 dark:text-gray-200"
                                                 title="Edit Post"
                                             >
                                                 <Edit className="h-4 w-4" />
                                             </button>
+                                            {user?.is_super_admin && (
+                                                <button
+                                                    onClick={() => handleDelete(news.id, news.title)}
+                                                    disabled={deletingId === news.id}
+                                                    className="bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-900/30 dark:hover:bg-red-900/50 dark:text-red-400 p-2 rounded-full shadow-md transition-all duration-200 hover:shadow-lg disabled:opacity-50"
+                                                    title="Delete Post"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </button>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}

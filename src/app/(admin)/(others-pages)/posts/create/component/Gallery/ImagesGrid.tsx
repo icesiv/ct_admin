@@ -1,6 +1,7 @@
 import React from 'react';
 import { Upload, Trash2, RotateCcw } from 'lucide-react';
 import { ImageData } from './ImageUploaderModal';
+import { useAuth } from '@/context/AuthContext';
 
 interface ImagesGridProps {
   images: ImageData[];
@@ -29,6 +30,8 @@ export const ImagesGrid: React.FC<ImagesGridProps> = ({
   callback,
   OpenModal
 }) => {
+  const { user } = useAuth();
+  const isSuperAdmin = !!user?.is_super_admin;
 
   return (
     <div className='h-[calc(100vh-300px)] overflow-y-auto'>
@@ -53,6 +56,20 @@ export const ImagesGrid: React.FC<ImagesGridProps> = ({
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {images.map(image => (
           <div key={image.id} className="group relative bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+            {isSuperAdmin && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onDeleteImage(image.id);
+                }}
+                className="absolute top-2 right-2 p-1.5 bg-red-600/90 hover:bg-red-700 text-white rounded-full shadow-md transition-all duration-200 z-20 hover:scale-110"
+                title="Delete image from library"
+              >
+                <Trash2 size={14} />
+              </button>
+            )}
             <div className="aspect-video overflow-hidden">
               <a href='#' onClick={(e) => {
                 e.preventDefault();

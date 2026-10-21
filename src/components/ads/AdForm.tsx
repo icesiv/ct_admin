@@ -39,6 +39,17 @@ export default function AdForm({ initialData, onSubmit, onCancel, isLoading }: A
 
     useEffect(() => {
         if (initialData) {
+            let configObj: any = initialData.config;
+            if (typeof configObj === 'string') {
+                try {
+                    configObj = JSON.parse(configObj);
+                } catch (e) {
+                    configObj = {};
+                }
+            } else if (!configObj) {
+                configObj = {};
+            }
+
             setFormData({
                 name: initialData.name,
                 position: initialData.position,
@@ -47,17 +58,19 @@ export default function AdForm({ initialData, onSubmit, onCancel, isLoading }: A
                 start_date: initialData.start_date ? initialData.start_date.slice(0, 16) : '',
                 end_date: initialData.end_date ? initialData.end_date.slice(0, 16) : '',
                 config: {
-                    type: initialData.config?.type || 'image',
-                    layout: initialData.config?.layout || 'container',
-                    breakpoint: initialData.config?.breakpoint || 'lg',
-                    defaultWidth: initialData.config?.defaultWidth || 'full',
-                    defaultHeight: initialData.config?.defaultHeight || 'auto',
-                    containerClass: initialData.config?.containerClass || ''
+                    type: configObj.type || 'image',
+                    layout: configObj.layout || 'container',
+                    breakpoint: configObj.breakpoint || 'lg',
+                    defaultWidth: configObj.defaultWidth !== undefined && configObj.defaultWidth !== null && configObj.defaultWidth !== '' ? String(configObj.defaultWidth) : 'full',
+                    defaultHeight: configObj.defaultHeight !== undefined && configObj.defaultHeight !== null && configObj.defaultHeight !== '' ? String(configObj.defaultHeight) : 'auto',
+                    containerClass: configObj.containerClass || '',
+                    srcDesktop: configObj.srcDesktop,
+                    srcMobile: configObj.srcMobile,
                 }
             });
             // Try config srcDesktop first, then fallback to DB base image_url
-            setPreview(initialData.config?.srcDesktop || initialData.image_url || null);
-            setMobilePreview(initialData.config?.srcMobile || null);
+            setPreview(configObj.srcDesktop || initialData.image_url || null);
+            setMobilePreview(configObj.srcMobile || null);
         } else if (positions.length > 0 && !formData.position) {
             setFormData(prev => ({ ...prev, position: positions[0].key }));
         }
@@ -198,22 +211,85 @@ export default function AdForm({ initialData, onSubmit, onCancel, isLoading }: A
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 mt-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
-                <div>
-                    <label className="block text-xs font-medium text-gray-700 dark:text-white">Breakpoint</label>
-                    <input type="text" name="breakpoint" value={formData.config?.breakpoint} onChange={handleConfigChange} placeholder="e.g. lg, sm" className="mt-1 block w-full text-sm p-2 border rounded-md dark:bg-gray-800 dark:text-white" />
+            <div className="space-y-3 p-4 mt-4 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                        <label className="block text-xs font-medium text-gray-700 dark:text-white">Breakpoint</label>
+                        <input type="text" name="breakpoint" value={formData.config?.breakpoint || ''} onChange={handleConfigChange} placeholder="e.g. lg, sm" className="mt-1 block w-full text-sm p-2 border rounded-md dark:bg-gray-800 dark:text-white" />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-medium text-gray-700 dark:text-white">Default Width</label>
+                        <input
+                            type="text"
+                            name="defaultWidth"
+                            value={formData.config?.defaultWidth || ''}
+                            onChange={handleConfigChange}
+                            placeholder="e.g. full, 728px, 300px"
+                            className="mt-1 block w-full text-sm p-2 border rounded-md dark:bg-gray-800 dark:text-white"
+                        />
+                        <div className="flex flex-wrap gap-1 mt-1.5">
+                            {['full', '728px', '970px', '300px', '320px'].map((w) => (
+                                <button
+                                    key={w}
+                                    type="button"
+                                    onClick={() => setFormData(prev => ({
+                                        ...prev,
+                                        config: { ...prev.config, defaultWidth: w }
+                                    }))}
+                                    className={`text-[10px] px-1.5 py-0.5 rounded border transition ${
+                                        formData.config?.defaultWidth === w
+                                            ? 'bg-indigo-600 text-white border-indigo-600 font-semibold'
+                                            : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700'
+                                    }`}
+                                >
+                                    {w}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                    <div>
+                        <label className="block text-xs font-medium text-gray-700 dark:text-white">Default Height</label>
+                        <input
+                            type="text"
+                            name="defaultHeight"
+                            value={formData.config?.defaultHeight || ''}
+                            onChange={handleConfigChange}
+                            placeholder="e.g. auto, 90px, 250px"
+                            className="mt-1 block w-full text-sm p-2 border rounded-md dark:bg-gray-800 dark:text-white"
+                        />
+                        <div className="flex flex-wrap gap-1 mt-1.5">
+                            {['auto', '90px', '250px', '152px', '100px'].map((h) => (
+                                <button
+                                    key={h}
+                                    type="button"
+                                    onClick={() => setFormData(prev => ({
+                                        ...prev,
+                                        config: { ...prev.config, defaultHeight: h }
+                                    }))}
+                                    className={`text-[10px] px-1.5 py-0.5 rounded border transition ${
+                                        formData.config?.defaultHeight === h
+                                            ? 'bg-indigo-600 text-white border-indigo-600 font-semibold'
+                                            : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700'
+                                    }`}
+                                >
+                                    {h}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                    <div>
+                        <label className="block text-xs font-medium text-gray-700 dark:text-white">Container Class</label>
+                        <input type="text" name="containerClass" value={formData.config?.containerClass || ''} onChange={handleConfigChange} placeholder="e.g. bg-gray-100" className="mt-1 block w-full text-sm p-2 border rounded-md dark:bg-gray-800 dark:text-white" />
+                    </div>
                 </div>
-                <div>
-                    <label className="block text-xs font-medium text-gray-700 dark:text-white">Default Width</label>
-                    <input type="text" name="defaultWidth" value={formData.config?.defaultWidth} onChange={handleConfigChange} placeholder="e.g. full, 96" className="mt-1 block w-full text-sm p-2 border rounded-md dark:bg-gray-800 dark:text-white" />
-                </div>
-                <div>
-                    <label className="block text-xs font-medium text-gray-700 dark:text-white">Default Height</label>
-                    <input type="text" name="defaultHeight" value={formData.config?.defaultHeight} onChange={handleConfigChange} placeholder="e.g. auto, 152" className="mt-1 block w-full text-sm p-2 border rounded-md dark:bg-gray-800 dark:text-white" />
-                </div>
-                <div>
-                    <label className="block text-xs font-medium text-gray-700 dark:text-white">Container Class</label>
-                    <input type="text" name="containerClass" value={formData.config?.containerClass} onChange={handleConfigChange} placeholder="e.g. bg-gray-100" className="mt-1 block w-full text-sm p-2 border rounded-md dark:bg-gray-800 dark:text-white" />
+
+                <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700 text-xs">
+                    <span className="text-gray-600 dark:text-gray-400">
+                        <strong>Live Size:</strong> {formData.config?.defaultWidth || 'full'} × {formData.config?.defaultHeight || 'auto'}
+                    </span>
+                    <span className="text-[11px] text-gray-500 dark:text-gray-400">
+                        Frontend render: {formData.config?.defaultWidth === 'full' ? '100% width' : (formData.config?.defaultWidth?.endsWith('px') ? formData.config.defaultWidth : `${formData.config?.defaultWidth || '100%'}px`)} × {formData.config?.defaultHeight === 'auto' ? 'auto height' : (formData.config?.defaultHeight?.endsWith('px') ? formData.config.defaultHeight : `${formData.config?.defaultHeight || 'auto'}px`)}
+                    </span>
                 </div>
             </div>
 

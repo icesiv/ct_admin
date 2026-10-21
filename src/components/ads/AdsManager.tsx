@@ -94,6 +94,9 @@ export default function AdsManager() {
                                 <td className="px-6 py-4">
                                     <div className="text-sm font-medium text-gray-900 dark:text-white">{ad.name}</div>
                                     <div className="text-sm text-gray-500 dark:text-gray-400">{ad.position}</div>
+                                    <div className="text-xs text-indigo-600 dark:text-indigo-400 mt-0.5">
+                                        Size: {ad.config?.defaultWidth || 'full'} × {ad.config?.defaultHeight || 'auto'}
+                                    </div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${ad.is_active ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'

@@ -504,7 +504,7 @@ export default function UserEditModal({ user, isOpen, onClose, onSave }: UserEdi
                   Assigned Menus
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {allNavItems.map((item) => (
+                  {allNavItems.filter((item) => !item.superAdminOnly).map((item) => (
                     <label key={item.name} className="flex items-center space-x-2">
                       <input
                         type="checkbox"

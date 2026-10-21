@@ -27,14 +27,15 @@ import {
   ChevronDown,
   GraduationCap,
   FileBarChart,
+  Trash2,
 } from "lucide-react";
 
-type NavItem = {
+export type NavItem = {
   name: string;
   icon: React.ReactNode;
   path?: string;
   subItems?: { name: string; path: string; new?: boolean }[];
-  // roles removed
+  superAdminOnly?: boolean;
 };
 
 export const allNavItems: NavItem[] = [
@@ -49,6 +50,8 @@ export const allNavItems: NavItem[] = [
     subItems: [
       { name: "Create Post", path: "/posts/create" },
       { name: "Manage Posts", path: "/posts" },
+      { name: "News By Division", path: "/location-news/division" },
+      { name: "News By District", path: "/location-news/district" },
     ],
   },
   {
@@ -60,24 +63,6 @@ export const allNavItems: NavItem[] = [
     name: "Breaking News",
     icon: <ShieldAlert />,
     path: "/breaking-news",
-  },
-  {
-    name: "Photo Galleries",
-    icon: <Images />,
-    path: "#",
-    subItems: [
-      { name: "Create Gallery", path: "/gallery/create" },
-      { name: "Manage Galleries", path: "/gallery/manage" },
-    ]
-  },
-  {
-    name: "News by Location",
-    icon: <MapPin />,
-    path: "#",
-    subItems: [
-      { name: "By Division", path: "/location-news/division" },
-      { name: "By District", path: "/location-news/district" },
-    ]
   },
   {
     name: "Videos",
@@ -152,6 +137,24 @@ export const allNavItems: NavItem[] = [
       { name: "Manage Author", path: "/authors" },
     ]
   },
+  {
+    name: "Delete",
+    icon: <Trash2 />,
+    superAdminOnly: true,
+    subItems: [
+      { name: "Delete Posts", path: "/delete/posts" },
+      { name: "Delete Images", path: "/delete/images" },
+    ],
+  },
+  {
+    name: "Photo Galleries",
+    icon: <Images />,
+    path: "#",
+    subItems: [
+      { name: "Create Gallery", path: "/gallery/create" },
+      { name: "Manage Galleries", path: "/gallery/manage" },
+    ]
+  },
 ];
 
 interface AppSidebarProps {
@@ -174,7 +177,12 @@ const AppSidebar: React.FC<AppSidebarProps> = () => {
     const assignedMenus = user.assigned_menus || [];
 
     return items
-      .filter((item) => isAdmin || assignedMenus.includes(item.name))
+      .filter((item) => {
+        if (item.superAdminOnly && !isAdmin) {
+          return false;
+        }
+        return isAdmin || assignedMenus.includes(item.name);
+      })
       .map((item) => {
         // Main items with subItems handle subitem logic implicitly or explicitly.
         // For simplicity, if parent is assigned, subitems are available.
@@ -210,7 +218,7 @@ const AppSidebar: React.FC<AppSidebarProps> = () => {
 
 
   const renderMenuItems = (navItems: NavItem[]) => (
-    <ul className="flex flex-col gap-1">
+    <ul className="flex flex-col gap-0.5">
       {navItems.map((nav, index) => (
         <li key={nav.name}>
           {nav.subItems ? (
@@ -219,10 +227,10 @@ const AppSidebar: React.FC<AppSidebarProps> = () => {
               className={`menu-item group ${openSubmenu?.index === index
                 ? "menu-item-active"
                 : "menu-item-inactive"
-                } cursor-pointer w-full py-2 ${!isExpanded && !isHovered ? "lg:justify-center px-2" : "lg:justify-start px-3"}`}
+                } cursor-pointer w-full py-1.5 ${!isExpanded && !isHovered ? "lg:justify-center px-2" : "lg:justify-start px-2.5"}`}
             >
               <span
-                className={`${openSubmenu?.index === index
+                className={`flex-shrink-0 [&>svg]:w-[18px] [&>svg]:h-[18px] ${openSubmenu?.index === index
                   ? "menu-item-icon-active"
                   : "menu-item-icon-inactive"
                   }`}
@@ -230,13 +238,13 @@ const AppSidebar: React.FC<AppSidebarProps> = () => {
                 {nav.icon}
               </span>
               {(isExpanded || isHovered || isMobileOpen) && (
-                <span className="menu-item-text text-sm font-medium">{nav.name}</span>
+                <span className="menu-item-text text-[13px] font-medium truncate">{nav.name}</span>
               )}
               {(isExpanded || isHovered || isMobileOpen) && (
                 <ChevronDown
-                  className={`ml-auto w-4 h-4 transition-transform duration-200 ${openSubmenu?.index === index
+                  className={`ml-auto w-3.5 h-3.5 flex-shrink-0 transition-transform duration-200 ${openSubmenu?.index === index
                     ? "rotate-180 text-brand-500"
-                    : ""
+                    : "text-gray-400"
                     }`}
                 />
               )}
@@ -245,13 +253,13 @@ const AppSidebar: React.FC<AppSidebarProps> = () => {
             nav.path && (
               <Link
                 href={nav.path}
-                className={`menu-item group ${isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"} py-2 ${!isExpanded && !isHovered ? "lg:justify-center px-2" : "lg:justify-start px-3"}`}
+                className={`menu-item group ${isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"} py-1.5 ${!isExpanded && !isHovered ? "lg:justify-center px-2" : "lg:justify-start px-2.5"}`}
               >
-                <span className={`${isActive(nav.path) ? "menu-item-icon-active" : "menu-item-icon-inactive"}`}>
+                <span className={`flex-shrink-0 [&>svg]:w-[18px] [&>svg]:h-[18px] ${isActive(nav.path) ? "menu-item-icon-active" : "menu-item-icon-inactive"}`}>
                   {nav.icon}
                 </span>
                 {(isExpanded || isHovered || isMobileOpen) && (
-                  <span className="menu-item-text text-sm font-medium">{nav.name}</span>
+                  <span className="menu-item-text text-[13px] font-medium truncate">{nav.name}</span>
                 )}
               </Link>
             )
@@ -267,20 +275,20 @@ const AppSidebar: React.FC<AppSidebarProps> = () => {
                   openSubmenu?.index === index ? "auto" : "0px",
               }}
             >
-              <ul className="mt-1 space-y-0.5 ml-9 border-l-2 border-gray-200 dark:border-gray-700">
+              <ul className="mt-0.5 space-y-0.5 ml-6 border-l border-gray-200 dark:border-gray-700 pl-1">
                 {nav.subItems.map((subItem) => (
                   <li key={subItem.name}>
                     <Link
                       href={subItem.path}
-                      className={`block w-full py-1.5 pl-4 pr-3 text-sm rounded-r-md transition-colors ${isActive(subItem.path)
+                      className={`block w-full py-1 pl-3 pr-2 text-xs rounded-md transition-colors ${isActive(subItem.path)
                         ? "text-blue-600 font-medium bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400"
                         : "text-gray-500 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800"
                         }`}
                     >
                       <div className="flex items-center justify-between">
-                        <span>{subItem.name}</span>
+                        <span className="truncate">{subItem.name}</span>
                         {subItem.new && (
-                          <span className="ml-2 px-1.5 py-0.5 text-[10px] font-bold uppercase text-white bg-red-500 rounded-full">
+                          <span className="ml-1.5 px-1.5 py-0.2 text-[9px] font-bold uppercase text-white bg-red-500 rounded-full">
                             New
                           </span>
                         )}
@@ -298,28 +306,28 @@ const AppSidebar: React.FC<AppSidebarProps> = () => {
 
   return (
     <aside
-      className={`fixed mt-16 flex flex-col justify-between lg:mt-0 top-0 px-3 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 transition-all duration-300 ease-in-out z-50 border-r border-gray-200 h-screen
-        ${isExpanded || isMobileOpen ? "w-[290px]" : isHovered ? "w-[290px]" : "w-[90px]"}
+      className={`fixed mt-16 flex flex-col justify-between lg:mt-0 top-0 px-2.5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 transition-all duration-300 ease-in-out z-50 border-r border-gray-200 h-screen
+        ${isExpanded || isMobileOpen ? "w-[240px]" : isHovered ? "w-[240px]" : "w-[72px]"}
         ${isMobileOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
       onMouseEnter={() => !isExpanded && setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="flex flex-col min-h-0 flex-1">
-        <div className={`py-4 flex flex-shrink-0 ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start px-2"}`}>
+        <div className={`py-3 flex flex-shrink-0 ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start px-1.5"}`}>
           <Link href="/">
             {isExpanded || isHovered || isMobileOpen ? (
               <>
-                <Image className="dark:hidden" src="/images/logo/logo-wide.svg" alt="Logo" width={180} height={32} />
-                <Image className="hidden dark:block" src="/images/logo/logo-wide.svg" alt="Logo" width={180} height={32} />
+                <Image className="dark:hidden" src="/images/logo/logo-wide.svg" alt="Logo" width={145} height={26} />
+                <Image className="hidden dark:block" src="/images/logo/logo-wide.svg" alt="Logo" width={145} height={26} />
               </>
             ) : (
-              <Image src="/images/logo/logo-box.svg" alt="Logo" width={32} height={32} />
+              <Image src="/images/logo/logo-box.svg" alt="Logo" width={28} height={28} />
             )}
           </Link>
         </div>
         <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent hover:scrollbar-thumb-gray-400 dark:hover:scrollbar-thumb-gray-500">
-          <nav className="pb-4 mt-2">
-            <div className="flex flex-col gap-2">
+          <nav className="pb-3 mt-1">
+            <div className="flex flex-col gap-1">
               {renderMenuItems(filteredNavItems)}
             </div>
           </nav>

@@ -93,8 +93,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const mainContentMargin = isMobileOpen
     ? "ml-0"
     : isExpanded || isHovered
-      ? "lg:ml-[290px]"
-      : "lg:ml-[90px]";
+      ? "lg:ml-[240px]"
+      : "lg:ml-[72px]";
 
   return (
     <div className="min-h-screen xl:flex">
