@@ -50,8 +50,6 @@ export const allNavItems: NavItem[] = [
     subItems: [
       { name: "Create Post", path: "/posts/create" },
       { name: "Manage Posts", path: "/posts" },
-      { name: "News By Division", path: "/location-news/division" },
-      { name: "News By District", path: "/location-news/district" },
     ],
   },
   {
@@ -100,16 +98,17 @@ export const allNavItems: NavItem[] = [
     icon: <GraduationCap />,
     path: "/scholarships",
   },
-  // {
-  //   name: "Report",
-  //   icon: <FileBarChart />,
-  //   path: "#",
-  //   subItems: [
-  //     { name: "Overview", path: "/report" },
-  //     { name: "Post by User", path: "/report/post-by-user" },
-  //     { name: "Top Post", path: "/report/top-post" },
-  //   ],
-  // },
+  {
+    name: "Report",
+    icon: <FileBarChart />,
+    path: "#",
+    subItems: [
+      { name: "Post by User", path: "/report/post-by-user" },
+      { name: "Top Post", path: "/report/top-post" },
+      { name: "News By Division", path: "/location-news/division" },
+      { name: "News By District", path: "/location-news/district" },
+    ],
+  },
   {
     name: "Users",
     icon: <Users />,

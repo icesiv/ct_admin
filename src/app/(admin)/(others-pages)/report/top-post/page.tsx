@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import PageBreadcrumb from '@/components/common/PageBreadCrumb';
 import { useAuth } from '@/context/AuthContext';
 import { BASE_URL } from '@/config/config';
@@ -13,7 +13,6 @@ import {
   Download,
   Search,
   Filter,
-  ArrowUpRight,
   ExternalLink,
   Edit,
   Tag,
@@ -21,6 +20,7 @@ import {
   Sparkles,
   BarChart3,
   Award,
+  RefreshCw,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -28,197 +28,242 @@ interface TopPostItem {
   id: string | number;
   title: string;
   category: string;
+  category_slug?: string;
+  categories?: { id: number; name: string; slug: string }[];
   author: string;
   views: number;
+  all_time_views?: number;
   date: string;
-  shares?: number;
-  comments?: number;
+  created_at_ago?: string;
   trend?: 'viral' | 'rising' | 'steady';
+  featured_image?: string | null;
+  slug?: string;
+}
+
+interface CategoryOption {
+  id: number;
+  name: string;
+  slug: string;
 }
 
 export default function TopPostReportPage() {
-  const { authFetch } = useAuth();
+  const { authFetch, isAuthenticated } = useAuth();
   const [timeRange, setTimeRange] = useState<'today' | '7d' | '30d' | 'this_month' | 'all'>('30d');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const [posts, setPosts] = useState<TopPostItem[]>([]);
+  const [categories, setCategories] = useState<CategoryOption[]>([]);
 
-  // Default / initial high-performing dataset (connected with live API fallback)
-  const [posts, setPosts] = useState<TopPostItem[]>([
-    {
-      id: 1,
-      title: 'বুয়েট ভর্তি পরীক্ষার চূড়ান্ত ফল প্রকাশ, শীর্ষে যারা',
-      category: 'Admission',
-      author: 'ক্যাম্পাস প্রতিনিধি',
-      views: 34200,
-      shares: 1250,
-      comments: 340,
-      date: '2026-09-07',
-      trend: 'viral',
-    },
-    {
-      id: 2,
-      title: 'ঢাবি ক্যাম্পাসে নবীন শিক্ষার্থীদের উৎসবমুখর বরণ',
-      category: 'Campus News',
-      author: 'আসিফ আহমেদ',
-      views: 26800,
-      shares: 980,
-      comments: 215,
-      date: '2026-09-06',
-      trend: 'viral',
-    },
-    {
-      id: 3,
-      title: 'বিদেশে উচ্চশিক্ষা: স্কলারশিপ আবেদনের পূর্ণাঙ্গ নির্দেশিকা',
-      category: 'Scholarship',
-      author: 'মাকসুদা নাজনীন',
-      views: 21500,
-      shares: 1840,
-      comments: 420,
-      date: '2026-09-05',
-      trend: 'rising',
-    },
-    {
-      id: 4,
-      title: 'মেডিকেল ভর্তি পরীক্ষার নতুন নিয়মাবলি ও সিলেবাস আপডেট',
-      category: 'Admission',
-      author: 'নিজস্ব প্রতিবেদক',
-      views: 19400,
-      shares: 720,
-      comments: 180,
-      date: '2026-09-05',
-      trend: 'rising',
-    },
-    {
-      id: 5,
-      title: 'জাবি সিনেট নির্বাচন: ভোটার তালিকা ও তফসিল ঘোষণা',
-      category: 'Politics',
-      author: 'তানভীর হাসান',
-      views: 15300,
-      shares: 410,
-      comments: 95,
-      date: '2026-09-04',
-      trend: 'steady',
-    },
-    {
-      id: 6,
-      title: 'চবিতে আন্তর্জাতিক বিজ্ঞান সম্মেলনের পর্দা উঠলো',
-      category: 'Science & Tech',
-      author: 'ক্যাম্পাস প্রতিনিধি',
-      views: 13900,
-      shares: 310,
-      comments: 88,
-      date: '2026-09-03',
-      trend: 'steady',
-    },
-    {
-      id: 7,
-      title: 'ইন্টার-ইউনিভার্সিটি ফুটবল টুর্নামেন্টে চ্যাম্পিয়ন ঢাবি',
-      category: 'Sports',
-      author: 'আসিফ আহমেদ',
-      views: 12400,
-      shares: 550,
-      comments: 142,
-      date: '2026-09-02',
-      trend: 'rising',
-    },
-    {
-      id: 8,
-      title: 'আইসিটি অলিম্পিয়াডে সেরাদের তালিকায় বাংলাদেশী শিক্ষার্থীরা',
-      category: 'Features',
-      author: 'মাকসুদা নাজনীন',
-      views: 10800,
-      shares: 630,
-      comments: 110,
-      date: '2026-09-01',
-      trend: 'steady',
-    },
-    {
-      id: 9,
-      title: 'জগন্নাথ বিশ্ববিদ্যালয়ে নতুন রিসার্চ সেন্টারের উদ্বোধন',
-      category: 'Campus News',
-      author: 'নিজস্ব প্রতিবেদক',
-      views: 9400,
-      shares: 240,
-      comments: 65,
-      date: '2026-08-30',
-      trend: 'steady',
-    },
-    {
-      id: 10,
-      title: 'ডিজিটাল উদ্ভাবনী মেলায় প্রথম পুরষ্কার জিতেছে শাবিপ্রবি টিম',
-      category: 'Science & Tech',
-      author: 'তানভীর হাসান',
-      views: 8200,
-      shares: 310,
-      comments: 72,
-      date: '2026-08-29',
-      trend: 'steady',
-    },
-  ]);
-
+  // Debounce search input
   useEffect(() => {
-    const fetchTopPosts = async () => {
-      setLoading(true);
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 350);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
+
+  // Fetch actual data from ct-api
+  const fetchTopPosts = useCallback(async () => {
+    setLoading(true);
+    try {
+      let dataLoaded = false;
+      const fetcher = authFetch || fetch;
+
+      // Tier 1: Try dedicated admin report endpoint first
       try {
-        if (authFetch) {
-          const res = await authFetch(`${BASE_URL}admin/dashboard/stats`);
-          if (res && res.ok) {
-            const data = await res.json();
-            if (data.posts && Array.isArray(data.posts) && data.posts.length > 0) {
-              const mapped: TopPostItem[] = data.posts.map((p: any, idx: number) => ({
-                id: p.id || idx + 1,
-                title: p.title || p.post_title || 'Untitled Post',
-                category: p.category_name || p.category || 'General',
-                author: p.author_name || p.author || 'Admin',
-                views: Number(p.views || p.view_count || p.total_views || 0),
-                shares: Number(p.shares || 0),
-                comments: Number(p.comments_count || 0),
-                date: p.created_at ? p.created_at.split('T')[0] : '2026-09-01',
-                trend: idx < 2 ? 'viral' : idx < 5 ? 'rising' : 'steady',
-              }));
-              // Sort descending by views
-              mapped.sort((a, b) => b.views - a.views);
-              setPosts(mapped);
+        const queryParams = new URLSearchParams();
+        queryParams.set('days', timeRange);
+        if (selectedCategory !== 'all') {
+          queryParams.set('category', selectedCategory);
+        }
+        queryParams.set('limit', '50');
+        if (debouncedSearch) {
+          queryParams.set('search', debouncedSearch);
+        }
+
+        const res = await fetcher(`${BASE_URL}admin/report/top-posts?${queryParams.toString()}`);
+        if (res && res.ok) {
+          const json = await res.json();
+          if (json.success && Array.isArray(json.posts)) {
+            setPosts(json.posts);
+            if (Array.isArray(json.categories) && json.categories.length > 0) {
+              setCategories(json.categories);
             }
+            dataLoaded = true;
+          }
+        }
+      } catch (e) {
+        // Fallback
+      }
+
+      // Tier 2: Try public top-posts endpoint
+      if (!dataLoaded) {
+        try {
+          const queryParams = new URLSearchParams();
+          queryParams.set('days', timeRange);
+          if (selectedCategory !== 'all') {
+            queryParams.set('category', selectedCategory);
+          }
+          queryParams.set('limit', '50');
+          if (debouncedSearch) {
+            queryParams.set('search', debouncedSearch);
+          }
+
+          const res = await fetcher(`${BASE_URL}top-posts?${queryParams.toString()}`);
+          if (res && res.ok) {
+            const json = await res.json();
+            if (json.success && Array.isArray(json.posts)) {
+              setPosts(json.posts);
+              if (Array.isArray(json.categories) && json.categories.length > 0) {
+                setCategories(json.categories);
+              }
+              dataLoaded = true;
+            }
+          }
+        } catch (e) {
+          // Fallback
+        }
+      }
+
+      // Tier 3: Fallback to admin/posts/allposts ordered by view_count
+      if (!dataLoaded) {
+        try {
+          const daysParam =
+            timeRange === 'all'
+              ? 'all'
+              : timeRange === 'today'
+              ? '1'
+              : timeRange === '7d'
+              ? '7'
+              : timeRange === '30d'
+              ? '30'
+              : '30';
+
+          const url = `${BASE_URL}admin/posts/allposts?order_by=view_count&order_direction=desc&per_page=50&days=${daysParam}${
+            debouncedSearch ? `&search=${encodeURIComponent(debouncedSearch)}` : ''
+          }`;
+
+          const res = await fetcher(url);
+          if (res && res.ok) {
+            const json = await res.json();
+            const rawPosts: any[] = json.posts || [];
+            if (rawPosts.length > 0) {
+              const maxV = Math.max(...rawPosts.map((p) => p.view_count || 0), 1);
+              const mapped: TopPostItem[] = rawPosts.map((p, idx) => {
+                const v = p.view_count || 0;
+                let trend: 'viral' | 'rising' | 'steady' = 'steady';
+                if (idx === 0 || v >= 50000 || v / maxV >= 0.7) trend = 'viral';
+                else if (idx < 5 || v >= 10000 || v / maxV >= 0.3) trend = 'rising';
+
+                const primaryCat =
+                  p.categories && p.categories.length > 0 ? p.categories[0].name : 'General';
+                const catSlug =
+                  p.categories && p.categories.length > 0 ? p.categories[0].slug : '';
+
+                return {
+                  id: p.id,
+                  title: p.title || 'Untitled',
+                  category: primaryCat,
+                  category_slug: catSlug,
+                  categories: p.categories || [],
+                  author: p.created_by || p.author || 'Admin',
+                  views: v,
+                  all_time_views: v,
+                  date: p.created_at ? p.created_at.slice(0, 10) : '',
+                  created_at_ago: p.created_at_ago || '',
+                  trend,
+                  featured_image: p.image || null,
+                  slug: p.slug || '',
+                };
+              });
+
+              // Filter by category if selected
+              const filtered =
+                selectedCategory === 'all'
+                  ? mapped
+                  : mapped.filter(
+                      (p) =>
+                        p.category.toLowerCase() === selectedCategory.toLowerCase() ||
+                        p.category_slug?.toLowerCase() === selectedCategory.toLowerCase()
+                    );
+
+              setPosts(filtered);
+              dataLoaded = true;
+            }
+          }
+        } catch (e) {
+          console.error('Failed to load fallback posts:', e);
+        }
+      }
+
+      if (!dataLoaded) {
+        setPosts([]);
+      }
+    } catch (err) {
+      console.error('Failed to fetch top posts:', err);
+      setPosts([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [authFetch, timeRange, selectedCategory, debouncedSearch]);
+
+  // Load posts whenever dependencies change
+  useEffect(() => {
+    fetchTopPosts();
+  }, [fetchTopPosts]);
+
+  // Also fetch categories if not yet loaded
+  useEffect(() => {
+    const loadCategories = async () => {
+      if (categories.length > 0) return;
+      try {
+        const fetcher = authFetch || fetch;
+        const res = await fetcher(`${BASE_URL}admin/categories`);
+        if (res && res.ok) {
+          const json = await res.json();
+          const list: any[] = json.data || json.categories || [];
+          if (Array.isArray(list) && list.length > 0) {
+            setCategories(
+              list.map((c) => ({
+                id: c.id,
+                name: c.name,
+                slug: c.slug,
+              }))
+            );
           }
         }
       } catch (err) {
-        console.warn('Using default top posts data', err);
-      } finally {
-        setLoading(false);
+        // ignore
       }
     };
 
-    fetchTopPosts();
-  }, [authFetch]);
-
-  // Extract distinct categories
-  const categoriesList = useMemo(() => {
-    const set = new Set<string>();
-    posts.forEach((p) => {
-      if (p.category) set.add(p.category);
-    });
-    return Array.from(set);
-  }, [posts]);
+    loadCategories();
+  }, [authFetch, categories.length]);
 
   // Filtered top posts
   const filteredPosts = useMemo(() => {
     return posts.filter((p) => {
-      const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
+      const matchesCategory =
+        selectedCategory === 'all' ||
+        p.category === selectedCategory ||
+        p.category_slug === selectedCategory;
+
       const matchesSearch =
-        searchQuery === '' ||
-        p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.category.toLowerCase().includes(searchQuery.toLowerCase());
+        debouncedSearch === '' ||
+        p.title.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        p.author.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        p.category.toLowerCase().includes(debouncedSearch.toLowerCase());
+
       return matchesCategory && matchesSearch;
     });
-  }, [posts, selectedCategory, searchQuery]);
+  }, [posts, selectedCategory, debouncedSearch]);
 
   // Metrics
   const maxViews = useMemo(() => {
-    return Math.max(...posts.map((p) => p.views), 1);
-  }, [posts]);
+    return Math.max(...filteredPosts.map((p) => p.views), 1);
+  }, [filteredPosts]);
 
   const stats = useMemo(() => {
     const totalViews = filteredPosts.reduce((acc, p) => acc + p.views, 0);
@@ -249,9 +294,10 @@ export default function TopPostReportPage() {
 
   // CSV export handler
   const handleExportCSV = () => {
-    const headers = ['Rank', 'Title', 'Category', 'Author', 'Views', 'Date', 'Trend'];
+    const headers = ['Rank', 'Post ID', 'Title', 'Category', 'Author', 'Views', 'Date', 'Trend'];
     const rows = filteredPosts.map((p, index) => [
       index + 1,
+      String(p.id),
       `"${p.title.replace(/"/g, '""')}"`,
       `"${p.category}"`,
       `"${p.author}"`,
@@ -260,11 +306,13 @@ export default function TopPostReportPage() {
       p.trend || 'steady',
     ]);
 
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
+    const csvContent =
+      'data:text/csv;charset=utf-8,\uFEFF' +
+      [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `top_posts_report_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute('download', `top_posts_report_${timeRange}_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -277,27 +325,38 @@ export default function TopPostReportPage() {
       {/* Header & Controls */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/60">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="p-2 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-xl">
+          <div className="flex items-center gap-3">
+            <span className="p-2.5 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-xl shadow-xs">
               <Trophy className="w-6 h-6" />
             </span>
             <div>
               <h1 className="text-xl font-bold text-gray-900 dark:text-white">Top Performing Posts</h1>
-              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                Leaderboard of the most read, engaged, and viral stories
+              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                Leaderboard of the most read and trending stories from ct-api
               </p>
             </div>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          {/* Refresh Button */}
+          <button
+            type="button"
+            onClick={() => fetchTopPosts()}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl shadow-xs hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-700 cursor-pointer"
+            title="Refresh Data"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-blue-600' : ''}`} />
+            <span>Refresh</span>
+          </button>
+
           {/* Time range selector */}
           <div className="flex items-center bg-gray-100 dark:bg-gray-700/50 p-1 rounded-xl">
             {(['today', '7d', '30d', 'this_month', 'all'] as const).map((range) => (
               <button
                 key={range}
                 onClick={() => setTimeRange(range)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
+                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all cursor-pointer ${
                   timeRange === range
                     ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm'
                     : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
@@ -316,9 +375,11 @@ export default function TopPostReportPage() {
             ))}
           </div>
 
+          {/* Export CSV Button */}
           <button
             onClick={handleExportCSV}
-            className="flex items-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-sm transition-colors"
+            disabled={filteredPosts.length === 0}
+            className="flex items-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-sm transition-colors disabled:opacity-50 cursor-pointer"
           >
             <Download className="w-4 h-4" />
             <span>Export CSV</span>
@@ -340,11 +401,13 @@ export default function TopPostReportPage() {
             </span>
           </div>
           <p className="text-sm font-semibold text-gray-900 dark:text-white line-clamp-2 mb-2">
-            {stats.topPost ? stats.topPost.title : 'N/A'}
+            {stats.topPost ? stats.topPost.title : loading ? 'Loading...' : 'No data available'}
           </p>
           <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-            <span>By {stats.topPost ? stats.topPost.author : '-'}</span>
-            <span className="font-bold text-amber-600 dark:text-amber-400 text-sm">
+            <span className="truncate max-w-[140px]">
+              By {stats.topPost ? stats.topPost.author : '-'}
+            </span>
+            <span className="font-bold text-amber-600 dark:text-amber-400 text-sm whitespace-nowrap">
               {stats.topPost ? stats.topPost.views.toLocaleString() : 0} views
             </span>
           </div>
@@ -365,7 +428,7 @@ export default function TopPostReportPage() {
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 flex items-center gap-1">
             <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
-            Across top {filteredPosts.length} selected articles
+            Across {filteredPosts.length} selected articles
           </p>
         </div>
 
@@ -384,7 +447,7 @@ export default function TopPostReportPage() {
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 flex items-center gap-1">
             <Sparkles className="w-3.5 h-3.5 text-purple-500" />
-            Strong reader retention benchmark
+            Strong reader engagement benchmark
           </p>
         </div>
 
@@ -413,7 +476,7 @@ export default function TopPostReportPage() {
           <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
-            placeholder="Search top posts, authors, categories..."
+            placeholder="Search top posts by title or author..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2 text-sm bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
@@ -425,12 +488,12 @@ export default function TopPostReportPage() {
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="w-full sm:w-auto px-3 py-2 text-sm bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 dark:text-gray-200"
+            className="w-full sm:w-auto px-3.5 py-2 text-xs sm:text-sm font-semibold bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 dark:text-gray-200 cursor-pointer"
           >
-            <option value="all">All Categories</option>
-            {categoriesList.map((c) => (
-              <option key={c} value={c}>
-                {c}
+            <option value="all">All Categories (সকল ক্যাটাগরি)</option>
+            {categories.map((c) => (
+              <option key={c.id || c.slug} value={c.slug || c.name}>
+                {c.name}
               </option>
             ))}
           </select>
@@ -447,7 +510,7 @@ export default function TopPostReportPage() {
             </h2>
           </div>
           <span className="text-xs text-gray-400 dark:text-gray-500">
-            Sorted by total reads
+            Sorted by total reads from ct-api
           </span>
         </div>
 
@@ -466,10 +529,24 @@ export default function TopPostReportPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50 text-sm">
-              {filteredPosts.length === 0 ? (
+              {loading ? (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-gray-500 dark:text-gray-400">
-                    No articles matched your criteria.
+                  <td colSpan={8} className="py-16 text-center">
+                    <div className="flex flex-col items-center justify-center space-y-3">
+                      <RefreshCw className="h-7 w-7 animate-spin text-blue-600" />
+                      <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                        Loading top posts from ct-api database...
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              ) : filteredPosts.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="py-16 text-center text-gray-500 dark:text-gray-400">
+                    <p className="font-semibold text-sm">কোনো আর্টিকেল পাওয়া যায়নি।</p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      অন্য কোনো ক্যাটাগরি, সময়সীমা অথবা সার্চ কিওয়ার্ড দিয়ে চেষ্টা করুন।
+                    </p>
                   </td>
                 </tr>
               ) : (
@@ -503,29 +580,47 @@ export default function TopPostReportPage() {
                         )}
                       </td>
 
-                      {/* Title & View bar */}
+                      {/* Title & Thumbnail & View Volume Bar */}
                       <td className="py-4 px-4 max-w-md">
-                        <div className="font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2">
-                          {post.title}
-                        </div>
-                        {/* Visual view volume bar */}
-                        <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1.5 mt-2 overflow-hidden">
-                          <div
-                            className={`h-1.5 rounded-full ${
-                              rank === 1
-                                ? 'bg-amber-500'
-                                : rank <= 3
-                                ? 'bg-blue-500'
-                                : 'bg-emerald-500'
-                            }`}
-                            style={{ width: `${viewPercentage}%` }}
-                          />
+                        <div className="flex items-center gap-3">
+                          {post.featured_image && (
+                            <img
+                              src={post.featured_image}
+                              alt={post.title}
+                              className="w-12 h-10 rounded-lg object-cover border border-gray-100 dark:border-gray-700 shrink-0 bg-gray-100 dark:bg-gray-700"
+                              onError={(e) => {
+                                (e.target as HTMLElement).style.display = 'none';
+                              }}
+                            />
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <Link
+                              href={`/posts/edit/${post.id}`}
+                              className="font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2"
+                              title={post.title}
+                            >
+                              {post.title}
+                            </Link>
+                            {/* Visual view volume bar */}
+                            <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1.5 mt-2 overflow-hidden">
+                              <div
+                                className={`h-1.5 rounded-full ${
+                                  rank === 1
+                                    ? 'bg-amber-500'
+                                    : rank <= 3
+                                    ? 'bg-blue-500'
+                                    : 'bg-emerald-500'
+                                }`}
+                                style={{ width: `${Math.max(viewPercentage, 3)}%` }}
+                              />
+                            </div>
+                          </div>
                         </div>
                       </td>
 
                       {/* Category */}
                       <td className="py-4 px-4 whitespace-nowrap">
-                        <span className="px-2.5 py-1 text-xs font-medium rounded-lg bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
+                        <span className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border border-blue-200/50 dark:border-blue-800/40">
                           {post.category}
                         </span>
                       </td>
@@ -533,18 +628,27 @@ export default function TopPostReportPage() {
                       {/* Author */}
                       <td className="py-4 px-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
-                          <span className="w-6 h-6 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 text-white text-[11px] font-bold flex items-center justify-center">
-                            {post.author.charAt(0)}
+                          <span className="w-6 h-6 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 text-white text-[11px] font-bold flex items-center justify-center shrink-0">
+                            {post.author ? post.author.charAt(0).toUpperCase() : 'U'}
                           </span>
-                          <span className="text-gray-700 dark:text-gray-300 text-xs font-medium">
+                          <span className="text-gray-700 dark:text-gray-300 text-xs font-medium truncate max-w-[120px]">
                             {post.author}
                           </span>
                         </div>
                       </td>
 
                       {/* Date */}
-                      <td className="py-4 px-4 whitespace-nowrap text-xs text-gray-500 dark:text-gray-400">
-                        {post.date}
+                      <td className="py-4 px-4 whitespace-nowrap">
+                        <div className="flex flex-col">
+                          <span className="font-mono text-xs text-gray-700 dark:text-gray-300">
+                            {post.date || '--'}
+                          </span>
+                          {post.created_at_ago && (
+                            <span className="text-[10px] text-gray-400">
+                              {post.created_at_ago}
+                            </span>
+                          )}
+                        </div>
                       </td>
 
                       {/* Views */}
@@ -560,11 +664,11 @@ export default function TopPostReportPage() {
                       {/* Trend indicator */}
                       <td className="py-4 px-4 whitespace-nowrap text-center">
                         {post.trend === 'viral' ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold rounded-full bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold rounded-full bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200/50">
                             <Flame className="w-3.5 h-3.5" /> Viral
                           </span>
                         ) : post.trend === 'rising' ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold rounded-full bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold rounded-full bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200/50">
                             <TrendingUp className="w-3.5 h-3.5" /> Rising
                           </span>
                         ) : (
@@ -584,13 +688,15 @@ export default function TopPostReportPage() {
                           >
                             <Edit className="w-4 h-4" />
                           </Link>
-                          <Link
-                            href={`/posts`}
-                            title="Manage Posts"
+                          <a
+                            href={`https://campustimes.press/posts/${post.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title="Open on live site"
                             className="p-1.5 text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                           >
                             <ExternalLink className="w-4 h-4" />
-                          </Link>
+                          </a>
                         </div>
                       </td>
                     </tr>
