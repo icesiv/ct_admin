@@ -48,10 +48,43 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   if (!loading && user) {
     const isAdmin = user.is_super_admin;
     if (!isAdmin && pathname !== '/') { // Always allow dashboard '/'
+      // Block any route that belongs to a superAdminOnly nav item or is a super admin route
+      const isSuperAdminRoute =
+        pathname.startsWith('/report') ||
+        pathname.startsWith('/delete') ||
+        pathname.startsWith('/location-news') ||
+        allNavItems.some((item) => {
+          if (!item.superAdminOnly) return false;
+          if (item.path && item.path !== '/' && item.path !== '#' && (pathname === item.path || pathname.startsWith(item.path + '/'))) {
+            return true;
+          }
+          if (item.subItems) {
+            return item.subItems.some((sub) => pathname === sub.path || (sub.path !== '/' && sub.path !== '#' && pathname.startsWith(sub.path)));
+          }
+          return false;
+        });
+
+      if (isSuperAdminRoute) {
+        return (
+          <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+            <div className="text-center p-8 bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full">
+              <h1 className="text-3xl font-bold text-red-500 mb-4">Access Denied</h1>
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
+                This page is strictly reserved for Super Administrators. You do not have permission to view this content.
+              </p>
+              <a href="/" className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                Return to Dashboard
+              </a>
+            </div>
+          </div>
+        );
+      }
+
       const assignedMenus = Array.isArray(user.assigned_menus) ? user.assigned_menus : [];
       let isAllowed = false;
 
       for (const item of allNavItems) {
+        if (item.superAdminOnly) continue;
         if (assignedMenus.includes(item.name)) {
           // Check parent path
           if (item.path && item.path !== '/' && item.path !== '#' && pathname.startsWith(item.path)) {

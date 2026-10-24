@@ -20,6 +20,7 @@ import {
   RefreshCw,
   User as UserIcon,
   Sparkles,
+  ShieldAlert,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -58,7 +59,7 @@ interface PostItem {
 }
 
 export default function PostByUserReportPage() {
-  const { authFetch, isAuthenticated } = useAuth();
+  const { user, loading: authLoading, authFetch, isAuthenticated } = useAuth();
 
   // Filter States
   const [selectedUserId, setSelectedUserId] = useState<string>('all');
@@ -261,17 +262,17 @@ export default function PostByUserReportPage() {
 
   // Load user stats whenever timeRange changes
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && user?.is_super_admin) {
       fetchUserStats();
     }
-  }, [isAuthenticated, fetchUserStats]);
+  }, [isAuthenticated, user?.is_super_admin, fetchUserStats]);
 
   // Load posts whenever dependencies change
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && user?.is_super_admin) {
       fetchPosts(currentPage);
     }
-  }, [isAuthenticated, currentPage, fetchPosts]);
+  }, [isAuthenticated, user?.is_super_admin, currentPage, fetchPosts]);
 
   // When user_id, status, or perPage changes, reset to page 1
   const handleUserChange = (val: string) => {
@@ -431,6 +432,35 @@ export default function PostByUserReportPage() {
     link.click();
     document.body.removeChild(link);
   };
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-10 w-10 border-4 border-blue-600 border-t-transparent"></div>
+      </div>
+    );
+  }
+
+  if (!user?.is_super_admin) {
+    return (
+      <div className="p-8 text-center bg-white dark:bg-gray-800 rounded-2xl border border-red-200 dark:border-red-900 shadow-sm max-w-xl mx-auto mt-12">
+        <ShieldAlert className="w-16 h-16 text-red-500 mx-auto mb-4" />
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+          Access Restricted
+        </h2>
+        <p className="text-gray-600 dark:text-gray-400 mb-6">
+          This page is strictly reserved for Super Administrators. You do not have
+          the required privileges to view post reports.
+        </p>
+        <Link
+          href="/dashboard"
+          className="inline-flex items-center px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+        >
+          Return to Dashboard
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

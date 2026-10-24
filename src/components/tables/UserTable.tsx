@@ -132,6 +132,11 @@ export default function UserTable() {
   };
 
   const handleDelete = async (userId: string | number) => {
+    if (!currentUser?.is_super_admin) {
+      alert('Only super admins can delete users.');
+      return;
+    }
+
     if (!window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
       return;
     }
@@ -337,13 +342,15 @@ export default function UserTable() {
                           >
                             <Ban size={18} />
                           </button>
-                          <button
-                            onClick={() => handleDelete(user.id)}
-                            className="text-red-500 hover:text-red-600 p-1"
-                            title="Delete User"
-                          >
-                            <Trash2 size={18} />
-                          </button>
+                          {currentUser?.is_super_admin && (
+                            <button
+                              onClick={() => handleDelete(user.id)}
+                              className="text-red-500 hover:text-red-600 p-1"
+                              title="Delete User"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          )}
                         </>
                       ) : (
                         <span className="text-gray-400 text-xs italic">Current User</span>

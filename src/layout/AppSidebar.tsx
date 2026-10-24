@@ -101,6 +101,7 @@ export const allNavItems: NavItem[] = [
   {
     name: "Report",
     icon: <FileBarChart />,
+    superAdminOnly: true,
     path: "#",
     subItems: [
       { name: "Post by User", path: "/report/post-by-user" },

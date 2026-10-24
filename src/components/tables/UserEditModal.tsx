@@ -259,13 +259,18 @@ export default function UserEditModal({ user, isOpen, onClose, onSave }: UserEdi
         }
       }
 
-      // Prepare data for API
+      // Prepare data for API - filter out superAdminOnly menus if user is not super admin
+      const superAdminMenuNames = allNavItems.filter(item => item.superAdminOnly).map(item => item.name);
+      const cleanAssignedMenus = formData.is_super_admin
+        ? (formData.assigned_menus || [])
+        : (formData.assigned_menus || []).filter(name => !superAdminMenuNames.includes(name));
+
       const updateData = {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
         is_super_admin: formData.is_super_admin,
-        assigned_menus: formData.assigned_menus,
+        assigned_menus: cleanAssignedMenus,
         ...(profileImagePath !== undefined && { profile_image: profileImagePath })
       };
 
@@ -293,7 +298,7 @@ export default function UserEditModal({ user, isOpen, onClose, onSave }: UserEdi
           email: formData.email,
           phone: formData.phone,
           is_super_admin: formData.is_super_admin,
-          assigned_menus: formData.assigned_menus,
+          assigned_menus: cleanAssignedMenus,
           profile_image: profileImagePath
         };
 
